@@ -1,0 +1,50 @@
+PATH
+  remote: .
+  specs:
+    dotsync (0.1.0)
+      fileutils
+      listen
+      toml-rb
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    citrus (3.0.2)
+    diff-lcs (1.6.1)
+    ffi (1.17.1-arm64-darwin)
+    fileutils (1.7.3)
+    listen (3.9.0)
+      rb-fsevent (~> 0.10, >= 0.10.3)
+      rb-inotify (~> 0.9, >= 0.9.10)
+    racc (1.8.1)
+    rake (10.5.0)
+    rb-fsevent (0.11.2)
+    rb-inotify (0.11.1)
+      ffi (~> 1.0)
+    rspec (3.13.0)
+      rspec-core (~> 3.13.0)
+      rspec-expectations (~> 3.13.0)
+      rspec-mocks (~> 3.13.0)
+    rspec-core (3.13.3)
+      rspec-support (~> 3.13.0)
+    rspec-expectations (3.13.3)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.2)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-support (3.13.2)
+    toml-rb (4.0.0)
+      citrus (~> 3.0, > 3.0)
+      racc (~> 1.7)
+
+PLATFORMS
+  arm64-darwin-24
+
+DEPENDENCIES
+  dotsync!
+  rake (~> 10.0)
+  rspec (~> 3.0)
+
+BUNDLED WITH
+   2.6.7

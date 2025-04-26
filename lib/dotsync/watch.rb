@@ -1,12 +1,7 @@
-require 'fileutils'
-require 'listen'
-require_relative 'loggable'
-
 module Dotsync
   class Watch
     include Loggable
-
-    CONFIG_FILE = File.expand_path("~/.config/dotfiles_watcher.conf")
+    include Configurable
 
     def initialize
       load_config
@@ -18,9 +13,15 @@ module Dotsync
         abort("Config file not found at #{CONFIG_FILE}")
       end
 
-      lines = File.readlines(CONFIG_FILE).map(&:strip).reject { |l| l.empty? || l.start_with?('#') }
-      @output_dir = File.expand_path(lines.shift)
-      @watch_paths = lines.map { |path| File.expand_path(path) }
+      config = TOML.load_file(CONFIG_FILE)
+      watch_config = config['watch']
+
+      unless watch_config
+        abort("No [watch] section found in #{CONFIG_FILE}")
+      end
+
+      @output_dir = File.expand_path(watch_config['output_dir'])
+      @watch_paths = watch_config['paths'].map { |path| File.expand_path(path) }
 
       log_info(" Watching paths:")
       @watch_paths.each { |path| log_info("  #{path}") }
@@ -66,3 +67,4 @@ module Dotsync
     end
   end
 end
+
