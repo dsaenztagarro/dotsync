@@ -1,8 +1,8 @@
 require 'spec_helper'
-require 'fileutils'
 
 RSpec.describe Dotsync::Sync do
-  let(:sync) { Dotsync::Sync.new }
+  let(:logger) { Dotsync::Logger.new(File.open(File::NULL, 'w')) }
+  let(:sync) { Dotsync::Sync.new(logger) }
   let(:backup_root) { '/tmp/dotsync_backups' }
   let(:src) { '/tmp/dotsync_src' }
   let(:dest) { '/tmp/dotsync_dest' }

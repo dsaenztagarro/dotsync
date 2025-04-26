@@ -1,7 +1,12 @@
 module Dotsync
   class Sync
-    include Loggable
     include Configurable
+
+    def_delegator :@logger, :log
+
+    def initialize(logger = Dotsync::Logger.new)
+      @logger = logger
+    end
 
     def timestamp
       Time.now.strftime('%Y%m%d%H%M%S')

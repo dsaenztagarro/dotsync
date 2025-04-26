@@ -4,8 +4,10 @@ require 'listen'
 require 'toml-rb'
 
 # Concerns
-require_relative 'dotsync/loggable'
 require_relative "dotsync/configurable"
+
+# Utils
+require_relative 'dotsync/logger'
 
 # Main classes
 require_relative "dotsync/sync"

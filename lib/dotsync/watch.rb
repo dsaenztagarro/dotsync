@@ -1,9 +1,11 @@
 module Dotsync
   class Watch
-    include Loggable
     include Configurable
 
-    def initialize
+    def_delegator :@logger, :log
+
+    def initialize(logger = Dotsync::Logger.new)
+      @logger = logger
       load_config
       setup_listeners
     end
