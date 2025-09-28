@@ -1,4 +1,3 @@
-require "bundler/setup"
 require "dotsync"
 
 RSpec.configure do |config|

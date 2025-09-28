@@ -1,8 +1,14 @@
 module Dotsync
   class Sync
     include Configurable
+    extend Forwardable # def_delegator
 
     def_delegator :@logger, :log
+    # Same as:
+    #
+    # def log(*args, &block)
+    #   @logger.log(*args, &block)
+    # end
 
     def initialize(logger = Dotsync::Logger.new)
       @logger = logger

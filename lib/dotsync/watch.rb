@@ -1,6 +1,7 @@
 module Dotsync
   class Watch
     include Configurable
+    extend Forwardable
 
     def_delegator :@logger, :log
 
