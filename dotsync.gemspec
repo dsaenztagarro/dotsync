@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["David Sáenz"]
   spec.email         = ["david.saenz.tagarro@gmail.com"]
 
-  spec.summary       = %q{TODO: Write a short summary, because RubyGems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
+  spec.summary       = "DotSync Automator"
+  spec.description   = "DotSync Automator"
   spec.homepage      = "https://github.com/dsaenztagarro/dotsync"
   spec.license       = "MIT"
 
@@ -20,8 +20,8 @@ Gem::Specification.new do |spec|
     spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
 
     spec.metadata["homepage_uri"] = spec.homepage
-    spec.metadata["source_code_uri"] = "TODO: Put your gem's public repo URL here."
-    spec.metadata["changelog_uri"] = "TODO: Put your gem's CHANGELOG.md URL here."
+    spec.metadata["source_code_uri"] = "https://github.com/dsaenztagarro/dotsync"
+    spec.metadata["changelog_uri"] = "https://github.com/dsaenztagarro/dotsync/blob/master/CHANGELOG.md"
   else
     raise "RubyGems 2.0 or newer is required to protect against " \
       "public gem pushes."
@@ -39,6 +39,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency "toml-rb"
   spec.add_dependency "listen"
   spec.add_dependency "fileutils"
+  spec.add_dependency "logger" # No longer part of default gems from Ruby 3.5
+  spec.add_dependency "ostruct" # No longer part of default gems from Ruby 3.5
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_development_dependency "debug"
 end
