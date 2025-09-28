@@ -62,7 +62,10 @@ paths = [
   '~/.config/zellij/',
   '~/.config/nvim/',
   '~/.config/starship.toml',
-  '~/.config/exercism/'
+  '~/.config/exercism/',
+  '~/.config/nvim/init.lua',
+  '~/.config/nvim/lua/',
+  '~/.config/nvim/after/'
 ]
 output_dir = '~/Code/dotfiles/src/'
 ```
