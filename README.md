@@ -45,3 +45,24 @@ Everyone interacting in the Dotsync project’s codebases, issue trackers, chat 
 ## Rake tasks
 
 List with `bundle exec rake -AT`
+
+## Sample config file
+
+Put in `~/.config/dotsync.toml`
+
+```
+[paths]
+src = '~/Code/dotfiles/src/'
+dest = '~/.config'
+backup_root = '~/.local/share/dotsync/backups'
+
+[watch]
+paths = [
+  '~/.config/alacritty/',
+  '~/.config/zellij/',
+  '~/.config/nvim/',
+  '~/.config/starship.toml',
+  '~/.config/exercism/'
+]
+output_dir = '~/Code/dotfiles/src/'
+```
