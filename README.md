@@ -52,9 +52,9 @@ Put in `~/.config/dotsync.toml`
 
 ```
 [paths]
-src = '~/Code/dotfiles/src/'
-dest = '~/.config'
-backup_root = '~/.local/share/dotsync/backups'
+src = '~/Code/dotfiles/src/config/'
+dest = '~/.config/'
+backups_root = '~/.local/share/dotsync/backups'
 
 [watch]
 paths = [

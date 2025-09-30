@@ -5,6 +5,7 @@ module Dotsync
     # 🎨 Nerd Font Icons
     ICONS = {
       info:    " ",
+      error:   " ",
       watch:   " ",
       output:  " ",
       delete:  " ",
@@ -22,7 +23,7 @@ module Dotsync
 
     def log(type, message, icon: "")
       color = {
-        info: 10, event: 141, delete: 31, copy: 32,
+        info: 10, error: 196, event: 141, delete: 31, copy: 32,
         skip: 33, done: 32, backup: 35,
         clean: 34
       }[type] || 0

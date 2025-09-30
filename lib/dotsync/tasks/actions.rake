@@ -1,10 +1,10 @@
 desc "Sync Dotfiles"
 task :sync do
-  ds = Dotsync::Sync.new
+  ds = Dotsync::SyncAction.new
 end
 
 desc "Watch Dotfiles"
 task :watch do
-  action = Dotsync::Watch.new
+  action = Dotsync::WatchAction.new
   action.start
 end

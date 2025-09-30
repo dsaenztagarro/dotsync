@@ -1,7 +1,11 @@
 module Dotsync
   module Configurable
-    CONFIG_PATH = File.expand_path('~/.config/dotsync.toml')
-    CONFIG = TomlRB.load_file(CONFIG_PATH)
+    def check_config
+      unless File.exist?(CONFIG_PATH)
+        log(:error, "Config file not found at #{CONFIG_PATH}. Aborting sync.")
+        abort
+      end
+    end
 
     def self.src
       File.expand_path(CONFIG['paths']['src'])

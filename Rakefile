@@ -16,21 +16,20 @@ task :hello do
 end
 
 namespace :dotsync do
-  desc "Sync Dotfiles"
-  task :sync do
-    ds = Dotsync::Sync.new
+  desc "Pull Dotfiles"
+  task :pull do
+  Dotsync::PullAction.new.run
   end
 
   desc "Watch Dotfiles"
   task :watch do
-    action = Dotsync::Watch.new
-    action.start
+    Dotsync::WatchAction.new.run
   end
 end
 
-namespace :utils do
+namespace :palette do
   desc "Show palette background"
-  task :palette_bg do
+  task :bg do
     (0..255).each do |color|
       print "\e[48;5;#{color}m #{color.to_s.rjust(3)} \e[0m"
       puts if (color + 1) % 16 == 0
@@ -38,7 +37,7 @@ namespace :utils do
   end
 
   desc "Show palette foreground"
-  task :palette_fg do
+  task :fg do
     (0..255).each do |color|
       print "\e[38;5;#{color}m\e[1m #{color.to_s.rjust(3)} \e[0m"
       puts if (color + 1) % 16 == 0
