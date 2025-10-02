@@ -53,7 +53,7 @@ module Dotsync
       def sync_dotfiles
         FileUtils.mkdir_p(dest)
         FileUtils.cp_r(Dir["#{src}/*"], dest, remove_destination: false)
-        log(:copy, "Dotfiles synced from #{src} to #{dest}")
+        log(:copy, "Dotfiles copied from #{src} to #{dest}")
       end
   end
 end

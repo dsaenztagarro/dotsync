@@ -35,12 +35,8 @@ RSpec.describe Dotsync::PullAction do
     end
 
     context 'when the configuration file does not exist' do
-      before do
-        FileUtils.rm_f(config_path)
-      end
-
       it 'logs an error and aborts the sync' do
-        expect(action).to receive(:log).with(:error, "Configuration file not found at #{config_path}. Aborting sync.")
+        expect(action).to receive(:log).with(:error, "Configuration file not found. Aborting sync.")
         action.execute
       end
     end
@@ -58,10 +54,13 @@ RSpec.describe Dotsync::PullAction do
     context 'when a backup is generated' do
       it 'creates a backup with the proper content' do
         FileUtils.touch(File.join(src, 'testfile'))
+        sleep(1) # Ensure a time difference between src and dest file creation
+        FileUtils.touch(File.join(dest, 'testfile'))
         action.execute
         backup_dir = Dir[File.join(backups_root, 'config-*')].first
         expect(backup_dir).not_to be_nil
-        expect(File.exist?(File.join(backup_dir, 'testfile'))).to be true
+        expect(Dir.entries(backup_dir)).to include('testfile')
+        expect(File.mtime(File.join(backup_dir, 'testfile'))).to be < File.mtime(File.join(dest, 'testfile'))
       end
     end
 
