@@ -74,6 +74,7 @@ GEM
       parser (>= 3.3.7.2)
       prism (~> 1.4)
     ruby-progressbar (1.13.0)
+    timecop (0.9.10)
     toml-rb (4.0.0)
       citrus (~> 3.0, > 3.0)
       racc (~> 1.7)
@@ -99,6 +100,7 @@ DEPENDENCIES
   rake
   rspec
   rubocop
+  timecop
 
 BUNDLED WITH
    2.7.2

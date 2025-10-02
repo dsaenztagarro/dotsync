@@ -53,10 +53,14 @@ RSpec.describe Dotsync::PullAction do
 
     context 'when a backup is generated' do
       it 'creates a backup with the proper content' do
+        require 'timecop'
+
         FileUtils.touch(File.join(src, 'testfile'))
-        sleep(1) # Ensure a time difference between src and dest file creation
-        FileUtils.touch(File.join(dest, 'testfile'))
-        action.execute
+        Timecop.freeze(Time.now + 1) do
+          FileUtils.touch(File.join(dest, 'testfile'))
+          action.execute
+        end
+
         backup_dir = Dir[File.join(backups_root, 'config-*')].first
         expect(backup_dir).not_to be_nil
         expect(Dir.entries(backup_dir)).to include('testfile')
