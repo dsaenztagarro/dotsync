@@ -18,6 +18,7 @@ RSpec.describe Dotsync::PullAction do
     allow(logger).to receive(:info)
     allow(logger).to receive(:success)
     allow(logger).to receive(:error)
+    allow(logger).to receive(:warning)
   end
 
   after do
@@ -40,15 +41,37 @@ RSpec.describe Dotsync::PullAction do
 
     context 'when pulled file exist in destination' do
       before do
-        FileUtils.touch(File.join(src, 'testfile'))
-        FileUtils.touch(File.join(dest, 'testfile'))
+        File.write(File.join(src, 'testfile'), 'source content')
+        File.write(File.join(dest, 'testfile'), 'destination content')
       end
 
-      it 'removes conflicting files and syncs new files' do
+      it 'replaces the file with the source version' do
         action.execute
-        expect(File.exist?(File.join(dest, 'testfile'))).to be true
+
+        file_path = File.join(dest, 'testfile')
+        expect(File.exist?(file_path)).to be true
+        expect(File.read(file_path)).to eq('source content')
         expect(Dir[File.join(backups_root, 'config-*')].size).to eq(1)
-        expect(logger).to have_received(:info).with("Conflicting files detected and resolved.")
+        expect(logger).to have_received(:warning).with("Removed #{file_path}", icon: :delete)
+      end
+    end
+
+    context 'when pulled folder exist in destination' do
+      before do
+        FileUtils.mkdir_p(File.join(src, 'folder/subfolder1'))
+        FileUtils.mkdir_p(File.join(dest, 'folder/subfolder2'))
+        File.write(File.join(src, 'folder/subfolder1', 'file1.txt'), 'source content')
+        File.write(File.join(dest, 'folder/subfolder2', 'file2.txt'), 'destination content')
+      end
+
+      it 'replaces the folder with the source version' do
+        action.execute
+
+        folder_path = File.join(dest, 'folder/subfolder1')
+        removed_path = File.join(dest, 'folder')
+        expect(Dir.exist?(folder_path)).to be true
+        expect(File.read(File.join(folder_path, 'file1.txt'))).to eq('source content')
+        expect(logger).to have_received(:warning).with("Removed #{removed_path}", icon: :delete)
       end
     end
 
@@ -69,21 +92,26 @@ RSpec.describe Dotsync::PullAction do
         expect(Dir.exist?(backup_dir)).to be true
         expect(Dir.entries(backup_dir)).to include('testfile')
         expect(File.mtime(File.join(backup_dir, 'testfile'))).to be < File.mtime(File.join(dest, 'testfile'))
-        expect(logger).to have_received(:info).with("Backup created successfully at #{backup_dir}.")
+        expect(logger).to have_received(:info).with("Backup created: #{backup_dir}", icon: :backup)
       end
     end
 
     context 'when there are more than 10 backups' do
       before do
         12.times do |i|
-          FileUtils.mkdir_p(File.join(backups_root, "config-#{i}"))
+          date = Date.new(2025, 1, i + 1).strftime('%Y%m%d')
+          FileUtils.mkdir_p(File.join(backups_root, "config-#{date}"))
         end
       end
 
       it 'cleans up old backups and creates a new one' do
         action.execute
+
         expect(Dir[File.join(backups_root, 'config-*')].size).to eq(10)
-        expect(logger).to have_received(:info).with("Old backups cleaned up. Maximum of 10 backups retained.")
+        expect(logger).to have_received(:info).with("Maximum of 10 backups retained")
+        expect(logger).to have_received(:info).with("Old backup deleted: #{File.join(backups_root, "config-20250103")}", icon: :delete)
+        expect(logger).to have_received(:info).with("Old backup deleted: #{File.join(backups_root, "config-20250102")}", icon: :delete)
+        expect(logger).to have_received(:info).with("Old backup deleted: #{File.join(backups_root, "config-20250101")}", icon: :delete)
       end
     end
   end

@@ -21,8 +21,8 @@ module Dotsync
       @output = output
     end
 
-    def info(message, icon: "")
-      log(:info, message, icon: icon)
+    def info(message, options = {})
+      log(:info, message, options)
     end
 
     def success(message)
@@ -33,9 +33,13 @@ module Dotsync
       log(:error, message, icon: :error)
     end
 
+    def warning(message, options = {})
+      log(:warning, message, options)
+    end
+
     def log(type, message, icon: "")
       color = {
-        info: 10, error: 196, event: 141, delete: 31, copy: 32,
+        info: 10, error: 196, event: 141, warning: 31, copy: 32,
         skip: 33, done: 32, backup: 35,
         clean: 34
       }[type] || 0
