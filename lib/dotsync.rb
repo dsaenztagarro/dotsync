@@ -19,17 +19,22 @@ require_relative 'dotsync/logger'
 require_relative "dotsync/actions/config/base_config"
 require_relative "dotsync/actions/config/watch_action_config"
 require_relative "dotsync/actions/config/pull_action_config"
+require_relative "dotsync/actions/base_action"
 require_relative "dotsync/actions/pull_action"
 require_relative "dotsync/actions/watch_action"
+
+require_relative 'dotsync/runner'
 
 require_relative "dotsync/version"
 
 module Dotsync
   class Error < StandardError; end
 
-  @config_path = "~/.config/dotsync.toml"
-
   class << self
-    attr_accessor :config_path
+    attr_writer :config_path
+
+    def config_path
+      @config_path ||= ENV['DOTSYNC_CONFIG'] || "~/.config/dotsync.toml"
+    end
   end
 end

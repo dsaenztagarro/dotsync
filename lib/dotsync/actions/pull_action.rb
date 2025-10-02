@@ -1,18 +1,10 @@
 module Dotsync
-  class PullAction
-    extend Forwardable # def_delegator
-
-    def_delegator :@logger, :log
+  class PullAction < BaseAction
     def_delegator :@config, :src
     def_delegator :@config, :dest
     def_delegator :@config, :backups_root
 
-    def initialize(logger: nil, config: nil)
-      @logger = logger || Dotsync::Logger.new
-      @config = config || Dotsync::PullActionConfig.new
-    end
-
-    def run
+    def execute
       log(:info, "Starting dotfile sync")
       create_backup
       purge_old_backups

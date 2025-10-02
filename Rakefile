@@ -18,12 +18,12 @@ end
 namespace :dotsync do
   desc "Pull Dotfiles"
   task :pull do
-  Dotsync::PullAction.new.run
+    Dotsync::Runner.new.run(:pull)
   end
 
   desc "Watch Dotfiles"
   task :watch do
-    Dotsync::WatchAction.new.run
+    Dotsync::Runner.new.run(:watch)
   end
 end
 
