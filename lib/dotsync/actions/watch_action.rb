@@ -10,15 +10,15 @@ module Dotsync
     end
 
     def execute
-      log(:info, "Watched paths:", icon: :watch)
-      watched_paths.each { |path| log(:info, "  #{path}") }
+      logger.info("Watched paths:", icon: :watch)
+      watched_paths.each { |path| logger.info("  #{path}") }
 
-      log(:info, "Output directory:", icon: :output)
-      log(:info, "  #{output_dir}")
+      logger.info("Output directory:", icon: :output)
+      logger.info("  #{output_dir}")
 
       @listeners.each(&:start)
 
-      log(:info, "Listening for changes. Press Ctrl+C to exit.")
+      logger.info("Listening for changes. Press Ctrl+C to exit.")
 
       sleep
     end
@@ -70,7 +70,7 @@ module Dotsync
         FileUtils.mkdir_p(File.dirname(dest_path))
         FileUtils.cp(path, dest_path)
         log(:event, "Copied file", icon: :copy)
-        log(:info, "  ~/#{relative_path} → #{dest_path}")
+        logger.info("  ~/#{relative_path} → #{dest_path}")
       end
   end
 end
