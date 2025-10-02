@@ -21,9 +21,16 @@ module Dotsync
       @output = output
     end
 
-    def error(message, icon: "")
-      puts "****"
-      log(:error, message, icon: icon)
+    def info(message, icon: "")
+      log(:info, message, icon: icon)
+    end
+
+    def success(message)
+      log(:success, message, icon: :done)
+    end
+
+    def error(message)
+      log(:error, message, icon: :error)
     end
 
     def log(type, message, icon: "")

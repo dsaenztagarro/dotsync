@@ -2,6 +2,8 @@ module Dotsync
   class BaseAction
     extend Forwardable # def_delegator
 
+    attr_reader :logger
+
     def_delegator :@logger, :log
 
     def initialize(config, logger)

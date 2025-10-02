@@ -5,12 +5,12 @@ module Dotsync
     def_delegator :@config, :backups_root
 
     def execute
-      log(:info, "Starting dotfile sync")
+      logger.info("Starting dotfile sync")
       create_backup
       purge_old_backups
       remove_conflicts
       sync_dotfiles
-      log(:done, "Dotfile sync complete ✔")
+      logger.success("Dotfile sync complete")
     end
 
     private
@@ -23,7 +23,7 @@ module Dotsync
         FileUtils.mkdir_p(backups_root)
         backup_path = File.join(backups_root, "config-#{timestamp}")
         FileUtils.cp_r(dest, backup_path)
-        log(:info, "Backup created at #{backup_path}", icon: :backup)
+        logger.info("Backup created at #{backup_path}", icon: :backup)
       end
 
       def purge_old_backups
@@ -31,7 +31,7 @@ module Dotsync
         if backups.size > 10
           backups[10..].each do |path|
             FileUtils.rm_rf(path)
-            log(:info, "Old backup removed: #{path}", icon: :backup)
+            log.info("Old backup removed: #{path}", icon: :backup)
           end
         end
       end
@@ -53,7 +53,7 @@ module Dotsync
       def sync_dotfiles
         FileUtils.mkdir_p(dest)
         FileUtils.cp_r(Dir["#{src}/*"], dest, remove_destination: false)
-        log(:copy, "Dotfiles copied from #{src} to #{dest}")
+        logger.info("Dotfiles copied from #{src} to #{dest}", icon: :copy)
       end
   end
 end
