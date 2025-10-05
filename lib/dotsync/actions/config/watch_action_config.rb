@@ -4,12 +4,12 @@ module Dotsync
       File.expand_path(section["src"])
     end
 
-    def watched_paths
-      section["paths"]
+    def dest
+      File.expand_path(section["dest"])
     end
 
-    def output_dir
-      section["output_dir"]
+    def watched_paths
+      section["paths"]
     end
 
     private

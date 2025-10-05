@@ -31,7 +31,7 @@ RSpec.describe Dotsync::PullAction do
   end
 
   describe '#execute' do
-    it 'successfully completes the sync process' do
+    it 'pulls file in destination' do
       FileUtils.touch(File.join(src, 'testfile'))
 
       action.execute

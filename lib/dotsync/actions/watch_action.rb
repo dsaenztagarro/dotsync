@@ -1,7 +1,8 @@
 module Dotsync
   class WatchAction < BaseAction
+    def_delegator :@config, :src
+    def_delegator :@config, :dest
     def_delegator :@config, :watched_paths
-    def_delegator :@config, :output_dir, :output_dir
 
     def initialize(config, logger)
       super
@@ -12,7 +13,7 @@ module Dotsync
       info("Watched paths:", icon: :watch)
       watched_paths.each { |path| info("  #{path}") }
       info("Output directory:", icon: :output)
-      info("  #{output_dir}")
+      info("  #{dest}")
 
       @listeners.each(&:start)
 
@@ -21,15 +22,6 @@ module Dotsync
     end
 
     private
-
-      attr_reader :config
-
-      def setup_trap_signals
-        Signal.trap("INT") do
-          @log_queue << { type: :info, message: "Shutting down gracefully...", icon: :bell }
-          exit
-        end
-      end
 
       def setup_listeners
         @listeners = watched_paths.map do |watched_path|
@@ -60,18 +52,15 @@ module Dotsync
       end
 
       def copy_file(path)
-        sanitized_src = sanitize_path(config.src)
+        sanitized_src = sanitize_path(src)
         sanitized_path = sanitize_path(path)
         relative_path = sanitized_path.delete_prefix(sanitized_src)
-        dest_path = File.join(output_dir, relative_path)
+        dest_path = File.join(dest, relative_path)
         sanitized_dest = sanitize_path(dest_path)
         FileUtils.mkdir_p(File.dirname(dest_path))
         FileUtils.cp(path, sanitized_dest)
         info("Copied file", icon: :copy)
         info("  ~/#{relative_path} → #{sanitized_dest}")
       end
-
-    private
-
   end
 end

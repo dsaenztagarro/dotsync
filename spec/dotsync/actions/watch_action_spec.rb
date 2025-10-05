@@ -4,14 +4,14 @@ RSpec.describe Dotsync::WatchAction do
   include Dotsync::PathUtils
 
   let(:src) { '/tmp/src' }
+  let(:dest) { '/tmp/dest' }
   let(:watched_paths) { ['/tmp/src'] }
-  let(:output_dir) { '/tmp/dest' }
   let(:config) do
     instance_double(
       'Dotsync::WatchActionConfig',
       src: src,
       watched_paths: watched_paths,
-      output_dir: output_dir
+      dest: dest
     )
   end
   let(:logger) { instance_double('Dotsync::Logger', log: nil, info: nil, error: nil) }
@@ -19,7 +19,7 @@ RSpec.describe Dotsync::WatchAction do
 
   before do
     watched_paths.each { |path| FileUtils.mkdir_p(path) }
-    FileUtils.mkdir_p(output_dir)
+    FileUtils.mkdir_p(dest)
   end
 
   describe '#execute' do
