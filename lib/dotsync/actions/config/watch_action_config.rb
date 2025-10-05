@@ -1,10 +1,14 @@
 module Dotsync
   class WatchActionConfig < BaseConfig
+    def src
+      File.expand_path(section["src"])
+    end
+
     def watched_paths
       section["paths"]
     end
 
-    def output_directory
+    def output_dir
       section["output_dir"]
     end
 
@@ -18,6 +22,7 @@ module Dotsync
 
       def validate!
         validate_section_present!
+        validate_key_present! "src"
         validate_key_present! "paths"
         validate_key_present! "output_dir"
 
@@ -35,9 +40,9 @@ module Dotsync
           raise_error "[watch] section key 'paths' contains invalid file paths; all listed files must exist"
         end
 
-        output_dir = File.expand_path(section["output_dir"])
+        dir = File.expand_path(section["output_dir"])
 
-        unless Dir.exist?(output_dir)
+        unless Dir.exist?(dir)
           raise_error "[watch] section key 'output_dir' contains invalid directory"
         end
       end

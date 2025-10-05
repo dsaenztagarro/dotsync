@@ -14,6 +14,7 @@ require_relative "dotsync/configurable"
 
 # Utils
 require_relative 'dotsync/logger'
+require_relative 'dotsync/path_utils'
 
 # Actions
 require_relative "dotsync/actions/config/base_config"

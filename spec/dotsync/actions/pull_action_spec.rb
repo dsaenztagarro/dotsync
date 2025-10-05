@@ -1,16 +1,19 @@
 require "spec_helper"
 
 RSpec.describe Dotsync::PullAction do
-  let(:action) { Dotsync::PullAction.new(config, logger) }
-  let(:config) { double('Dotsync::PullActionConfig',
-    backups_root: backups_root,
-    src: src,
-    dest: dest
-  ) }
   let(:backups_root) { '/tmp/dotsync_backups' }
   let(:src) { '/tmp/dotsync_src' }
   let(:dest) { '/tmp/dotsync_dest' }
+  let(:config) do
+    instance_double(
+      'Dotsync::PullActionConfig',
+      backups_root: backups_root,
+      src: src,
+      dest: dest
+    )
+  end
   let(:logger) { instance_double("Dotsync::Logger") }
+  let(:action) { Dotsync::PullAction.new(config, logger) }
 
   before do
     FileUtils.mkdir_p(src)

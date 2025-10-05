@@ -1,25 +1,22 @@
 module Dotsync
   class WatchAction < BaseAction
     def_delegator :@config, :watched_paths
-    def_delegator :@config, :output_directory, :output_dir
+    def_delegator :@config, :output_dir, :output_dir
 
     def initialize(config, logger)
       super
-      setup_trap_signals
       setup_listeners
     end
 
     def execute
-      logger.info("Watched paths:", icon: :watch)
-      watched_paths.each { |path| logger.info("  #{path}") }
-
-      logger.info("Output directory:", icon: :output)
-      logger.info("  #{output_dir}")
+      info("Watched paths:", icon: :watch)
+      watched_paths.each { |path| info("  #{path}") }
+      info("Output directory:", icon: :output)
+      info("  #{output_dir}")
 
       @listeners.each(&:start)
 
-      logger.info("Listening for changes. Press Ctrl+C to exit.")
-
+      info("Listening for changes. Press Ctrl+C to exit.")
       sleep
     end
 
@@ -29,18 +26,18 @@ module Dotsync
 
       def setup_trap_signals
         Signal.trap("INT") do
-          puts "\nShutting down..."
+          @log_queue << { type: :info, message: "Shutting down gracefully...", icon: :bell }
           exit
         end
       end
 
       def setup_listeners
-        # Iterate over each path in the watched paths
         @listeners = watched_paths.map do |watched_path|
           watched_path = File.expand_path(watched_path)
           # Determine the base directory to watch. If it's a directory, use it directly.
           # Otherwise, use its parent directory.
           base = File.directory?(watched_path) ? watched_path : File.dirname(watched_path)
+
           # If the watched path is a file, create a pattern to match its name.
           # Otherwise, set the pattern to nil.
           pattern = File.directory?(watched_path) ? nil : /^#{Regexp.escape(File.basename(watched_path))}$/
@@ -63,14 +60,18 @@ module Dotsync
       end
 
       def copy_file(path)
-        home = Dir.home
-        home_with_slash = home.end_with?("/") ? home : "#{home}/"
-        relative_path = path.delete_prefix(home_with_slash)
+        sanitized_src = sanitize_path(config.src)
+        sanitized_path = sanitize_path(path)
+        relative_path = sanitized_path.delete_prefix(sanitized_src)
         dest_path = File.join(output_dir, relative_path)
+        sanitized_dest = sanitize_path(dest_path)
         FileUtils.mkdir_p(File.dirname(dest_path))
-        FileUtils.cp(path, dest_path)
-        log(:event, "Copied file", icon: :copy)
-        logger.info("  ~/#{relative_path} → #{dest_path}")
+        FileUtils.cp(path, sanitized_dest)
+        info("Copied file", icon: :copy)
+        info("  ~/#{relative_path} → #{sanitized_dest}")
       end
+
+    private
+
   end
 end
