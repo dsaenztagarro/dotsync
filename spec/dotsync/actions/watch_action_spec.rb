@@ -10,11 +10,11 @@ RSpec.describe Dotsync::WatchAction do
     instance_double(
       'Dotsync::WatchActionConfig',
       src: src,
-      watched_paths: watched_paths,
-      dest: dest
+      dest: dest,
+      watched_paths: watched_paths
     )
   end
-  let(:logger) { instance_double('Dotsync::Logger', log: nil, info: nil, error: nil) }
+  let(:logger) { instance_double('Dotsync::Logger', action: nil, info: nil) }
   let(:action) { described_class.new(config, logger) }
 
   before do
@@ -23,18 +23,20 @@ RSpec.describe Dotsync::WatchAction do
   end
 
   describe '#execute' do
-    it 'logs the watched paths and output directory' do
+    it 'logs the watched paths and destination' do
       allow_any_instance_of(Listen::Listener).to receive(:start)
       Thread.new { sleep 0.1; Process.kill('INT', Process.pid) }
 
       expect(logger).to receive(:info).with('Watched paths:', icon: :watch).ordered
       expect(logger).to receive(:info).with('  /tmp/src').ordered
-      expect(logger).to receive(:info).with('Output directory:', icon: :output).ordered
+      expect(logger).to receive(:info).with('Destination:', icon: :dest).ordered
       expect(logger).to receive(:info).with('  /tmp/dest').ordered
+      expect(logger).to receive(:action).with('Listening for changes...', icon: :listen).ordered
+      expect(logger).to receive(:info).with('Press Ctrl+C to exit.').ordered
       expect { action.execute }.to raise_error(SystemExit)
     end
 
-    it 'copies a file to the output directory and logs the action when added' do
+    it 'copies a file to the destination and logs the action when added' do
       dest_path = '/tmp/dest/testfile'
       file_path = sanitize_path '/tmp/src/testfile'
       sanitized_dest = sanitize_path dest_path

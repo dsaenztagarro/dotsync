@@ -5,9 +5,10 @@ module Dotsync
     # 🎨 Nerd Font Icons
     ICONS = {
       info:    " ",
+      listen:  " ",
       error:   " ",
       watch:   " ",
-      output:  " ",
+      dest:    " ",
       delete:  " ",
       bell:    " ",
       copy:    " ",
@@ -25,6 +26,10 @@ module Dotsync
       log(:info, message, options)
     end
 
+    def action(message, options = {})
+      log(:action, message, options)
+    end
+
     def success(message)
       log(:success, message, icon: :done)
     end
@@ -40,7 +45,7 @@ module Dotsync
     def log(type, message, options = {})
       icon = options[:icon]
       color = {
-        info: 10, error: 196, event: 141, warning: 31, copy: 32,
+        info: 103, action: 153, error: 196, event: 141, warning: 31, copy: 32,
         skip: 33, done: 32, backup: 35,
         clean: 34
       }[type] || 0

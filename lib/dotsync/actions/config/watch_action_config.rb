@@ -23,8 +23,8 @@ module Dotsync
       def validate!
         validate_section_present!
         validate_key_present! "src"
+        validate_key_present! "dest"
         validate_key_present! "paths"
-        validate_key_present! "output_dir"
 
         paths = section["paths"]
 
@@ -40,10 +40,10 @@ module Dotsync
           raise_error "[watch] section key 'paths' contains invalid file paths; all listed files must exist"
         end
 
-        dir = File.expand_path(section["output_dir"])
+        dir = File.expand_path(section["dest"])
 
         unless Dir.exist?(dir)
-          raise_error "[watch] section key 'output_dir' contains invalid directory"
+          raise_error "[watch] section key 'dest' contains invalid directory"
         end
       end
   end

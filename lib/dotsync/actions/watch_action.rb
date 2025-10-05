@@ -12,12 +12,14 @@ module Dotsync
     def execute
       info("Watched paths:", icon: :watch)
       watched_paths.each { |path| info("  #{path}") }
-      info("Output directory:", icon: :output)
+      info("Destination:", icon: :dest)
       info("  #{dest}")
+      info("")
 
       @listeners.each(&:start)
 
-      info("Listening for changes. Press Ctrl+C to exit.")
+      logger.action("Listening for changes...", icon: :listen)
+      info("Press Ctrl+C to exit.")
       sleep
     end
 

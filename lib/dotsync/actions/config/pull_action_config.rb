@@ -14,7 +14,7 @@ module Dotsync
 
     private
 
-      SECTION_NAME = "paths"
+      SECTION_NAME = "pull"
 
       def section_name
         SECTION_NAME
