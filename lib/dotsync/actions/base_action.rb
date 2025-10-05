@@ -11,7 +11,7 @@ module Dotsync
       @log_queue = Queue.new
       @config = config
       @logger = logger
-      # setup_logger_thread
+      setup_logger_thread
       setup_trap_signals
     end
 
