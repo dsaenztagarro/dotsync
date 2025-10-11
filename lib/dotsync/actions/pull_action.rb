@@ -5,7 +5,8 @@ module Dotsync
     def_delegator :@config, :backups_root
 
     def execute
-      info("Starting dotfile sync")
+      log_config
+
       create_backup
       purge_old_backups
       remove_conflicts
@@ -14,6 +15,12 @@ module Dotsync
     end
 
     private
+      def log_config
+        info("Source:", icon: :source)
+        info("  #{src}")
+        info("Destination:", icon: :dest)
+        info("  #{dest}")
+      end
 
       def timestamp
         Time.now.strftime('%Y%m%d%H%M%S')

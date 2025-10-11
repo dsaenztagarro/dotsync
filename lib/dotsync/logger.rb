@@ -8,6 +8,7 @@ module Dotsync
       listen:  " ",
       error:   " ",
       watch:   " ",
+      source:  " ",
       dest:    " ",
       delete:  " ",
       bell:    " ",

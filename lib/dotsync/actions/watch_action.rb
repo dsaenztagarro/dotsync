@@ -10,11 +10,7 @@ module Dotsync
     end
 
     def execute
-      info("Watched paths:", icon: :watch)
-      watched_paths.each { |path| info("  #{path}") }
-      info("Destination:", icon: :dest)
-      info("  #{dest}")
-      info("")
+      log_config
 
       @listeners.each(&:start)
 
@@ -24,6 +20,14 @@ module Dotsync
     end
 
     private
+
+      def log_config
+        info("Watched paths:", icon: :watch)
+        watched_paths.each { |path| info("  #{path}") }
+        info("Destination:", icon: :dest)
+        info("  #{dest}")
+        info("")
+      end
 
       def setup_listeners
         @listeners = watched_paths.map do |watched_path|
