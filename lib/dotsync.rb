@@ -9,9 +9,6 @@ require 'ostruct'
 # Errors
 require_relative "dotsync/errors"
 
-# Concerns
-require_relative "dotsync/configurable"
-
 # Utils
 require_relative 'dotsync/logger'
 require_relative 'dotsync/path_utils'
