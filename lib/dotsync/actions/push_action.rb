@@ -16,7 +16,7 @@ module Dotsync
         info("  #{src}")
         info("Destination:", icon: :dest)
         info("  #{dest}")
-        info("Remove destination:", icon: :copy)
+        info("Remove destination:", icon: :delete)
         info("  #{remove_dest}")
         if excluded_paths.any?
           info("Excluded paths:", icon: :skip)
