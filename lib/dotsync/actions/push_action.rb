@@ -3,6 +3,7 @@ module Dotsync
     def_delegator :@config, :src
     def_delegator :@config, :dest
     def_delegator :@config, :remove_dest
+    def_delegator :@config, :excluded_paths
 
     def execute
       log_config
@@ -17,6 +18,10 @@ module Dotsync
         info("  #{dest}")
         info("Remove destination:", icon: :copy)
         info("  #{remove_dest}")
+        if excluded_paths.any?
+          info("Excluded paths:", icon: :skip)
+          excluded_paths.each { |path| info("  #{path}") }
+        end
         info("")
       end
 
@@ -28,7 +33,11 @@ module Dotsync
         # useful for overwriting existing files or directories without merging
         # their contents. Without this option, existing files in the destination
         # might remain, potentially causing issues with stale or conflicting data.
-        FileUtils.cp_r(Dir["#{src}/*"], dest, remove_destination: remove_dest)
+        files_to_copy = Dir["#{src}/*"]
+        files_to_copy = files_to_copy.reject do |path|
+          excluded_paths.any? { |excluded| path.start_with?(File.join(src, excluded)) }
+        end
+        FileUtils.cp_r(files_to_copy, dest, remove_destination: remove_dest)
         action("Dotfiles pushed", icon: :copy)
       end
   end

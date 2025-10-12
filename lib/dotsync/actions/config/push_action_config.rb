@@ -12,6 +12,10 @@ module Dotsync
       section["remove_dest"]
     end
 
+    def excluded_paths
+      section["excluded_paths"]
+    end
+
     private
 
       SECTION_NAME = "push"

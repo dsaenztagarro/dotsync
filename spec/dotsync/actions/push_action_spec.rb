@@ -4,12 +4,14 @@ RSpec.describe Dotsync::PushAction do
   let(:src) { '/tmp/dotsync_src' }
   let(:dest) { '/tmp/dotsync_dest' }
   let(:remove_dest) { true }
+  let(:excluded_paths) { [] }
   let(:config) do
     instance_double(
       'Dotsync::PushActionConfig',
       src: src,
       dest: dest,
-      remove_dest: remove_dest
+      remove_dest: remove_dest,
+      excluded_paths: excluded_paths
     )
   end
   let(:logger) { instance_double("Dotsync::Logger") }
@@ -64,6 +66,30 @@ RSpec.describe Dotsync::PushAction do
         folder_path = File.join(dest, 'folder/subfolder1')
         expect(Dir.exist?(folder_path)).to be true
         expect(File.read(File.join(folder_path, 'file1.txt'))).to eq('source content')
+      end
+    end
+
+    context 'with excluded paths' do
+      let(:excluded_paths) { ['excluded_folder', 'excluded_file.txt'] }
+
+      before do
+        FileUtils.mkdir_p(File.join(src, 'included_folder'))
+        FileUtils.mkdir_p(File.join(src, 'excluded_folder'))
+        File.write(File.join(src, 'included_folder', 'file1.txt'), 'content')
+        File.write(File.join(src, 'excluded_folder', 'file2.txt'), 'content')
+        File.write(File.join(src, 'excluded_file.txt'), 'content')
+        File.write(File.join(src, 'included_file.txt'), 'content')
+
+        FileUtils.mkdir_p(dest)
+      end
+
+      it 'excludes specified paths from files_to_copy' do
+        action.execute
+
+        expect(File.exist?(File.join(dest, 'included_folder', 'file1.txt'))).to be true
+        expect(File.exist?(File.join(dest, 'excluded_folder', 'file2.txt'))).to be false
+        expect(File.exist?(File.join(dest, 'excluded_file.txt'))).to be false
+        expect(File.exist?(File.join(dest, 'included_file.txt'))).to be true
       end
     end
   end
