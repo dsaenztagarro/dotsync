@@ -20,10 +20,6 @@ module Dotsync
         info("")
       end
 
-      def timestamp
-        Time.now.strftime('%Y%m%d%H%M%S')
-      end
-
       def sync_dotfiles
         FileUtils.mkdir_p(dest)
         # The `remove_destination` option is used with file operations in Ruby,
