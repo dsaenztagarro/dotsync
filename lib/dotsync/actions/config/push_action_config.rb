@@ -13,7 +13,7 @@ module Dotsync
     end
 
     def excluded_paths
-      section["excluded_paths"]
+      section["excluded_paths"] || []
     end
 
     private
