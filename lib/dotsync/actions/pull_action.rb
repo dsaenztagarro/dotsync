@@ -9,7 +9,7 @@ module Dotsync
       create_backup
       purge_old_backups
       remove_destination
-      sync_dotfiles
+      pull_dotfiles
     end
 
     private
@@ -69,7 +69,7 @@ module Dotsync
         end
       end
 
-      def sync_dotfiles
+      def pull_dotfiles
         FileUtils.mkdir_p(dest)
         FileUtils.cp_r(Dir["#{src}/*"], dest, remove_destination: false)
         action("Dotfiles pulled", icon: :copy)
