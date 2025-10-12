@@ -18,6 +18,8 @@ module Dotsync
         info("  #{src}")
         info("Destination:", icon: :dest)
         info("  #{dest}")
+        info("Backups root:", icon: :backup)
+        info("  #{backups_root}")
         info("")
       end
 
@@ -29,9 +31,8 @@ module Dotsync
         FileUtils.mkdir_p(backups_root)
         backup_path = File.join(backups_root, "config-#{timestamp}")
         FileUtils.cp_r(dest, backup_path)
-        info("Backup created:", icon: :backup)
+        action("Backup created:", icon: :backup)
         info("  #{backup_path}")
-        info("")
       end
 
       def purge_old_backups
@@ -47,6 +48,7 @@ module Dotsync
       end
 
       def remove_conflicts
+        removed_from_dest = []
         # Iterate through all files and directories in the source, including hidden ones
         Dir.glob("#{src}/**/*", File::FNM_DOTMATCH).each do |src_path|
           next if File.basename(src_path) == '.' || File.basename(src_path) == '..'
@@ -56,7 +58,13 @@ module Dotsync
 
           if File.exist?(dest_path)
             FileUtils.rm_rf(dest_path)
-            logger.warning("Removed #{dest_path}", icon: :delete)
+            removed_from_dest << dest_path
+          end
+        end
+        if removed_from_dest.any?
+          logger.warning("Removed from destination", icon: :delete)
+          removed_from_dest.each do |removed_path|
+            info("  #{removed_path}")
           end
         end
       end

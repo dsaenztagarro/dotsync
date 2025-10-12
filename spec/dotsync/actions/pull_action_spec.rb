@@ -54,7 +54,8 @@ RSpec.describe Dotsync::PullAction do
         expect(File.exist?(file_path)).to be true
         expect(File.read(file_path)).to eq('source content')
         expect(Dir[File.join(backups_root, 'config-*')].size).to eq(1)
-        expect(logger).to have_received(:warning).with("Removed #{file_path}", icon: :delete)
+        expect(logger).to have_received(:warning).with("Removed from destination", icon: :delete)
+        expect(logger).to have_received(:info).with("  #{file_path}")
       end
     end
 
@@ -73,7 +74,8 @@ RSpec.describe Dotsync::PullAction do
         removed_path = File.join(dest, 'folder')
         expect(Dir.exist?(folder_path)).to be true
         expect(File.read(File.join(folder_path, 'file1.txt'))).to eq('source content')
-        expect(logger).to have_received(:warning).with("Removed #{removed_path}", icon: :delete)
+        expect(logger).to have_received(:warning).with("Removed from destination", icon: :delete)
+        expect(logger).to have_received(:info).with("  #{removed_path}")
       end
     end
 
@@ -94,7 +96,7 @@ RSpec.describe Dotsync::PullAction do
         expect(Dir.exist?(backup_dir)).to be true
         expect(Dir.entries(backup_dir)).to include('testfile')
         expect(File.mtime(File.join(backup_dir, 'testfile'))).to be < File.mtime(File.join(dest, 'testfile'))
-        expect(logger).to have_received(:info).with("Backup created:", icon: :backup)
+        expect(logger).to have_received(:action).with("Backup created:", icon: :backup)
         expect(logger).to have_received(:info).with("  #{backup_dir}")
       end
     end
