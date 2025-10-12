@@ -8,7 +8,7 @@ module Dotsync
       log_config
       create_backup
       purge_old_backups
-      remove_conflicts
+      remove_destination
       sync_dotfiles
     end
 
@@ -47,7 +47,7 @@ module Dotsync
         end
       end
 
-      def remove_conflicts
+      def remove_destination
         removed_from_dest = []
         # Iterate through all files and directories in the source, including hidden ones
         Dir.glob("#{src}/**/*", File::FNM_DOTMATCH).each do |src_path|
