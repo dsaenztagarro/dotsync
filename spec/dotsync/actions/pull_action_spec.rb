@@ -19,9 +19,8 @@ RSpec.describe Dotsync::PullAction do
     FileUtils.mkdir_p(src)
     FileUtils.mkdir_p(dest)
     allow(logger).to receive(:info)
-    allow(logger).to receive(:success)
-    allow(logger).to receive(:error)
     allow(logger).to receive(:warning)
+    allow(logger).to receive(:action)
   end
 
   after do
@@ -39,7 +38,7 @@ RSpec.describe Dotsync::PullAction do
       expect(Dir.exist?(backups_root)).to be true
       expect(Dir[File.join(backups_root, 'config-*')].size).to eq(1)
       expect(File.exist?(File.join(dest, 'testfile'))).to be true
-      expect(logger).to have_received(:success).with("Dotfile sync complete")
+      expect(logger).to have_received(:action).with("Dotfiles pulled", icon: :copy)
     end
 
     context 'when pulled file exist in destination' do
@@ -95,7 +94,8 @@ RSpec.describe Dotsync::PullAction do
         expect(Dir.exist?(backup_dir)).to be true
         expect(Dir.entries(backup_dir)).to include('testfile')
         expect(File.mtime(File.join(backup_dir, 'testfile'))).to be < File.mtime(File.join(dest, 'testfile'))
-        expect(logger).to have_received(:info).with("Backup created: #{backup_dir}", icon: :backup)
+        expect(logger).to have_received(:info).with("Backup created:", icon: :backup)
+        expect(logger).to have_received(:info).with("  #{backup_dir}")
       end
     end
 

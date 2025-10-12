@@ -10,7 +10,6 @@ module Dotsync
       purge_old_backups
       remove_conflicts
       sync_dotfiles
-      logger.success("Dotfile sync complete")
     end
 
     private
@@ -19,6 +18,7 @@ module Dotsync
         info("  #{src}")
         info("Destination:", icon: :dest)
         info("  #{dest}")
+        info("")
       end
 
       def timestamp
@@ -29,7 +29,9 @@ module Dotsync
         FileUtils.mkdir_p(backups_root)
         backup_path = File.join(backups_root, "config-#{timestamp}")
         FileUtils.cp_r(dest, backup_path)
-        info("Backup created: #{backup_path}", icon: :backup)
+        info("Backup created:", icon: :backup)
+        info("  #{backup_path}")
+        info("")
       end
 
       def purge_old_backups
@@ -62,7 +64,7 @@ module Dotsync
       def sync_dotfiles
         FileUtils.mkdir_p(dest)
         FileUtils.cp_r(Dir["#{src}/*"], dest, remove_destination: false)
-        info("Dotfiles copied from #{src} to #{dest}", icon: :copy)
+        action("Dotfiles pulled", icon: :copy)
       end
   end
 end

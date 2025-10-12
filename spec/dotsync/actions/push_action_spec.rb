@@ -19,9 +19,6 @@ RSpec.describe Dotsync::PushAction do
     FileUtils.mkdir_p(src)
     FileUtils.mkdir_p(dest)
     allow(logger).to receive(:info)
-    # allow(logger).to receive(:success)
-    # allow(logger).to receive(:error)
-    # allow(logger).to receive(:warning)
     allow(logger).to receive(:action)
   end
 
