@@ -15,10 +15,12 @@ require_relative 'dotsync/path_utils'
 
 # Actions
 require_relative "dotsync/actions/config/base_config"
-require_relative "dotsync/actions/config/watch_action_config"
 require_relative "dotsync/actions/config/pull_action_config"
+require_relative "dotsync/actions/config/push_action_config"
+require_relative "dotsync/actions/config/watch_action_config"
 require_relative "dotsync/actions/base_action"
 require_relative "dotsync/actions/pull_action"
+require_relative "dotsync/actions/push_action"
 require_relative "dotsync/actions/watch_action"
 
 require_relative 'dotsync/runner'

@@ -6,7 +6,6 @@ module Dotsync
 
     def execute
       log_config
-
       create_backup
       purge_old_backups
       remove_conflicts

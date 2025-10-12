@@ -6,6 +6,7 @@ module Dotsync
 
     attr_reader :logger
     def_delegator :logger, :info
+    def_delegator :logger, :action
 
     def initialize(config, logger)
       @log_queue = Queue.new

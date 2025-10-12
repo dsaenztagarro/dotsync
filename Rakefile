@@ -23,6 +23,11 @@ namespace :dotsync do
     Dotsync::Runner.new.run(:pull)
   end
 
+  desc "Push Dotfiles"
+  task :push do
+    Dotsync::Runner.new.run(:push)
+  end
+
   desc "Watch Dotfiles"
   task :watch do
     Dotsync::Runner.new.run(:watch)

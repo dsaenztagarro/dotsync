@@ -51,12 +51,19 @@ List with `bundle exec rake -AT`
 Put in `~/.config/dotsync.toml`
 
 ```
-[paths]
-src = '~/Code/dotfiles/src/config/'
-dest = '~/.config/'
+[pull]
+src = '~/Code/dotfiles/src/.config/'
+dest = '~/myconfig/'
 backups_root = '~/.local/share/dotsync/backups'
 
+[push]
+src = '~/.config/'
+dest = '~/Code/dotfiles/src/.config/'
+remove_dest = true
+
 [watch]
+src = '~/.config'
+dest = '~/Code/dotfiles/src/'
 paths = [
   '~/.config/alacritty/',
   '~/.config/zellij/',
@@ -67,5 +74,4 @@ paths = [
   '~/.config/nvim/lua/',
   '~/.config/nvim/after/'
 ]
-output_dir = '~/Code/dotfiles/src/'
 ```
