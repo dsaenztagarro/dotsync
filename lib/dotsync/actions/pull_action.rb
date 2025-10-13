@@ -5,7 +5,7 @@ module Dotsync
     def_delegator :@config, :backups_root
 
     def execute
-      log_config
+      show_config
       create_backup
       purge_old_backups
       remove_destination
@@ -13,7 +13,7 @@ module Dotsync
     end
 
     private
-      def log_config
+      def show_config
         info("Source:", icon: :source)
         info("  #{src}")
         info("Destination:", icon: :dest)

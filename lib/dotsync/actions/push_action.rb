@@ -6,12 +6,12 @@ module Dotsync
     def_delegator :@config, :excluded_paths
 
     def execute
-      log_config
+      show_config
       push_dotfiles
     end
 
     private
-      def log_config
+      def show_config
         info("Source:", icon: :source)
         info("  #{src}")
         info("Destination:", icon: :dest)
@@ -27,6 +27,7 @@ module Dotsync
 
       def push_dotfiles
         push_dotfiles_for(src, dest)
+        action("Dotfiles pushed", icon: :copy)
       end
 
       def push_dotfiles_for(local_src, local_dest)
@@ -50,7 +51,6 @@ module Dotsync
             FileUtils.cp_r(path, local_dest, remove_destination: remove_dest)
           end
         end
-        action("Dotfiles pushed", icon: :copy)
       end
 
       def exclude_paths(paths)
