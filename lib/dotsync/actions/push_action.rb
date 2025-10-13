@@ -38,7 +38,9 @@ module Dotsync
         # useful for overwriting existing files or directories without merging
         # their contents. Without this option, existing files in the destination
         # might remain, potentially causing issues with stale or conflicting data.
-        Dir["#{local_src}/{*,.*}"].each do |path|
+        Dir.glob("#{local_src}/*", File::FNM_DOTMATCH).each do |path|
+          next if File.basename(path) == '.' || File.basename(path) == '..'
+
           path = File.expand_path(path)
           next if excluded_paths.include?(path) || path == local_src
 
