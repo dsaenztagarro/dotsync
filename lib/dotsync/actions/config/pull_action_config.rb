@@ -12,6 +12,10 @@ module Dotsync
       File.expand_path(section["backups_root"])
     end
 
+    def excluded_paths
+      section["excluded_paths"].to_a.map { |path| File.join(src, path) }
+    end
+
     private
 
       SECTION_NAME = "pull"

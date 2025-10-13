@@ -3,6 +3,7 @@ module Dotsync
     def_delegator :@config, :src
     def_delegator :@config, :dest
     def_delegator :@config, :backups_root
+    def_delegator :@config, :excluded_paths
 
     def execute
       show_config
@@ -70,9 +71,34 @@ module Dotsync
       end
 
       def pull_dotfiles
-        FileUtils.mkdir_p(dest)
-        FileUtils.cp_r(Dir["#{src}/*"], dest, remove_destination: false)
+        pull_dotfiles_for(src, dest)
+        # FileUtils.mkdir_p(dest)
+        # FileUtils.cp_r(Dir["#{src}/*"], dest, remove_destination: false)
         action("Dotfiles pulled", icon: :copy)
+      end
+
+      def pull_dotfiles_for(local_src, local_dest)
+        FileUtils.mkdir_p(local_dest)
+        Dir.glob("#{local_src}/*", File::FNM_DOTMATCH).each do |path|
+          next if File.basename(path) == '.' || File.basename(path) == '..'
+
+          path = File.expand_path(path)
+          next if excluded_paths.include?(path) || path == local_src
+
+          if File.file?(path)
+            FileUtils.cp_r(path, local_dest, remove_destination: remove_dest)
+          elsif excluded_paths.any? { |excluded_path| excluded_path.start_with?(path) }
+            next_src = path
+            next_dest = File.join(local_dest, File.basename(path))
+            pull_dotfiles_for(next_src, next_dest)
+          else
+            FileUtils.cp_r(path, local_dest, remove_destination: remove_dest)
+          end
+        end
+      end
+
+      def remove_dest
+        false
       end
   end
 end
