@@ -72,8 +72,6 @@ module Dotsync
 
       def pull_dotfiles
         pull_dotfiles_for(src, dest)
-        # FileUtils.mkdir_p(dest)
-        # FileUtils.cp_r(Dir["#{src}/*"], dest, remove_destination: false)
         action("Dotfiles pulled", icon: :copy)
       end
 
