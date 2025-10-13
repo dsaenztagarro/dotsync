@@ -70,24 +70,43 @@ RSpec.describe Dotsync::PushAction do
     end
 
     context 'with excluded paths' do
-      let(:excluded_paths) { ['excluded_folder', 'excluded_file.txt'] }
+      let(:excluded_paths) do
+        [
+          File.join(src, 'excluded_folder'),
+          File.join(src, 'subfolder/excluded_subfolder'),
+          File.join(src, 'subfolder/another_subfolder/excluded_subsubfolder'),
+          File.join(src, 'excluded_file.txt')
+        ]
+      end
 
       before do
         FileUtils.mkdir_p(File.join(src, 'included_folder'))
         FileUtils.mkdir_p(File.join(src, 'excluded_folder'))
+        FileUtils.mkdir_p(File.join(src, 'subfolder', 'included_subfolder'))
+        FileUtils.mkdir_p(File.join(src, 'subfolder', 'excluded_subfolder'))
+        FileUtils.mkdir_p(File.join(src, 'subfolder', 'another_subfolder', 'included_subsubfolder'))
+        FileUtils.mkdir_p(File.join(src, 'subfolder', 'another_subfolder', 'excluded_subsubfolder'))
         File.write(File.join(src, 'included_folder', 'file1.txt'), 'content')
         File.write(File.join(src, 'excluded_folder', 'file2.txt'), 'content')
+        File.write(File.join(src, 'subfolder', 'included_subfolder', 'file3.txt'), 'content')
+        File.write(File.join(src, 'subfolder', 'excluded_subfolder', 'file4.txt'), 'content')
+        File.write(File.join(src, 'subfolder', 'another_subfolder', 'included_subsubfolder', 'file5.txt'), 'content')
+        File.write(File.join(src, 'subfolder', 'another_subfolder', 'excluded_subsubfolder', 'file6.txt'), 'content')
         File.write(File.join(src, 'excluded_file.txt'), 'content')
         File.write(File.join(src, 'included_file.txt'), 'content')
 
         FileUtils.mkdir_p(dest)
       end
 
-      it 'excludes specified paths from files_to_copy' do
+      it 'excludes specified paths from files_to_copy including 3 subfolder levels' do
         action.execute
 
         expect(File.exist?(File.join(dest, 'included_folder', 'file1.txt'))).to be true
         expect(File.exist?(File.join(dest, 'excluded_folder', 'file2.txt'))).to be false
+        expect(File.exist?(File.join(dest, 'subfolder', 'included_subfolder', 'file3.txt'))).to be true
+        expect(File.exist?(File.join(dest, 'subfolder', 'excluded_subfolder', 'file4.txt'))).to be false
+        expect(File.exist?(File.join(dest, 'subfolder', 'another_subfolder', 'included_subsubfolder', 'file5.txt'))).to be true
+        expect(File.exist?(File.join(dest, 'subfolder', 'another_subfolder', 'excluded_subsubfolder', 'file6.txt'))).to be false
         expect(File.exist?(File.join(dest, 'excluded_file.txt'))).to be false
         expect(File.exist?(File.join(dest, 'included_file.txt'))).to be true
       end
