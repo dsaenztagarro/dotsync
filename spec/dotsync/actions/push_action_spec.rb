@@ -15,6 +15,7 @@ RSpec.describe Dotsync::PushAction do
     )
   end
   let(:logger) { instance_double("Dotsync::Logger") }
+  let(:file_transfer) { instance_double("Dotsync::FileTransfer") }
   let(:action) { Dotsync::PushAction.new(config, logger) }
 
   before do
@@ -30,12 +31,15 @@ RSpec.describe Dotsync::PushAction do
   end
 
   describe '#execute' do
-    it 'pushes file to destination' do
+    it 'transfers file to destination' do
+      allow(Dotsync::FileTransfer).to receive(:new).with(config).and_return(file_transfer)
+      allow(file_transfer).to receive(:transfer)
+
       FileUtils.touch(File.join(src, 'testfile'))
 
       action.execute
 
-      expect(File.exist?(File.join(dest, 'testfile'))).to be true
+      expect(file_transfer).to have_received(:transfer)
       expect(logger).to have_received(:action).with("Dotfiles pushed", icon: :copy)
     end
 
@@ -66,75 +70,6 @@ RSpec.describe Dotsync::PushAction do
         folder_path = File.join(dest, 'folder/subfolder1')
         expect(Dir.exist?(folder_path)).to be true
         expect(File.read(File.join(folder_path, 'file1.txt'))).to eq('source content')
-      end
-    end
-
-    context 'with excluded paths' do
-      let(:excluded_paths) do
-        [
-          File.join(src, 'excluded_folder'),
-          File.join(src, 'subfolder/excluded_subfolder'),
-          File.join(src, 'subfolder/another_subfolder/excluded_subsubfolder'),
-          File.join(src, 'excluded_file.txt')
-        ]
-      end
-
-      before do
-        FileUtils.mkdir_p(File.join(src, 'included_folder'))
-        FileUtils.mkdir_p(File.join(src, 'excluded_folder'))
-        FileUtils.mkdir_p(File.join(src, 'subfolder', 'included_subfolder'))
-        FileUtils.mkdir_p(File.join(src, 'subfolder', 'excluded_subfolder'))
-        FileUtils.mkdir_p(File.join(src, 'subfolder', 'another_subfolder', 'included_subsubfolder'))
-        FileUtils.mkdir_p(File.join(src, 'subfolder', 'another_subfolder', 'excluded_subsubfolder'))
-        File.write(File.join(src, 'included_folder', 'file1.txt'), 'content')
-        File.write(File.join(src, 'excluded_folder', 'file2.txt'), 'content')
-        File.write(File.join(src, 'subfolder', 'included_subfolder', 'file3.txt'), 'content')
-        File.write(File.join(src, 'subfolder', 'excluded_subfolder', 'file4.txt'), 'content')
-        File.write(File.join(src, 'subfolder', 'another_subfolder', 'included_subsubfolder', 'file5.txt'), 'content')
-        File.write(File.join(src, 'subfolder', 'another_subfolder', 'excluded_subsubfolder', 'file6.txt'), 'content')
-        File.write(File.join(src, 'excluded_file.txt'), 'content')
-        File.write(File.join(src, 'included_file.txt'), 'content')
-
-        FileUtils.mkdir_p(dest)
-      end
-
-      it 'excludes specified paths from files_to_copy including 3 subfolder levels' do
-        action.execute
-
-        expect(File.exist?(File.join(dest, 'included_folder', 'file1.txt'))).to be true
-        expect(File.exist?(File.join(dest, 'excluded_folder', 'file2.txt'))).to be false
-        expect(File.exist?(File.join(dest, 'subfolder', 'included_subfolder', 'file3.txt'))).to be true
-        expect(File.exist?(File.join(dest, 'subfolder', 'excluded_subfolder', 'file4.txt'))).to be false
-        expect(File.exist?(File.join(dest, 'subfolder', 'another_subfolder', 'included_subsubfolder', 'file5.txt'))).to be true
-        expect(File.exist?(File.join(dest, 'subfolder', 'another_subfolder', 'excluded_subsubfolder', 'file6.txt'))).to be false
-        expect(File.exist?(File.join(dest, 'excluded_file.txt'))).to be false
-        expect(File.exist?(File.join(dest, 'included_file.txt'))).to be true
-      end
-
-      context "with excluded paths for dotfiles and dotfolders inside normal folders" do
-        let(:excluded_paths) do
-          [
-            File.join(src, 'normal_folder/.dotfile_in_folder'),
-            File.join(src, 'normal_folder/.dotfolder_in_folder')
-          ]
-        end
-
-        before do
-          FileUtils.mkdir_p(File.join(src, 'normal_folder'))
-          File.write(File.join(src, 'normal_folder/.dotfile_in_folder'), 'dotfile in folder content')
-          FileUtils.mkdir_p(File.join(src, 'normal_folder/.dotfolder_in_folder'))
-          File.write(File.join(src, 'normal_folder/.dotfolder_in_folder/file_in_dotfolder.txt'), 'file in dotfolder content')
-          File.write(File.join(src, 'normal_folder/regular_file_in_folder.txt'), 'regular file in folder content')
-        end
-
-        it 'excludes dotfiles and dotfolders inside normal folders from files_to_copy' do
-          action.execute
-
-          expect(File.exist?(File.join(dest, 'normal_folder/.dotfile_in_folder'))).to be false
-          expect(File.exist?(File.join(dest, 'normal_folder/.dotfolder_in_folder'))).to be false
-          expect(File.exist?(File.join(dest, 'normal_folder/.dotfolder_in_folder/file_in_dotfolder.txt'))).to be false
-          expect(File.exist?(File.join(dest, 'normal_folder/regular_file_in_folder.txt'))).to be true
-        end
       end
     end
   end

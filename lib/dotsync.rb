@@ -11,6 +11,7 @@ require_relative "dotsync/errors"
 
 # Utils
 require_relative 'dotsync/logger'
+require_relative 'dotsync/file_transfer'
 require_relative 'dotsync/path_utils'
 
 # Actions

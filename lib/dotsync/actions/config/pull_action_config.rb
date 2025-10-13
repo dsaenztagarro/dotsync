@@ -8,6 +8,10 @@ module Dotsync
       File.expand_path(section["dest"])
     end
 
+    def remove_dest
+      section["remove_dest"]
+    end
+
     def backups_root
       File.expand_path(section["backups_root"])
     end
@@ -28,6 +32,7 @@ module Dotsync
         validate_section_present!
         validate_key_present! "src"
         validate_key_present! "dest"
+        validate_key_present! "remove_dest"
         validate_key_present! "backups_root"
       end
   end
