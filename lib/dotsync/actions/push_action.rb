@@ -38,15 +38,16 @@ module Dotsync
         # useful for overwriting existing files or directories without merging
         # their contents. Without this option, existing files in the destination
         # might remain, potentially causing issues with stale or conflicting data.
-        Dir["#{local_src}/**"].each do |path|
-          if excluded_paths.include?(path)
-            # do nothing
+        Dir["#{local_src}/{*,.*}"].each do |path|
+          path = File.expand_path(path)
+          next if excluded_paths.include?(path) || path == local_src
+
+          if File.file?(path)
+            FileUtils.cp_r(path, local_dest, remove_destination: remove_dest)
           elsif excluded_paths.any? { |excluded_path| excluded_path.start_with?(path) }
-            (Dir["#{path}/**"] - excluded_paths).each do |subpath|
-              next_src = path
-              next_dest = File.join(local_dest, File.basename(path))
-              push_dotfiles_for(next_src, next_dest)
-            end
+            next_src = path
+            next_dest = File.join(local_dest, File.basename(path))
+            push_dotfiles_for(next_src, next_dest)
           else
             FileUtils.cp_r(path, local_dest, remove_destination: remove_dest)
           end

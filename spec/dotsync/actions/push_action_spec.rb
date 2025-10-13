@@ -110,6 +110,32 @@ RSpec.describe Dotsync::PushAction do
         expect(File.exist?(File.join(dest, 'excluded_file.txt'))).to be false
         expect(File.exist?(File.join(dest, 'included_file.txt'))).to be true
       end
+
+      context "with excluded paths for dotfiles and dotfolders inside normal folders" do
+        let(:excluded_paths) do
+          [
+            File.join(src, 'normal_folder/.dotfile_in_folder'),
+            File.join(src, 'normal_folder/.dotfolder_in_folder')
+          ]
+        end
+
+        before do
+          FileUtils.mkdir_p(File.join(src, 'normal_folder'))
+          File.write(File.join(src, 'normal_folder/.dotfile_in_folder'), 'dotfile in folder content')
+          FileUtils.mkdir_p(File.join(src, 'normal_folder/.dotfolder_in_folder'))
+          File.write(File.join(src, 'normal_folder/.dotfolder_in_folder/file_in_dotfolder.txt'), 'file in dotfolder content')
+          File.write(File.join(src, 'normal_folder/regular_file_in_folder.txt'), 'regular file in folder content')
+        end
+
+        it 'excludes dotfiles and dotfolders inside normal folders from files_to_copy' do
+          action.execute
+
+          expect(File.exist?(File.join(dest, 'normal_folder/.dotfile_in_folder'))).to be false
+          expect(File.exist?(File.join(dest, 'normal_folder/.dotfolder_in_folder'))).to be false
+          expect(File.exist?(File.join(dest, 'normal_folder/.dotfolder_in_folder/file_in_dotfolder.txt'))).to be false
+          expect(File.exist?(File.join(dest, 'normal_folder/regular_file_in_folder.txt'))).to be true
+        end
+      end
     end
   end
 end
