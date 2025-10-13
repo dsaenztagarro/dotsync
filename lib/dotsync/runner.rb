@@ -14,11 +14,14 @@ module Dotsync
         action = action_class.new(config, @logger)
         action.execute
       rescue ConfigError => e
-        @logger.error("[#{action_name}] config error: #{e.message}")
+        @logger.error("[#{action_name}] config error:")
+        @logger.info(e.message)
       rescue NameError => e
-        @logger.error("Unknown action '#{action_name}' (#{e.message})")
+        @logger.error("Unknown action '#{action_name}':")
+        @logger.info(e.message)
       rescue => e
-        @logger.error("Error running '#{action_name}': #{e.message}")
+        @logger.error("Error running '#{action_name}':")
+        @logger.info(e.message)
         raise
       end
     end
