@@ -55,11 +55,5 @@ module Dotsync
           end
         end
       end
-
-      def exclude_paths(paths)
-        paths.reject do |path|
-          excluded_paths.any? { |excluded_path| path.start_with?(excluded_path) }
-        end
-      end
   end
 end
