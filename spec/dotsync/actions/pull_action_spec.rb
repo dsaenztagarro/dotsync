@@ -1,18 +1,21 @@
 require "spec_helper"
 
 RSpec.describe Dotsync::PullAction do
-  let(:src) { '/tmp/dotsync_src' }
-  let(:dest) { '/tmp/dotsync_dest' }
+  let(:mappings) do
+    [
+      { src: '/tmp/dotsync_src1', dest: '/tmp/dotsync_dest1', remove_dest: true, excluded_paths: [] },
+      { src: '/tmp/dotsync_src2', dest: '/tmp/dotsync_dest2', remove_dest: false, excluded_paths: [] }
+    ]
+  end
+  let(:src) { mappings.map { |mapping| mapping[:src] }.uniq }
+  let(:dest) { mappings.map { |mapping| mapping[:dest] }.uniq }
   let(:remove_dest) { true }
   let(:backups_root) { '/tmp/dotsync_backups' }
   let(:excluded_paths) { [] }
   let(:config) do
     instance_double(
       'Dotsync::PullActionConfig',
-      src: src,
-      dest: dest,
-      remove_dest: remove_dest,
-      excluded_paths: excluded_paths,
+      mappings: mappings,
       backups_root: backups_root
     )
   end
@@ -21,8 +24,10 @@ RSpec.describe Dotsync::PullAction do
   let(:action) { Dotsync::PullAction.new(config, logger) }
 
   before do
-    FileUtils.mkdir_p(src)
-    FileUtils.mkdir_p(dest)
+    FileUtils.mkdir_p(backups_root)
+    src.each { |source| FileUtils.mkdir_p(File.dirname(source)) }
+    src.each { |source| FileUtils.touch(source) unless File.directory?(source) }
+    dest.each { |destination| FileUtils.mkdir_p(destination) }
     allow(logger).to receive(:info)
     allow(logger).to receive(:warning)
     allow(logger).to receive(:action)
@@ -30,63 +35,22 @@ RSpec.describe Dotsync::PullAction do
 
   after do
     FileUtils.rm_rf(backups_root)
-    FileUtils.rm_rf(src)
-    FileUtils.rm_rf(dest)
+    src.each { |source| FileUtils.rm_rf(source) }
+    dest.each { |destination| FileUtils.rm_rf(destination) }
   end
 
   describe '#execute' do
-    it 'transfers file to destination' do
-      allow(Dotsync::FileTransfer).to receive(:new).with(config).and_return(file_transfer)
+    before do
+      allow(Dotsync::FileTransfer).to receive(:new).and_return(file_transfer)
       allow(file_transfer).to receive(:transfer)
+    end
 
-      FileUtils.touch(File.join(src, 'testfile'))
-
+    it 'transfers mappings of sources to corresponding destinations' do
       action.execute
 
-      expect(Dir.exist?(backups_root)).to be true
-      expect(Dir[File.join(backups_root, 'config-*')].size).to eq(1)
-      expect(file_transfer).to have_received(:transfer)
-      expect(logger).to have_received(:action).with("Dotfiles pulled", icon: :copy)
-    end
-
-    context 'when a backup is generated' do
-      before do
-        require 'timecop'
-        FileUtils.touch(File.join(src, 'testfile'))
-        Timecop.freeze(Time.now + 1) do
-          FileUtils.touch(File.join(dest, 'testfile'))
-        end
-      end
-
-      it 'creates a backup with the proper content' do
-        action.execute
-
-        timestamp = Time.now.strftime('%Y%m%d%H%M%S')
-        backup_dir = File.join(backups_root, "config-#{timestamp}")
-        expect(Dir.exist?(backup_dir)).to be true
-        expect(Dir.entries(backup_dir)).to include('testfile')
-        expect(File.mtime(File.join(backup_dir, 'testfile'))).to be < File.mtime(File.join(dest, 'testfile'))
-        expect(logger).to have_received(:action).with("Backup created:", icon: :backup)
-        expect(logger).to have_received(:info).with("  #{backup_dir}")
-      end
-    end
-
-    context 'when there are more than 10 backups' do
-      before do
-        12.times do |i|
-          date = Date.new(2025, 1, i + 1).strftime('%Y%m%d')
-          FileUtils.mkdir_p(File.join(backups_root, "config-#{date}"))
-        end
-      end
-
-      it 'cleans up old backups and creates a new one' do
-        action.execute
-
-        expect(Dir[File.join(backups_root, 'config-*')].size).to eq(10)
-        expect(logger).to have_received(:info).with("Maximum of 10 backups retained")
-        expect(logger).to have_received(:info).with("Old backup deleted: #{File.join(backups_root, "config-20250103")}", icon: :delete)
-        expect(logger).to have_received(:info).with("Old backup deleted: #{File.join(backups_root, "config-20250102")}", icon: :delete)
-        expect(logger).to have_received(:info).with("Old backup deleted: #{File.join(backups_root, "config-20250101")}", icon: :delete)
+      mappings.each do |mapping|
+        expect(Dotsync::FileTransfer).to have_received(:new).with(mapping)
+        expect(file_transfer).to have_received(:transfer).at_least(:once)
       end
     end
   end

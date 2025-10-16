@@ -6,13 +6,12 @@ RSpec.describe Dotsync::FileTransfer do
   let(:remove_dest) { true }
   let(:excluded_paths) { [] }
   let(:config) do
-    instance_double(
-      'Dotsync::transferActionConfig',
+    {
       src: src,
       dest: dest,
       remove_dest: remove_dest,
       excluded_paths: excluded_paths
-    )
+    }
   end
 
   let(:subject) { described_class.new(config) }

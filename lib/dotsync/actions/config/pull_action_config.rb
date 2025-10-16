@@ -1,11 +1,13 @@
 module Dotsync
   class PullActionConfig < BaseConfig
-    def src
-      File.expand_path(section["src"])
-    end
-
-    def dest
-      File.expand_path(section["dest"])
+    def mappings
+      mappings_list = section["mappings"]
+      Array(mappings_list).map do |mapping|
+        {
+          src: File.expand_path(mapping["src"]),
+          dest: File.expand_path(mapping["dest"])
+        }
+      end
     end
 
     def remove_dest
@@ -30,8 +32,7 @@ module Dotsync
 
       def validate!
         validate_section_present!
-        validate_key_present! "src"
-        validate_key_present! "dest"
+        validate_key_present! "mappings"
         validate_key_present! "remove_dest"
         validate_key_present! "backups_root"
       end

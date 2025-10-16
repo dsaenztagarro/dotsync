@@ -22,9 +22,49 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+### Configuration
 
-## Development
+The configuration file now uses a single `mappings` structure where `src` can represent both files and folders. Here is an example configuration file:
+
+```toml
+[pull]
+mappings = [
+  { src = '~/Code/dotfiles/src/.config/', dest = '~/.config/' },
+  { src = '~/Code/dotfiles/src/.zshenv', dest = '~/.zshenv' },
+  { src = '~/Code/dotfiles/src/.config/dotsync-macmini.toml', dest = '~/.config/dotsync.toml' }
+]
+backups_root = '~/.local/share/dotsync/backups'
+
+[push]
+mappings = [
+  { src = '~/.config/', dest = '~/Code/dotfiles/src/.config/' },
+  { src = '~/.zshenv', dest = '~/Code/dotfiles/src/.zshenv' },
+  { src = '~/.config/dotsync.toml', dest = '~/Code/dotfiles/src/.config/dotsync-macmini.toml' }
+]
+remove_dest = true
+
+[watch]
+mappings = [
+  { src = '~/.config/alacritty/', dest = '~/Code/dotfiles/src/alacritty/' },
+  { src = '~/.config/starship.toml', dest = '~/Code/dotfiles/src/starship.toml' }
+]
+```
+
+### Synchronization
+
+To sync your configuration files, use the following commands:
+
+- **Push**: Transfer dotfiles from your local machine to the destination repository.
+  ```shell
+  dotsync push
+  ```
+
+- **Pull**: Synchronize dotfiles from the repository to your local machine.
+  ```shell
+  dotsync pull
+  ```
+
+### Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
@@ -45,33 +85,3 @@ Everyone interacting in the Dotsync project’s codebases, issue trackers, chat 
 ## Rake tasks
 
 List with `bundle exec rake -AT`
-
-## Sample config file
-
-Put in `~/.config/dotsync.toml`
-
-```
-[pull]
-src = '~/Code/dotfiles/src/.config/'
-dest = '~/myconfig/'
-backups_root = '~/.local/share/dotsync/backups'
-
-[push]
-src = '~/.config/'
-dest = '~/Code/dotfiles/src/.config/'
-remove_dest = true
-
-[watch]
-src = '~/.config'
-dest = '~/Code/dotfiles/src/'
-paths = [
-  '~/.config/alacritty/',
-  '~/.config/zellij/',
-  '~/.config/nvim/',
-  '~/.config/starship.toml',
-  '~/.config/exercism/',
-  '~/.config/nvim/init.lua',
-  '~/.config/nvim/lua/',
-  '~/.config/nvim/after/'
-]
-```

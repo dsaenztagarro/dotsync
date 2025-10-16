@@ -1,46 +1,46 @@
 module Dotsync
   class FileTransfer
-    extend Forwardable # def_delegator
-
-    def_delegator :@config, :src
-    def_delegator :@config, :dest
-    def_delegator :@config, :remove_dest
-    def_delegator :@config, :excluded_paths
-
     def initialize(config)
-      @config = config
+      @src = config[:src]
+      @dest = config[:dest]
+      @remove_dest = config[:remove_dest]
+      @excluded_paths = config[:excluded_paths] || []
     end
 
     def transfer
-      do_transfer(src, dest)
+      if File.file?(@src)
+        transfer_file(@src, @dest)
+      else
+        transfer_folder(@src, @dest)
+      end
     end
 
     private
 
-      def do_transfer(local_src, local_dest)
-        FileUtils.mkdir_p(local_dest)
-        # The `remove_destination` option is used with file operations in Ruby,
-        # such as `FileUtils.cp_r`. When set to `true`, it ensures that the
-        # destination is removed before copying files or directories. This is
-        # useful for overwriting existing files or directories without merging
-        # their contents. Without this option, existing files in the destination
-        # might remain, potentially causing issues with stale or conflicting data.
-        Dir.glob("#{local_src}/*", File::FNM_DOTMATCH).each do |path|
-          next if File.basename(path) == '.' || File.basename(path) == '..'
+    def transfer_file(file_src, file_dest)
+      FileUtils.mkdir_p(File.dirname(file_dest))
+      FileUtils.cp(file_src, file_dest)
+    end
 
-          path = File.expand_path(path)
-          next if excluded_paths.include?(path) || path == local_src
+    def transfer_folder(folder_src, folder_dest)
+      FileUtils.mkdir_p(folder_dest)
+      Dir.glob("#{folder_src}/*", File::FNM_DOTMATCH).each do |path|
+        next if ['.', '..'].include?(File.basename(path))
 
-          if File.file?(path)
-            FileUtils.cp_r(path, local_dest, remove_destination: remove_dest)
-          elsif excluded_paths.any? { |excluded_path| excluded_path.start_with?(path) }
-            next_src = path
-            next_dest = File.join(local_dest, File.basename(path))
-            do_transfer(next_src, next_dest)
-          else
-            FileUtils.cp_r(path, local_dest, remove_destination: remove_dest)
-          end
+        full_path = File.expand_path(path)
+        next if excluded_path?(full_path)
+
+        target = File.join(folder_dest, File.basename(path))
+        if File.file?(full_path)
+          FileUtils.cp(full_path, target)
+        else
+          transfer_folder(full_path, target)
         end
       end
     end
+
+    def excluded_path?(path)
+      @excluded_paths.any? { |excluded| path.start_with?(File.expand_path(excluded)) }
+    end
+  end
 end

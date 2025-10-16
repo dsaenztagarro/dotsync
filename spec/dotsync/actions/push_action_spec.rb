@@ -1,17 +1,16 @@
 require "spec_helper"
 
 RSpec.describe Dotsync::PushAction do
-  let(:src) { '/tmp/dotsync_src' }
-  let(:dest) { '/tmp/dotsync_dest' }
-  let(:remove_dest) { true }
-  let(:excluded_paths) { [] }
+  let(:mappings) do
+    [
+      { src: '/tmp/dotsync_src1', dest: '/tmp/dotsync_dest1', remove_dest: true, excluded_paths: [] },
+      { src: '/tmp/dotsync_src2', dest: '/tmp/dotsync_dest2', remove_dest: false, excluded_paths: [] }
+    ]
+  end
   let(:config) do
     instance_double(
       'Dotsync::PushActionConfig',
-      src: src,
-      dest: dest,
-      remove_dest: remove_dest,
-      excluded_paths: excluded_paths
+      mappings: mappings
     )
   end
   let(:logger) { instance_double("Dotsync::Logger") }
@@ -19,58 +18,33 @@ RSpec.describe Dotsync::PushAction do
   let(:action) { Dotsync::PushAction.new(config, logger) }
 
   before do
-    FileUtils.mkdir_p(src)
-    FileUtils.mkdir_p(dest)
     allow(logger).to receive(:info)
     allow(logger).to receive(:action)
   end
 
-  after do
-    FileUtils.rm_rf(src)
-    FileUtils.rm_rf(dest)
-  end
-
   describe '#execute' do
-    it 'transfers file to destination' do
-      allow(Dotsync::FileTransfer).to receive(:new).with(config).and_return(file_transfer)
+    before do
+      allow(Dotsync::FileTransfer).to receive(:new).and_return(file_transfer)
       allow(file_transfer).to receive(:transfer)
+    end
 
-      FileUtils.touch(File.join(src, 'testfile'))
-
+    it 'shows config' do
       action.execute
 
-      expect(file_transfer).to have_received(:transfer)
-      expect(logger).to have_received(:action).with("Dotfiles pushed", icon: :copy)
+      expect(logger).to have_received(:info).with("Mappings:", icon: :source_dest).ordered.once
+      expect(logger).to have_received(:info).with("Source: /tmp/dotsync_src1 -> Destination: /tmp/dotsync_dest1", {icon: :copy}).ordered.once
+      expect(logger).to have_received(:info).with("Remove destination: true", {icon: :delete}).ordered.once
+      expect(logger).to have_received(:info).with("Source: /tmp/dotsync_src2 -> Destination: /tmp/dotsync_dest2", {icon: :copy}).ordered.once
+      expect(logger).to have_received(:info).with("Remove destination: false", {icon: :delete}).ordered.once
     end
 
-    context 'when source file exists in destination' do
-      before do
-        File.write(File.join(src, 'testfile'), 'source content')
-        File.write(File.join(dest, 'testfile'), 'destination content')
+    it 'transfers mappings of sources to corresponding destinations' do
+      action.execute
+
+      mappings.each do |mapping|
+        expect(Dotsync::FileTransfer).to have_received(:new).with(mapping)
       end
-
-      it 'overwrites the file in the destination with the source version' do
-        action.execute
-
-        file_path = File.join(dest, 'testfile')
-        expect(File.exist?(file_path)).to be true
-        expect(File.read(file_path)).to eq('source content')
-      end
-    end
-
-    context 'when a folder is pushed' do
-      before do
-        FileUtils.mkdir_p(File.join(src, 'folder/subfolder1'))
-        File.write(File.join(src, 'folder/subfolder1', 'file1.txt'), 'source content')
-      end
-
-      it 'copies the folder and its contents to the destination' do
-        action.execute
-
-        folder_path = File.join(dest, 'folder/subfolder1')
-        expect(Dir.exist?(folder_path)).to be true
-        expect(File.read(File.join(folder_path, 'file1.txt'))).to eq('source content')
-      end
+      expect(file_transfer).to have_received(:transfer).twice
     end
   end
 end

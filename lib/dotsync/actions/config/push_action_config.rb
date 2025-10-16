@@ -1,19 +1,17 @@
 module Dotsync
   class PushActionConfig < BaseConfig
-    def src
-      File.expand_path(section["src"])
-    end
-
-    def dest
-      File.expand_path(section["dest"])
+    def mappings
+      mappings_list = section["mappings"]
+      Array(mappings_list).map do |mapping|
+        {
+          src: File.expand_path(mapping["src"]),
+          dest: File.expand_path(mapping["dest"])
+        }
+      end
     end
 
     def remove_dest
       section["remove_dest"]
-    end
-
-    def excluded_paths
-      section["excluded_paths"].to_a.map { |path| File.join(src, path) }
     end
 
     private
@@ -26,9 +24,13 @@ module Dotsync
 
       def validate!
         validate_section_present!
-        validate_key_present! "src"
-        validate_key_present! "dest"
-        validate_key_present! "remove_dest"
+        validate_key_present! "mappings"
+
+        Array(section["mappings"]).each_with_index do |mapping, index|
+          unless mapping.is_a?(Hash) && mapping.key?("src") && mapping.key?("dest")
+            raise "Configuration error in mapping ##{index + 1}: Each mapping must have 'src' and 'dest' keys."
+          end
+        end
       end
   end
 end
