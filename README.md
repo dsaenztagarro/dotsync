@@ -29,7 +29,7 @@ The configuration file now uses a single `mappings` structure where `src` can re
 ```toml
 [pull]
 mappings = [
-  { src = '~/Code/dotfiles/src/.config/', dest = '~/.config/' },
+  { src = '~/Code/dotfiles/src/.config/', dest = '~/.config/', remove_dest = false  },
   { src = '~/Code/dotfiles/src/.zshenv', dest = '~/.zshenv' },
   { src = '~/Code/dotfiles/src/.config/dotsync-macmini.toml', dest = '~/.config/dotsync.toml' }
 ]
@@ -37,11 +37,10 @@ backups_root = '~/.local/share/dotsync/backups'
 
 [push]
 mappings = [
-  { src = '~/.config/', dest = '~/Code/dotfiles/src/.config/' },
+  { src = '~/.config/', dest = '~/Code/dotfiles/src/.config/', remove_dest = true },
   { src = '~/.zshenv', dest = '~/Code/dotfiles/src/.zshenv' },
   { src = '~/.config/dotsync.toml', dest = '~/Code/dotfiles/src/.config/dotsync-macmini.toml' }
 ]
-remove_dest = true
 
 [watch]
 mappings = [
@@ -72,7 +71,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/dotsync. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at https://github.com/dsaenztagarro/dotsync. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
 ## License
 
