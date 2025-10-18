@@ -15,6 +15,7 @@ require_relative 'dotsync/file_transfer'
 require_relative 'dotsync/path_utils'
 
 # Actions
+require_relative "dotsync/actions/config/xdg_base_directory_spec"
 require_relative "dotsync/actions/config/base_config"
 require_relative "dotsync/actions/config/pull_action_config"
 require_relative "dotsync/actions/config/push_action_config"

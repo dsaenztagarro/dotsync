@@ -1,5 +1,7 @@
 module Dotsync
   class PullActionConfig < BaseConfig
+    include XDGBaseDirectorySpec
+
     def mappings
       mappings_list = section["mappings"]
       Array(mappings_list).map do |mapping|
@@ -15,7 +17,7 @@ module Dotsync
     end
 
     def backups_root
-      File.expand_path(section["backups_root"])
+      File.join(xdg_data_home, "dotsync", "backups")
     end
 
     def excluded_paths
@@ -34,7 +36,6 @@ module Dotsync
         validate_section_present!
         validate_key_present! "mappings"
         validate_key_present! "force"
-        validate_key_present! "backups_root"
       end
   end
 end

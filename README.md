@@ -33,7 +33,6 @@ mappings = [
   { src = '~/Code/dotfiles/src/.zshenv', dest = '~/.zshenv' },
   { src = '~/Code/dotfiles/src/.config/dotsync-macmini.toml', dest = '~/.config/dotsync.toml' }
 ]
-backups_root = '~/.local/share/dotsync/backups'
 
 [push]
 mappings = [

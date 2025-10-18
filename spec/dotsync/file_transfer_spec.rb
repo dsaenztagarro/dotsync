@@ -9,6 +9,7 @@ RSpec.describe Dotsync::FileTransfer do
       excluded_paths: excluded_paths
     }
   end
+  let(:force) { false }
 
   let(:subject) { described_class.new(config) }
 
@@ -16,7 +17,6 @@ RSpec.describe Dotsync::FileTransfer do
     context "when source is a folder" do
       let(:src) { '/tmp/dotsync_src' }
       let(:dest) { '/tmp/dotsync_dest' }
-      let(:force) { true }
       let(:excluded_paths) { [] }
 
       before do
@@ -142,28 +142,57 @@ RSpec.describe Dotsync::FileTransfer do
   end
 
   context "when source is a file" do
-    let(:src) { '/tmp/dotsync_src_files/src_file' }
-    let(:dest) { '/tmp/dotsync_dest_files/dest_file' }
-    let(:force) { true }
+    let(:root) { File.join("/tmp", "dotsync") }
+    let(:src_folder) { File.join(root, "src") }
+    let(:dest_folder) { File.join(root, "dest") }
+    let(:src) { File.join(src_folder, "src_file") }
     let(:excluded_paths) { [] }
 
     before do
-      FileUtils.mkdir_p('/tmp/dotsync_src_files')
-      FileUtils.mkdir_p('/tmp/dotsync_dest_files')
+      FileUtils.mkdir_p(src_folder)
+      FileUtils.mkdir_p(dest_folder)
       File.write(src, 'source file content')
-      File.write(dest, 'destination file content')
     end
 
-    after do
-      FileUtils.rm_rf('/tmp/dotsync_src_files')
-      FileUtils.rm_rf('/tmp/dotsync_dest_files')
+    after { FileUtils.rm_rf(root) }
+
+    context "when destination is a folder" do
+      let(:dest) { dest_folder }
+
+      it 'creates the destination file with the source file' do
+        subject.transfer
+
+        dest_file = File.join(dest, "src_file")
+        expect(File.exist?(dest_file)).to be true
+        expect(File.read(dest_file)).to eq('source file content')
+      end
     end
 
-    it 'replaces the destination file with the source file' do
-      subject.transfer
+    context "when destination is a file" do
+      let(:dest) { File.join(dest_folder, "dest_file") }
 
-      expect(File.exist?(dest)).to be true
-      expect(File.read(dest)).to eq('source file content')
+      context "and the file exist" do
+        before do
+          File.write(dest, 'destination file content')
+        end
+
+        it 'replaces the destination file with the source file' do
+          subject.transfer
+
+          expect(File.exist?(dest)).to be true
+          expect(File.read(dest)).to eq('source file content')
+        end
+      end
+
+      context "and the file does not exist" do
+        it 'creates the destination file with the source file' do
+          subject.transfer
+
+          expect(File.exist?(dest)).to be true
+          expect(File.read(dest)).to eq('source file content')
+        end
+      end
+
     end
   end
 end
