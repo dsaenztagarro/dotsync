@@ -10,8 +10,8 @@ module Dotsync
       end
     end
 
-    def remove_dest
-      section["remove_dest"]
+    def force
+      section["force"]
     end
 
     def backups_root
@@ -33,7 +33,7 @@ module Dotsync
       def validate!
         validate_section_present!
         validate_key_present! "mappings"
-        validate_key_present! "remove_dest"
+        validate_key_present! "force"
         validate_key_present! "backups_root"
       end
   end

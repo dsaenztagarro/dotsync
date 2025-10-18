@@ -3,7 +3,7 @@ module Dotsync
     def initialize(config)
       @src = config[:src]
       @dest = config[:dest]
-      @remove_dest = config[:remove_dest]
+      @force = config[:force]
       @excluded_paths = config[:excluded_paths] || []
     end
 

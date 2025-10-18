@@ -3,8 +3,8 @@ require "spec_helper"
 RSpec.describe Dotsync::PushAction do
   let(:mappings) do
     [
-      { src: '/tmp/dotsync_src1', dest: '/tmp/dotsync_dest1', remove_dest: true, excluded_paths: [] },
-      { src: '/tmp/dotsync_src2', dest: '/tmp/dotsync_dest2', remove_dest: false, excluded_paths: [] }
+      { src: '/tmp/dotsync_src1', dest: '/tmp/dotsync_dest1', force: true, excluded_paths: [] },
+      { src: '/tmp/dotsync_src2', dest: '/tmp/dotsync_dest2', force: false, excluded_paths: [] }
     ]
   end
   let(:config) do

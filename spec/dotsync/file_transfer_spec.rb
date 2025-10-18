@@ -5,7 +5,7 @@ RSpec.describe Dotsync::FileTransfer do
     {
       src: src,
       dest: dest,
-      remove_dest: remove_dest,
+      force: force,
       excluded_paths: excluded_paths
     }
   end
@@ -16,7 +16,7 @@ RSpec.describe Dotsync::FileTransfer do
     context "when source is a folder" do
       let(:src) { '/tmp/dotsync_src' }
       let(:dest) { '/tmp/dotsync_dest' }
-      let(:remove_dest) { true }
+      let(:force) { true }
       let(:excluded_paths) { [] }
 
       before do
@@ -144,7 +144,7 @@ RSpec.describe Dotsync::FileTransfer do
   context "when source is a file" do
     let(:src) { '/tmp/dotsync_src_files/src_file' }
     let(:dest) { '/tmp/dotsync_dest_files/dest_file' }
-    let(:remove_dest) { true }
+    let(:force) { true }
     let(:excluded_paths) { [] }
 
     before do

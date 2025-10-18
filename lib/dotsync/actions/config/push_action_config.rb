@@ -10,8 +10,8 @@ module Dotsync
       end
     end
 
-    def remove_dest
-      section["remove_dest"]
+    def force
+      section["force"]
     end
 
     private

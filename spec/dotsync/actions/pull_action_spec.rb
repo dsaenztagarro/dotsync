@@ -13,7 +13,7 @@ RSpec.describe Dotsync::PullAction do
   let(:files) { [file1_src, file2_src, file1_dest, file2_dest] }
   let(:mappings) do
     [
-      { src: folder_src, dest: folder_dest, remove_dest: true, excluded_paths: [] },
+      { src: folder_src, dest: folder_dest, force: true, excluded_paths: [] },
       { src: file2_src, dest: file2_dest }
     ]
   end

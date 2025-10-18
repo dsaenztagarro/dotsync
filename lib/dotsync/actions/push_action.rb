@@ -13,7 +13,7 @@ module Dotsync
       info("Mappings:", icon: :source_dest)
       mappings.each do |mapping|
         info("Source: #{mapping[:src]} -> Destination: #{mapping[:dest]}", icon: :copy)
-        info("Remove destination: #{mapping[:remove_dest]}", icon: :delete)
+        info("Remove destination: #{mapping[:force]}", icon: :delete)
         info("Exclude paths: #{mapping[:exclude_paths].join(', ')}", icon: :exclude) if mapping[:exclude_paths]&.any?
         info("")
       end
