@@ -29,21 +29,22 @@ The configuration file now uses a single `mappings` structure where `src` can re
 ```toml
 [pull]
 mappings = [
-  { src = "$DOTFILES_PATH/config/", dest = "$XDG_CONFIG_HOME", force = false },
-  { src = "$DOTFILES_PATH/home/.zshenv", dest = "$HOME" }
+  { src = "$DOTFILES_DIR/config/", dest = "$XDG_CONFIG_HOME", force = false },
+  { src = "$DOTFILES_DIR/home/.zshenv", dest = "$HOME" }
 ]
 
 [push]
 mappings = [
-  { src = "$HOME/.zshenv", dest = "$DOTFILES_PATH/home/.zshenv" },
-  { src = "$XDG_CONFIG_HOME/alacritty", dest = "$DOTFILES_PATH/config/alacritty" },
-  { src = "$XDG_CONFIG_HOME/brewfile", dest = "$DOTFILES_PATH/config/brewfile" },
-  { src = "$XDG_CONFIG_HOME/exercism", dest = "$DOTFILES_PATH/config/exercism" },
-  { src = "$XDG_CONFIG_HOME/git", dest = "$DOTFILES_PATH/config/git", force = true },
-  { src = "$XDG_CONFIG_HOME/zellij", dest = "$DOTFILES_PATH/config/zellij" },
-  { src = "$XDG_CONFIG_HOME/zsh", dest = "$DOTFILES_PATH/config/zsh", ignore = [".zsh_sessions", ".zsh_history"] },
-  { src = "$XDG_CONFIG_HOME/starship.toml", dest = "$DOTFILES_PATH/config/starship.toml" },
-  { src = "$XDG_CONFIG_HOME/dotsync.toml", dest = "$DOTFILES_PATH/config/dotsync-macmini.toml" }
+  { src = "$HOME/.zshenv", dest = "$DOTFILES_DIR/home/.zshenv" },
+  { src = "$XDG_CONFIG_HOME/alacritty", dest = "$DOTFILES_DIR/config/alacritty" },
+  { src = "$XDG_CONFIG_HOME/brewfile", dest = "$DOTFILES_DIR/config/brewfile" },
+  { src = "$XDG_CONFIG_HOME/exercism", dest = "$DOTFILES_DIR/config/exercism" },
+  { src = "$XDG_CONFIG_HOME/git", dest = "$DOTFILES_DIR/config/git" },
+  { src = "$XDG_CONFIG_HOME/nvim", dest = "$DOTFILES_DIR/config/nvim", ignore = "lazy-lock.json" },
+  { src = "$XDG_CONFIG_HOME/zellij", dest = "$DOTFILES_DIR/config/zellij" },
+  { src = "$XDG_CONFIG_HOME/zsh", dest = "$DOTFILES_DIR/config/zsh", ignore = [".zsh_sessions", ".zsh_history"] },
+  { src = "$XDG_CONFIG_HOME/starship.toml", dest = "$DOTFILES_DIR/config/starship.toml" },
+  { src = "$XDG_CONFIG_HOME/dotsync.toml", dest = "$DOTFILES_DIR/dotsync/macmini.toml" }
 ]
 
 [watch]

@@ -6,8 +6,8 @@ module Dotsync
       mappings_list = section["mappings"]
       Array(mappings_list).map do |mapping|
         {
-          src: File.expand_path(mapping["src"]),
-          dest: File.expand_path(mapping["dest"])
+          src: sanitize_path(mapping["src"]),
+          dest: sanitize_path(mapping["dest"])
         }
       end
     end

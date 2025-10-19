@@ -2,6 +2,8 @@ module Dotsync
   # BaseConfig serves as an abstract class to define the structure
   # and validation rules for configuration files in the Dotsync system.
   class BaseConfig
+    include Dotsync::PathUtils
+
     # Initialize the BaseConfig with the provided path.
     # Loads the TOML configuration file and validates it.
     #

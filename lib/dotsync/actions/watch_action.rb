@@ -60,7 +60,7 @@ module Dotsync
       def copy_file(path)
         sanitized_src = sanitize_path(src)
         sanitized_path = sanitize_path(path)
-        relative_path = sanitized_path.delete_prefix(sanitized_src)
+        relative_path = sanitized_path.delete_prefix(File.join(sanitized_src, "/"))
         dest_path = File.join(dest, relative_path)
         sanitized_dest = sanitize_path(dest_path)
         FileUtils.mkdir_p(File.dirname(dest_path))
