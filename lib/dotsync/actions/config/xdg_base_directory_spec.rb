@@ -1,4 +1,5 @@
 module Dotsync
+  # https://specifications.freedesktop.org/basedir-spec/latest/
   module XDGBaseDirectorySpec
     def xdg_data_home
       File.expand_path(ENV["XDG_DATA_HOME"] || "$HOME/.local/share")

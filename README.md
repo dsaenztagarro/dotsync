@@ -29,22 +29,34 @@ The configuration file now uses a single `mappings` structure where `src` can re
 ```toml
 [pull]
 mappings = [
-  { src = '~/Code/dotfiles/src/.config/', dest = '~/.config/', force = false  },
-  { src = '~/Code/dotfiles/src/.zshenv', dest = '~/.zshenv' },
-  { src = '~/Code/dotfiles/src/.config/dotsync-macmini.toml', dest = '~/.config/dotsync.toml' }
+  { src = "$DOTFILES_PATH/config/", dest = "$XDG_CONFIG_HOME", force = false },
+  { src = "$DOTFILES_PATH/home/.zshenv", dest = "$HOME" }
 ]
 
 [push]
 mappings = [
-  { src = '~/.config/', dest = '~/Code/dotfiles/src/.config/', force = true },
-  { src = '~/.zshenv', dest = '~/Code/dotfiles/src/.zshenv' },
-  { src = '~/.config/dotsync.toml', dest = '~/Code/dotfiles/src/.config/dotsync-macmini.toml' }
+  { src = "$HOME/.zshenv", dest = "$DOTFILES_PATH/home/.zshenv" },
+  { src = "$XDG_CONFIG_HOME/alacritty", dest = "$DOTFILES_PATH/config/alacritty" },
+  { src = "$XDG_CONFIG_HOME/brewfile", dest = "$DOTFILES_PATH/config/brewfile" },
+  { src = "$XDG_CONFIG_HOME/exercism", dest = "$DOTFILES_PATH/config/exercism" },
+  { src = "$XDG_CONFIG_HOME/git", dest = "$DOTFILES_PATH/config/git", force = true },
+  { src = "$XDG_CONFIG_HOME/zellij", dest = "$DOTFILES_PATH/config/zellij" },
+  { src = "$XDG_CONFIG_HOME/zsh", dest = "$DOTFILES_PATH/config/zsh", ignore = [".zsh_sessions", ".zsh_history"] },
+  { src = "$XDG_CONFIG_HOME/starship.toml", dest = "$DOTFILES_PATH/config/starship.toml" },
+  { src = "$XDG_CONFIG_HOME/dotsync.toml", dest = "$DOTFILES_PATH/config/dotsync-macmini.toml" }
 ]
 
 [watch]
-mappings = [
-  { src = '~/.config/alacritty/', dest = '~/Code/dotfiles/src/alacritty/' },
-  { src = '~/.config/starship.toml', dest = '~/Code/dotfiles/src/starship.toml' }
+src = '~/.config'
+dest = '~/Code/dotfiles/src/'
+paths = [
+  '~/.config/alacritty/',
+  '~/.config/zellij/',
+  '~/.config/nvim/',
+  '~/.config/exercism/',
+  '~/.config/nvim/init.lua',
+  '~/.config/nvim/lua/',
+  '~/.config/nvim/after/'
 ]
 ```
 

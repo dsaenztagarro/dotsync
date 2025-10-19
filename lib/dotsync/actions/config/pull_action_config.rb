@@ -20,8 +20,8 @@ module Dotsync
       File.join(xdg_data_home, "dotsync", "backups")
     end
 
-    def excluded_paths
-      section["excluded_paths"].to_a.map { |path| File.join(src, path) }
+    def ignore
+      section["ignore"].to_a.map { |path| File.join(src, path) }
     end
 
     private

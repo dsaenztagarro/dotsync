@@ -4,13 +4,14 @@ module Dotsync
       @src = config[:src]
       @dest = config[:dest]
       @force = config[:force]
-      @excluded_paths = config[:excluded_paths] || []
+      @ignore = config[:ignore] || []
     end
 
     def transfer
       if File.file?(@src)
         transfer_file(@src, @dest)
       else
+        FileUtils.rm_rf(Dir.glob(File.join(@dest, '*'))) if @force
         transfer_folder(@src, @dest)
       end
     end
@@ -40,7 +41,7 @@ module Dotsync
     end
 
     def excluded_path?(path)
-      @excluded_paths.any? { |excluded| path.start_with?(File.expand_path(excluded)) }
+      @ignore.any? { |excluded| path.start_with?(File.expand_path(excluded)) }
     end
   end
 end
