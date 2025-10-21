@@ -2,15 +2,7 @@ module Dotsync
   class PushActionConfig < BaseConfig
     def mappings
       mappings_list = section["mappings"]
-      Array(mappings_list).map do |mapping|
-        sanitized_src = sanitize_path(mapping["src"])
-        {
-          src: sanitized_src,
-          dest: sanitize_path(mapping["dest"]),
-          force: mapping["force"],
-          ignore: Array(mapping["ignore"]).map { |relative_path| File.join(sanitized_src, relative_path) }
-        }
-      end
+      Array(mappings_list).map { |mapping| Dotsync::MappingEntry.new(mapping) }
     end
 
     def force

@@ -2,12 +2,12 @@ require "spec_helper"
 
 RSpec.describe Dotsync::FileTransfer do
   let(:config) do
-    {
-      src: src,
-      dest: dest,
-      force: force,
-      ignore: ignore
-    }
+    Dotsync::MappingEntry.new(
+      "src" => src,
+      "dest" => dest,
+      "force" => force,
+      "ignore" => ignore
+    )
   end
   let(:force) { false }
 

@@ -13,8 +13,16 @@ RSpec.describe Dotsync::PullAction do
   let(:files) { [file1_src, file2_src, file1_dest, file2_dest] }
   let(:mappings) do
     [
-      { src: folder_src, dest: folder_dest, force: true, ignore: [] },
-      { src: file2_src, dest: file2_dest }
+      Dotsync::MappingEntry.new(
+        "src" => folder_src,
+        "dest" => folder_dest,
+        "force" => true,
+        "ignore" => []
+      ),
+      Dotsync::MappingEntry.new(
+        "src" => file2_src,
+        "dest" => file2_dest
+      )
     ]
   end
   let(:backups_root) { File.join(root, "backups") }
@@ -48,7 +56,7 @@ RSpec.describe Dotsync::PullAction do
       allow(file_transfer2).to receive(:transfer)
     end
 
-    it 'transfers mappings of sources to corresponding destinations' do
+    it "transfers mappings correctly" do
       action.execute
 
       expect(file_transfer1).to have_received(:transfer)

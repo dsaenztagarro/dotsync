@@ -4,12 +4,7 @@ module Dotsync
 
     def mappings
       mappings_list = section["mappings"]
-      Array(mappings_list).map do |mapping|
-        {
-          src: sanitize_path(mapping["src"]),
-          dest: sanitize_path(mapping["dest"])
-        }
-      end
+      Array(mappings_list).map { |mapping| Dotsync::MappingEntry.new(mapping) }
     end
 
     def force

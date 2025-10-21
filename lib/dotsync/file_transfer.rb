@@ -1,10 +1,10 @@
 module Dotsync
   class FileTransfer
     def initialize(config)
-      @src = config[:src]
-      @dest = config[:dest]
-      @force = config[:force]
-      @ignore = config[:ignore] || []
+      @src = config.src
+      @dest = config.dest
+      @force = config.force?
+      @ignores = config.ignores || []
     end
 
     def transfer
@@ -41,7 +41,7 @@ module Dotsync
     end
 
     def excluded_path?(path)
-      @ignore.any? { |excluded| path.start_with?(File.expand_path(excluded)) }
+      @ignores.any? { |ignore| path.start_with?(File.expand_path(ignore)) }
     end
   end
 end

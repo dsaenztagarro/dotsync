@@ -17,7 +17,7 @@ module Dotsync
       def show_config
         info("Mappings:", icon: :source_dest)
         mappings.each do |mapping|
-          info("  Source: #{mapping[:src]} -> Destination: #{mapping[:dest]}")
+          info("  Source: #{mapping.src} -> Destination: #{mapping.dest}")
         end
       end
 
@@ -35,14 +35,14 @@ module Dotsync
       end
 
       def create_backup
-        return false unless mappings.any? { |mapping| File.exist?(mapping[:dest]) }
+        return false unless mappings.any? { |mapping| File.exist?(mapping.dest) }
         FileUtils.mkdir_p(backup_path)
         mappings.each do |mapping|
-          next unless File.exist?(mapping[:dest])
-          if File.file?(mapping[:src])
-            FileUtils.cp(mapping[:dest], File.join(backup_path, File.basename(mapping[:dest])))
+          next unless File.exist?(mapping.dest)
+          if File.file?(mapping.src)
+            FileUtils.cp(mapping.dest, File.join(backup_path, File.basename(mapping.dest)))
           else
-            FileUtils.cp_r(mapping[:dest], File.join(backup_path, File.basename(mapping[:dest])))
+            FileUtils.cp_r(mapping.dest, File.join(backup_path, File.basename(mapping.dest)))
           end
         end
         true
@@ -61,10 +61,7 @@ module Dotsync
       end
 
       def pull_dotfiles
-        mappings.each do |mapping|
-          Dotsync::FileTransfer.new(mapping).transfer
-        end
-
+        mappings.each { |mapping| Dotsync::FileTransfer.new(mapping).transfer }
         action("Dotfiles pulled", icon: :copy)
       end
   end

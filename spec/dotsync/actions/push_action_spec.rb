@@ -3,8 +3,18 @@ require "spec_helper"
 RSpec.describe Dotsync::PushAction do
   let(:mappings) do
     [
-      { src: '/tmp/dotsync_src1', dest: '/tmp/dotsync_dest1', force: true, ignore: [] },
-      { src: '/tmp/dotsync_src2', dest: '/tmp/dotsync_dest2', force: false, ignore: [] }
+      Dotsync::MappingEntry.new(
+        "src" => "/tmp/dotsync_src1",
+        "dest" => "/tmp/dotsync_dest1",
+        "force" => true,
+        "ignore" => []
+      ),
+      Dotsync::MappingEntry.new(
+        "src" => "/tmp/dotsync_src2",
+        "dest" => "/tmp/dotsync_dest2",
+        "force" => false,
+        "ignore" => []
+      )
     ]
   end
   let(:config) do
@@ -14,7 +24,8 @@ RSpec.describe Dotsync::PushAction do
     )
   end
   let(:logger) { instance_double("Dotsync::Logger") }
-  let(:file_transfer) { instance_double("Dotsync::FileTransfer") }
+  let(:file_transfer1) { instance_double("Dotsync::FileTransfer") }
+  let(:file_transfer2) { instance_double("Dotsync::FileTransfer") }
   let(:action) { Dotsync::PushAction.new(config, logger) }
 
   before do
@@ -24,8 +35,10 @@ RSpec.describe Dotsync::PushAction do
 
   describe '#execute' do
     before do
-      allow(Dotsync::FileTransfer).to receive(:new).and_return(file_transfer)
-      allow(file_transfer).to receive(:transfer)
+      allow(Dotsync::FileTransfer).to receive(:new).with(mappings[0]).and_return(file_transfer1)
+      allow(Dotsync::FileTransfer).to receive(:new).with(mappings[1]).and_return(file_transfer2)
+      allow(file_transfer1).to receive(:transfer)
+      allow(file_transfer2).to receive(:transfer)
     end
 
     it 'shows config' do
@@ -38,13 +51,11 @@ RSpec.describe Dotsync::PushAction do
       expect(logger).to have_received(:info).with("Remove destination: false", {icon: :delete}).ordered.once
     end
 
-    it 'transfers mappings of sources to corresponding destinations' do
+    it "transfers mappings correctly" do
       action.execute
 
-      mappings.each do |mapping|
-        expect(Dotsync::FileTransfer).to have_received(:new).with(mapping)
-      end
-      expect(file_transfer).to have_received(:transfer).twice
+      expect(file_transfer1).to have_received(:transfer)
+      expect(file_transfer2).to have_received(:transfer)
     end
   end
 end
