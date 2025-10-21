@@ -17,7 +17,9 @@ module Dotsync
       def show_config
         info("Mappings:", icon: :source_dest)
         mappings.each do |mapping|
-          info("  Source: #{mapping.src} -> Destination: #{mapping.dest}")
+          force_icon = mapping.force? ? " #{icon_delete}" : ""
+          info("  src: #{mapping.original_src} -> dest: #{mapping.original_dest}#{force_icon}", icon: :copy)
+          info("    ignores: #{mapping.ignores.join(', ')}", icon: :exclude) if mapping.ignores.any?
         end
       end
 
@@ -63,6 +65,10 @@ module Dotsync
       def pull_dotfiles
         mappings.each { |mapping| Dotsync::FileTransfer.new(mapping).transfer }
         action("Dotfiles pulled", icon: :copy)
+      end
+
+      def icon_delete
+        Dotsync::Logger::ICONS[:delete]
       end
   end
 end

@@ -44,11 +44,11 @@ RSpec.describe Dotsync::PushAction do
     it 'shows config' do
       action.execute
 
+      icon_delete = Dotsync::Logger::ICONS[:delete]
+
       expect(logger).to have_received(:info).with("Mappings:", icon: :source_dest).ordered.once
-      expect(logger).to have_received(:info).with("Source: /tmp/dotsync_src1 -> Destination: /tmp/dotsync_dest1", {icon: :copy}).ordered.once
-      expect(logger).to have_received(:info).with("Remove destination: true", {icon: :delete}).ordered.once
-      expect(logger).to have_received(:info).with("Source: /tmp/dotsync_src2 -> Destination: /tmp/dotsync_dest2", {icon: :copy}).ordered.once
-      expect(logger).to have_received(:info).with("Remove destination: false", {icon: :delete}).ordered.once
+      expect(logger).to have_received(:info).with("  src: /tmp/dotsync_src1 -> dest: /tmp/dotsync_dest1 #{icon_delete}", {icon: :copy}).ordered.once
+      expect(logger).to have_received(:info).with("  src: /tmp/dotsync_src2 -> dest: /tmp/dotsync_dest2", {icon: :copy}).ordered.once
     end
 
     it "transfers mappings correctly" do
