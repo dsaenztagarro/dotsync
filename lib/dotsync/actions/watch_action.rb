@@ -1,8 +1,6 @@
 module Dotsync
   class WatchAction < BaseAction
-    def_delegator :@config, :src
-    def_delegator :@config, :dest
-    def_delegator :@config, :watched_paths
+    def_delegator :@config, :mappings
 
     def initialize(config, logger)
       super
@@ -10,7 +8,7 @@ module Dotsync
     end
 
     def execute
-      log_config
+      show_config
 
       @listeners.each(&:start)
 
@@ -21,30 +19,32 @@ module Dotsync
 
     private
 
-      def log_config
-        info("Watched paths:", icon: :watch)
-        watched_paths.each { |path| info("  #{path}") }
-        info("Destination:", icon: :dest)
-        info("  #{dest}")
-        info("")
+      def show_config
+        info("Mappings:", icon: :watch)
+        mappings.each do |mapping|
+          force_icon = mapping.force? ? " #{icon_delete}" : ""
+          info("  src: #{mapping.original_src} -> dest: #{mapping.original_dest}#{force_icon}", icon: :copy)
+          info("    ignores: #{mapping.ignores.join(', ')}", icon: :exclude) if mapping.ignores.any?
+        end
       end
 
       def setup_listeners
-        @listeners = watched_paths.map do |watched_path|
-          watched_path = File.expand_path(watched_path)
+        @listeners = mappings.map do |mapping|
+          src = mapping.src
+
           # Determine the base directory to watch. If it's a directory, use it directly.
           # Otherwise, use its parent directory.
-          base = File.directory?(watched_path) ? watched_path : File.dirname(watched_path)
+          base = File.directory?(src) ? src : File.dirname(src)
 
           # If the watched path is a file, create a pattern to match its name.
           # Otherwise, set the pattern to nil.
-          pattern = File.directory?(watched_path) ? nil : /^#{Regexp.escape(File.basename(watched_path))}$/
+          pattern = File.directory?(src) ? nil : /^#{Regexp.escape(File.basename(src))}$/
 
           # Define a procedure to handle file changes (modified or added files)
           copy_proc = Proc.new do |modified, added, _removed|
             # For each modified or added file, copy it to the destination
             (modified | added).each do |path|
-              copy_file(path)
+              copy_file(path, mapping)
             end
           end
 
@@ -57,16 +57,11 @@ module Dotsync
         end
       end
 
-      def copy_file(path)
-        sanitized_src = sanitize_path(src)
-        sanitized_path = sanitize_path(path)
-        relative_path = sanitized_path.delete_prefix(File.join(sanitized_src, "/"))
-        dest_path = File.join(dest, relative_path)
-        sanitized_dest = sanitize_path(dest_path)
-        FileUtils.mkdir_p(File.dirname(dest_path))
-        FileUtils.cp(path, sanitized_dest)
+      def copy_file(path, mapping)
+        mapping = mapping.applied_to(path)
+        Dotsync::FileTransfer.new(mapping).transfer if mapping
         info("Copied file", icon: :copy)
-        info("  ~/#{relative_path} → #{sanitized_dest}")
+        info("  #{mapping.original_src} → #{mapping.original_dest}")
       end
   end
 end

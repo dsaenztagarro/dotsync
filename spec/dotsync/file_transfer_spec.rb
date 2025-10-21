@@ -15,8 +15,9 @@ RSpec.describe Dotsync::FileTransfer do
 
   describe '#transfer' do
     context "when source is a folder" do
-      let(:src) { '/tmp/dotsync_src' }
-      let(:dest) { '/tmp/dotsync_dest' }
+      let(:root) { File.join("/tmp", "dotsync") }
+      let(:src) { File.join(root, "src") }
+      let(:dest) { File.join(root, "dest") }
       let(:ignore) { [] }
 
       before do
@@ -25,8 +26,7 @@ RSpec.describe Dotsync::FileTransfer do
       end
 
       after do
-        FileUtils.rm_rf(src)
-        FileUtils.rm_rf(dest)
+        FileUtils.rm_rf(root)
       end
 
       it 'transfers file in destination' do
@@ -70,13 +70,13 @@ RSpec.describe Dotsync::FileTransfer do
         end
       end
 
-      context 'with excluded paths' do
+      context 'with ignore paths' do
         let(:ignore) do
           [
-            File.join(src, 'excluded_folder'),
-            File.join(src, 'subfolder/excluded_subfolder'),
-            File.join(src, 'subfolder/another_subfolder/excluded_subsubfolder'),
-            File.join(src, 'excluded_file.txt')
+            'excluded_folder',
+            'subfolder/excluded_subfolder',
+            'subfolder/another_subfolder/excluded_subsubfolder',
+            'excluded_file.txt'
           ]
         end
 
@@ -115,8 +115,8 @@ RSpec.describe Dotsync::FileTransfer do
         context "with excluded paths for dotfiles and dotfolders inside normal folders" do
           let(:ignore) do
             [
-              File.join(src, 'normal_folder/.dotfile_in_folder'),
-              File.join(src, 'normal_folder/.dotfolder_in_folder')
+              'normal_folder/.dotfile_in_folder',
+              'normal_folder/.dotfolder_in_folder'
             ]
           end
 

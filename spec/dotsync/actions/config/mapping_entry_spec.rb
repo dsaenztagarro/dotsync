@@ -4,8 +4,8 @@ RSpec.describe Dotsync::MappingEntry do
   include Dotsync::PathUtils
 
   let(:root) { File.join("/tmp", "dotsync") }
-  let(:src) { File.join(root, "source") }
-  let(:dest) { File.join(root, "destination") }
+  let(:src) { File.join(root, "src") }
+  let(:dest) { File.join(root, "dest") }
   let(:ignored_file) { File.join(src, "ignored_file") }
   let(:ignored_folder) { File.join(src, "ignored_folder") }
 

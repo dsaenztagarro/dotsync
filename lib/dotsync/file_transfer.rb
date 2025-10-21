@@ -1,5 +1,7 @@
 module Dotsync
   class FileTransfer
+    attr_reader :ignores
+
     def initialize(config)
       @src = config.src
       @dest = config.dest
@@ -29,7 +31,7 @@ module Dotsync
         next if ['.', '..'].include?(File.basename(path))
 
         full_path = File.expand_path(path)
-        next if excluded_path?(full_path)
+        next if ignore?(full_path)
 
         target = File.join(folder_dest, File.basename(path))
         if File.file?(full_path)
@@ -40,8 +42,8 @@ module Dotsync
       end
     end
 
-    def excluded_path?(path)
-      @ignores.any? { |ignore| path.start_with?(File.expand_path(ignore)) }
+    def ignore?(path)
+      @ignores.any? { |ignore| path.start_with?(ignore) }
     end
   end
 end

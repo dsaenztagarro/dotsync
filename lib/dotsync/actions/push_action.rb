@@ -14,7 +14,7 @@ module Dotsync
       mappings.each do |mapping|
         force_icon = mapping.force? ? " #{icon_delete}" : ""
         info("  src: #{mapping.original_src} -> dest: #{mapping.original_dest}#{force_icon}", icon: :copy)
-        info("    ignores: #{mapping.ignores.join(', ')}", icon: :exclude) if mapping.ignores.any?
+        info("    ignores: #{mapping.original_ignores.join(', ')}", icon: :exclude) if mapping.ignores.any?
       end
     end
 
