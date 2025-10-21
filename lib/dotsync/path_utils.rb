@@ -9,11 +9,10 @@ module Dotsync
     # @param [String] path The input path to translate
     # @return [String] The translated path
     def translate_tmp_path(path)
-      expanded_path = File.expand_path(path)
-      if expanded_path.start_with?('/tmp') && RUBY_PLATFORM.include?('darwin')
-        expanded_path.sub('/tmp', '/private/tmp')
+      if path.start_with?('/tmp') && RUBY_PLATFORM.include?('darwin')
+        path.sub('/tmp', '/private/tmp')
       else
-        expanded_path
+        path
       end
     end
 
@@ -21,9 +20,7 @@ module Dotsync
     # @param [String] path The input path to sanitize
     # @return [String] The sanitized path
     def sanitize_path(path)
-      path = expand_env_vars(path)
-      path = translate_tmp_path(File.expand_path(path))
-      path
+      translate_tmp_path(File.expand_path(expand_env_vars(path)))
     end
   end
 end
