@@ -5,10 +5,6 @@ module Dotsync
       Array(mappings_list).map { |mapping| Dotsync::MappingEntry.new(mapping) }
     end
 
-    def force
-      section["force"]
-    end
-
     private
 
       SECTION_NAME = "push"

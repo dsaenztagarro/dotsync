@@ -7,16 +7,8 @@ module Dotsync
       Array(mappings_list).map { |mapping| Dotsync::MappingEntry.new(mapping) }
     end
 
-    def force
-      section["force"]
-    end
-
     def backups_root
       File.join(xdg_data_home, "dotsync", "backups")
-    end
-
-    def ignore
-      section["ignore"].to_a.map { |path| File.join(src, path) }
     end
 
     private
@@ -30,7 +22,12 @@ module Dotsync
       def validate!
         validate_section_present!
         validate_key_present! "mappings"
-        validate_key_present! "force"
+
+        Array(section["mappings"]).each_with_index do |mapping, index|
+          unless mapping.is_a?(Hash) && mapping.key?("src") && mapping.key?("dest")
+            raise "Configuration error in mapping ##{index + 1}: Each mapping must have 'src' and 'dest' keys."
+          end
+        end
       end
   end
 end
