@@ -29,29 +29,6 @@ jobs:
         run: |
           bundle exec rake
 
-  publish:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && matrix.ruby == '3.2'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.2
-          bundler-cache: true
-
-      - name: Check if gem version has changed
-        id: gem_version_check
-        run: |
-          gem build *.gemspec
-          gem_name=$(ls *.gem | head -n 1)
-          gem info $gem_name --remote || echo "new_version" > version_changed
-        env:
-          GEM_HOST_API_KEY: "${{secrets.RUBYGEMS_AUTH_TOKEN}}"
-
       - name: Publish to RubyGems
         if: steps.gem_version_check.outputs.version_changed == 'new_version'
         run: |
