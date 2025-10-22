@@ -41,18 +41,24 @@ module Dotsync
       FileUtils.mkdir_p(File.dirname(config_path))
 
       example_mappings = {
-        "pull" => [
-          { "src" => "$DOTFILES_DIR/config/", "dest" => "$XDG_CONFIG_HOME", "force" => false },
-          { "src" => "$DOTFILES_DIR/home/.zshenv", "dest" => "$HOME" }
-        ],
-        "push" => [
-          { "src" => "$HOME/.zshenv", "dest" => "$DOTFILES_DIR/home/.zshenv" },
-          { "src" => "$XDG_CONFIG_HOME/alacritty", "dest" => "$DOTFILES_DIR/config/alacritty" }
-        ],
-        "watch" => [
-          { "src" => "$HOME/.zshenv", "dest" => "$DOTFILES_DIR/home/.zshenv" },
-          { "src" => "$XDG_CONFIG_HOME/alacritty", "dest" => "$DOTFILES_DIR/config/alacritty" }
-        ]
+        "pull" => {
+          "mappings" => [
+            { "src" => "$DOTFILES_DIR/config/", "dest" => "$XDG_CONFIG_HOME", "force" => false },
+            { "src" => "$DOTFILES_DIR/home/.zshenv", "dest" => "$HOME" }
+          ],
+        }
+        "push" => {
+          "mappings" => [
+            { "src" => "$HOME/.zshenv", "dest" => "$DOTFILES_DIR/home/.zshenv" },
+            { "src" => "$XDG_CONFIG_HOME/alacritty", "dest" => "$DOTFILES_DIR/config/alacritty" }
+          ]
+        },
+        "watch" => {
+          "mappings" => [
+            { "src" => "$HOME/.zshenv", "dest" => "$DOTFILES_DIR/home/.zshenv" },
+            { "src" => "$XDG_CONFIG_HOME/alacritty", "dest" => "$DOTFILES_DIR/config/alacritty" }
+          ]
+        }
       }
 
       File.write(config_path, TomlRB.dump(example_mappings))
