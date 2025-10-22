@@ -72,6 +72,15 @@ mappings = [
 ]
 ```
 
+#### `force` and `ignore` Options in Mappings
+
+Each mapping entry supports the following options:
+
+- **`force`**: A boolean (true/false) value. When set to `true`, it forces deletion of the destination folder before transferring files from the source. This is particularly useful when you need to ensure that the destination is clean before a transfer.
+- **`ignore`**: An array of patterns or file names to exclude during the transfer. This allows you to specify files or folders that should not be copied from the source to the destination.
+
+These options apply when the source is a directory and are relevant for both `push` and `pull` operations.
+
 ### Pro Tips
 
 - **Using rbenv**: To ensure the gem uses the correct Ruby version managed by rbenv, you can run:
