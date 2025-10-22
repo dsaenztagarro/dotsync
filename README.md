@@ -36,6 +36,8 @@ Dotsync provides the following commands to manage your dotfiles:
   dotsync pull
   ```
 
+  During the `pull` operation, `Dotsync::PullAction` creates a backup of the existing files on the destination. These backups are stored in a directory under the XDG path, with each backup organized by a timestamp. To prevent excessive storage usage, only the 10 most recent backups are retained. Older backups are automatically purged, ensuring efficient storage management.
+
 - **Watch**: Continuously monitor and sync changes between your local machine and the repository.
   ```shell
   dotsync watch
