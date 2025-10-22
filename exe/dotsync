@@ -7,6 +7,7 @@ options = {}
 
 opt_parser = OptionParser.new do |opts|
   opts.banner = <<~BANNER
+    dotsync #{Dotsync::VERSION}
     Usage: dotsync [command] [options]
 
     Commands:
@@ -36,9 +37,11 @@ when "watch"
 when "setup"
   Dotsync::Runner.new.run(:setup)
 else
-  puts "Unknown command: #{command}"
-  puts
-  puts opt_parser.banner
+  if command
+    puts "dotsync: no such command '#{command}'"
+  else
+    puts opt_parser.banner
+  end
   exit 1
 end
 
