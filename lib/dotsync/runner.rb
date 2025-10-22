@@ -46,7 +46,7 @@ module Dotsync
             { "src" => "$DOTFILES_DIR/config/", "dest" => "$XDG_CONFIG_HOME", "force" => false },
             { "src" => "$DOTFILES_DIR/home/.zshenv", "dest" => "$HOME" }
           ],
-        }
+        },
         "push" => {
           "mappings" => [
             { "src" => "$HOME/.zshenv", "dest" => "$DOTFILES_DIR/home/.zshenv" },
