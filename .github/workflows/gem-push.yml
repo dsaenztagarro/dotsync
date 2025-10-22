@@ -29,6 +29,20 @@ jobs:
         run: |
           bundle exec rake
 
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && matrix.ruby == '3.2'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2
+          bundler-cache: true
+
       - name: Publish to RubyGems
         run: |
           mkdir -p $HOME/.gem
