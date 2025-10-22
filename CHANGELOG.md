@@ -1,3 +1,7 @@
+# 0.1.2
+
+Add gem version on usage banner
+
 # 0.1.1
 
 Add gem executables
