@@ -1,4 +1,3 @@
-
 require_relative "lib/dotsync/version"
 
 Gem::Specification.new do |spec|
@@ -7,13 +6,12 @@ Gem::Specification.new do |spec|
   spec.authors       = ["David Sáenz"]
   spec.email         = ["david.saenz.tagarro@gmail.com"]
 
-  spec.summary       = "DotSync Automator"
-  spec.description   = "DotSync Automator"
+  spec.summary       = "Manage dotfiles like a boss"
+  spec.description   = "Keep in sync your dotfiles across machines with a single TOML file"
   spec.homepage      = "https://github.com/dsaenztagarro/dotsync"
   spec.license       = "MIT"
   spec.required_ruby_version = ">= 3.2.0"
 
-  spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/dsaenztagarro/dotsync"
   spec.metadata["changelog_uri"] = "https://github.com/dsaenztagarro/dotsync/blob/master/CHANGELOG.md"
@@ -27,14 +25,14 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "toml-rb"
-  spec.add_dependency "listen"
-  spec.add_dependency "fileutils"
-  spec.add_dependency "logger" # No longer part of default gems from Ruby 3.5
-  spec.add_dependency "ostruct" # No longer part of default gems from Ruby 3.5
-  spec.add_development_dependency "rake"
-  spec.add_development_dependency "rspec"
-  spec.add_development_dependency "rubocop"
-  spec.add_development_dependency "timecop"
-  spec.add_development_dependency "ruby-lsp"
+  spec.add_dependency "toml-rb", "~> 4.0.0"
+  spec.add_dependency "listen", "~> 3.9.0"
+  spec.add_dependency "fileutils", "~> 1.7.3"
+  spec.add_dependency "logger", "~> 1.7.0" # No longer part of default gems from Ruby 3.5
+  spec.add_dependency "ostruct", "~> 0.6.3" # No longer part of default gems from Ruby 3.5
+  spec.add_development_dependency "rake", "~> 13.3.0"
+  spec.add_development_dependency "rspec", "~> 3.13.1"
+  spec.add_development_dependency "rubocop", "~> 1.81.1"
+  spec.add_development_dependency "timecop", "~> 0.9.10"
+  spec.add_development_dependency "ruby-lsp", "~> 0.26.1"
 end
