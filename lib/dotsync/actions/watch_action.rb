@@ -5,6 +5,8 @@ module Dotsync
     def initialize(config, logger)
       super
       setup_listeners
+      setup_logger_thread
+      setup_signal_trap
     end
 
     def execute
@@ -22,9 +24,8 @@ module Dotsync
       def show_config
         info("Mappings:", icon: :watch)
         mappings.each do |mapping|
-          force_icon = mapping.force? ? " #{icon_delete}" : ""
-          info("  src: #{mapping.original_src} -> dest: #{mapping.original_dest}#{force_icon}", icon: :copy)
-          info("    ignores: #{mapping.ignores.join(', ')}", icon: :exclude) if mapping.ignores.any?
+          info("  #{mapping}", icon: :copy)
+          info("    Excludes: #{mapping.ignores.join(', ')}", icon: :exclude) if mapping.ignores.any?
         end
       end
 
@@ -36,33 +37,39 @@ module Dotsync
           # Otherwise, use its parent directory.
           base = File.directory?(src) ? src : File.dirname(src)
 
+          options = {}
           # If the watched path is a file, create a pattern to match its name.
-          # Otherwise, set the pattern to nil.
-          pattern = File.directory?(src) ? nil : /^#{Regexp.escape(File.basename(src))}$/
+          options[:pattern] = /^#{Regexp.escape(File.basename(src))}$/ unless File.directory?(src)
+          options[:ignore] = Regexp.union(mapping.ignores) if mapping.ignores.any?
 
-          # Define a procedure to handle file changes (modified or added files)
-          copy_proc = Proc.new do |modified, added, _removed|
-            # For each modified or added file, copy it to the destination
-            (modified | added).each do |path|
-              copy_file(path, mapping)
-            end
-          end
-
-          # Create a listener. If a pattern is defined, watch only files matching the pattern. Otherwise, watch all changes in the base directory.
-          if pattern
-            Listen.to(base, only: pattern, &copy_proc)
-          else
-            Listen.to(base, &copy_proc)
+          Listen.to(base, options) do |modified, added, removed|
+            handle_file_changes(mapping, modified, added, removed)
           end
         end
       end
 
-      def copy_file(path, mapping)
-        mapping = mapping.applied_to(path)
-        return unless mapping
-        Dotsync::FileTransfer.new(mapping).transfer
-        logger.info("Copied file", icon: :copy)
-        logger.info("  #{mapping}")
+      def handle_file_changes(mapping, modified, added, removed)
+        (modified + added).each do |path|
+          new_mapping = mapping.applied_to(path)
+          logger.info("Copied file: #{new_mapping.original_src}", icon: :copy)
+          Dotsync::FileTransfer.new(new_mapping).transfer
+        end
+        removed.each do |path|
+          logger.info("File removed: #{path}", icon: :delete)
+        end
+      end
+
+      def setup_signal_trap
+        listeners = @listeners.dup
+        Signal.trap("INT") do
+          # Using a new thread to handle the signal trap context,
+          # as Signal.trap runs in a more restrictive environment
+          Thread.new do
+            logger.action("Shutting down listeners...", icon: :bell)
+            listeners.each(&:stop)
+            exit
+          end
+        end
       end
   end
 end

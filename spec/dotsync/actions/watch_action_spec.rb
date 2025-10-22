@@ -34,12 +34,12 @@ RSpec.describe Dotsync::WatchAction do
   describe '#execute' do
     it 'shows config' do
       allow_any_instance_of(Listen::Listener).to receive(:start)
-      Thread.new { sleep 0.1; Process.kill('INT', Process.pid) }
+      Thread.new { sleep 0.5; Process.kill('INT', Process.pid) }
 
       expect(logger).to receive(:info).with("Mappings:", icon: :watch).ordered.once
-      expect(logger).to receive(:info).with("  src: #{src} -> dest: #{dest}", {icon: :copy}).ordered.once
-      expect(logger).to receive(:action).with('Listening for changes...', icon: :listen).ordered
-      expect(logger).to receive(:info).with('Press Ctrl+C to exit.').ordered
+      expect(logger).to receive(:info).with("  #{src} → #{dest}", {icon: :copy}).ordered.once
+      expect(logger).to receive(:info).with('Press Ctrl+C to exit.').ordered.once
+      expect(logger).to receive(:action).with('Shutting down listeners...', icon: :bell).ordered
 
       expect { action.execute }.to raise_error(SystemExit)
     end
@@ -54,16 +54,16 @@ RSpec.describe Dotsync::WatchAction do
       allow(FileUtils).to receive(:mkdir_p)
 
       Thread.new do
-        sleep 0.1
+        sleep 0.5 # Ensure listeners ready
         File.write(testfile_src, 'source content')
-        sleep 0.25
+        sleep 0.5 # Ensure files handled
         Process.kill('INT', Process.pid)
       end
 
       expect(FileUtils).to receive(:mkdir_p).with(File.dirname(sanitized_dest)).ordered
       expect(FileUtils).to receive(:cp).with(sanitized_src, sanitized_dest).ordered
 
-      expect(logger).to receive(:info).with('Copied file', icon: :copy)
+      expect(logger).to receive(:info).with("Copied file: #{testfile_src}", icon: :copy)
 
       expect { action.execute }.to raise_error(SystemExit)
     end

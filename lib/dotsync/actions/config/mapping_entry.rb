@@ -37,7 +37,7 @@ module Dotsync
 
     def to_s
       force_icon = force? ? "  #{icon_delete}" : ""
-      "#{original_src} → #{original_dest}#{icon_delete}"
+      "#{original_src} → #{original_dest}#{force_icon}"
     end
 
     def applied_to(path)

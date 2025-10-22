@@ -13,7 +13,7 @@ module Dotsync
       @config = config
       @logger = logger
       setup_logger_thread
-      setup_trap_signals
+      setup_signal_trap
     end
 
     def execute
@@ -22,7 +22,7 @@ module Dotsync
 
     private
 
-      def setup_trap_signals
+      def setup_signal_trap
         Signal.trap("INT") do
           @log_queue << { type: :info, message: "Shutting down gracefully...", icon: :bell }
           exit
