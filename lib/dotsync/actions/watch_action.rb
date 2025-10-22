@@ -59,9 +59,10 @@ module Dotsync
 
       def copy_file(path, mapping)
         mapping = mapping.applied_to(path)
-        Dotsync::FileTransfer.new(mapping).transfer if mapping
-        info("Copied file", icon: :copy)
-        info("  #{mapping.original_src} → #{mapping.original_dest}")
+        return unless mapping
+        Dotsync::FileTransfer.new(mapping).transfer
+        logger.info("Copied file", icon: :copy)
+        logger.info("  #{mapping}")
       end
   end
 end
