@@ -1,8 +1,6 @@
 # Dotsync
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/dotsync`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Welcome to Dotsync! This gem helps you manage and synchronize your dotfiles effortlessly. Below you'll find information on installation, usage, and some tips for getting started.
 
 ## Installation
 
@@ -14,7 +12,7 @@ gem 'dotsync'
 
 And then execute:
 
-    $ bundle
+    $ bundle install
 
 Or install it yourself as:
 
@@ -22,48 +20,9 @@ Or install it yourself as:
 
 ## Usage
 
-### Configuration
+### Executable Commands
 
-The configuration file now uses a single `mappings` structure where `src` can represent both files and folders. Here is an example configuration file:
-
-```toml
-[pull]
-mappings = [
-  { src = "$DOTFILES_DIR/config/", dest = "$XDG_CONFIG_HOME", force = false },
-  { src = "$DOTFILES_DIR/home/.zshenv", dest = "$HOME" }
-]
-
-[push]
-mappings = [
-  { src = "$HOME/.zshenv", dest = "$DOTFILES_DIR/home/.zshenv" },
-  { src = "$XDG_CONFIG_HOME/alacritty", dest = "$DOTFILES_DIR/config/alacritty" },
-  { src = "$XDG_CONFIG_HOME/brewfile", dest = "$DOTFILES_DIR/config/brewfile" },
-  { src = "$XDG_CONFIG_HOME/exercism", dest = "$DOTFILES_DIR/config/exercism" },
-  { src = "$XDG_CONFIG_HOME/git", dest = "$DOTFILES_DIR/config/git" },
-  { src = "$XDG_CONFIG_HOME/nvim", dest = "$DOTFILES_DIR/config/nvim", ignore = "lazy-lock.json" },
-  { src = "$XDG_CONFIG_HOME/zellij", dest = "$DOTFILES_DIR/config/zellij" },
-  { src = "$XDG_CONFIG_HOME/zsh", dest = "$DOTFILES_DIR/config/zsh", ignore = [".zsh_sessions", ".zsh_history"] },
-  { src = "$XDG_CONFIG_HOME/starship.toml", dest = "$DOTFILES_DIR/config/starship.toml" },
-  { src = "$XDG_CONFIG_HOME/dotsync.toml", dest = "$DOTFILES_DIR/dotsync/macmini.toml" }
-]
-
-[watch]
-src = '~/.config'
-dest = '~/Code/dotfiles/src/'
-paths = [
-  '~/.config/alacritty/',
-  '~/.config/zellij/',
-  '~/.config/nvim/',
-  '~/.config/exercism/',
-  '~/.config/nvim/init.lua',
-  '~/.config/nvim/lua/',
-  '~/.config/nvim/after/'
-]
-```
-
-### Synchronization
-
-To sync your configuration files, use the following commands:
+Dotsync provides the following commands to manage your dotfiles:
 
 - **Push**: Transfer dotfiles from your local machine to the destination repository.
   ```shell
@@ -75,7 +34,53 @@ To sync your configuration files, use the following commands:
   dotsync pull
   ```
 
-### Development
+- **Watch**: Continuously monitor and sync changes between your local machine and the repository.
+  ```shell
+  dotsync watch
+  ```
+
+- **Setup**: Generate a default configuration file at `~/.config/dotsync.toml` with example mappings for `pull`, `push`, and `watch`.
+  ```shell
+  dotsync setup
+  ```
+
+### Configuration
+
+The configuration file uses a `mappings` structure to define the source and destination of your dotfiles. Here is an example:
+
+```toml
+[pull]
+mappings = [
+  { src = "$DOTFILES_DIR/config/", dest = "$XDG_CONFIG_HOME", force = false },
+  { src = "$DOTFILES_DIR/home/.zshenv", dest = "$HOME" }
+]
+
+[push]
+mappings = [
+  { src = "$HOME/.zshenv", dest = "$DOTFILES_DIR/home/.zshenv" },
+  { src = "$XDG_CONFIG_HOME/alacritty", dest = "$DOTFILES_DIR/config/alacritty" }
+]
+
+[watch]
+mappings = [
+  { src = "$HOME/.zshenv", dest = "$DOTFILES_DIR/home/.zshenv" },
+  { src = "$XDG_CONFIG_HOME/alacritty", dest = "$DOTFILES_DIR/config/alacritty" }
+]
+```
+
+### Pro Tips
+
+- **Using rbenv**: To ensure the gem uses the correct Ruby version managed by rbenv, you can run:
+  ```shell
+  RBENV_VERSION=3.2.0 dotsync push
+  ```
+
+- **Global Installation**: Install the gem using a globally available Ruby version to make the executable accessible anywhere:
+  ```shell
+  gem install dotsync
+  ```
+
+## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
@@ -91,8 +96,4 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Code of Conduct
 
-Everyone interacting in the Dotsync project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/dotsync/blob/master/CODE_OF_CONDUCT.md).
-
-## Rake tasks
-
-List with `bundle exec rake -AT`
+Everyone interacting in the Dotsync project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/dsaenztagarro/dotsync/blob/master/CODE_OF_CONDUCT.md).

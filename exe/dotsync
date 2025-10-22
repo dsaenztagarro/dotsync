@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/dotsync'
+require 'optparse'
+
+options = {}
+
+opt_parser = OptionParser.new do |opts|
+  opts.banner = <<~BANNER
+    Usage: dotsync [command] [options]
+
+    Commands:
+      push   Upload local changes to the remote
+      pull   Download remote changes to the local
+      watch  Continuously monitor and sync changes
+      setup  Initialize a default configuration file
+  BANNER
+
+  opts.on("-h", "--help", "Show this help message") do
+    puts opts
+    exit
+  end
+end
+
+opt_parser.parse!
+
+command = ARGV.shift
+
+case command
+when "push"
+  Dotsync::Runner.new.run(:push)
+when "pull"
+  Dotsync::Runner.new.run(:pull)
+when "watch"
+  Dotsync::Runner.new.run(:watch)
+when "setup"
+  Dotsync::Runner.new.run(:setup)
+else
+  puts "Unknown command: #{command}"
+  puts
+  puts opt_parser.banner
+  exit 1
+end
+
