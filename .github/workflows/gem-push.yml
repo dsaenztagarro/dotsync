@@ -30,7 +30,7 @@ jobs:
           bundle exec rake
 
       - name: Publish to RubyGems
-        if: steps.gem_version_check.outputs.version_changed == 'new_version'
+        if: matrix.ruby == '3.2'
         run: |
           mkdir -p $HOME/.gem
           touch $HOME/.gem/credentials
