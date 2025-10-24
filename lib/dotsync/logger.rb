@@ -4,6 +4,7 @@ module Dotsync
 
     # 🎨 Nerd Font Icons
     ICONS = {
+      config:  " ",
       info:    " ",
       listen:  " ",
       error:   " ",

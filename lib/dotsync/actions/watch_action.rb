@@ -22,11 +22,8 @@ module Dotsync
     private
 
       def show_config
-        info("Mappings:", icon: :watch)
-        mappings.each do |mapping|
-          info("  #{mapping}", icon: :copy)
-          info("    Excludes: #{mapping.ignores.join(', ')}", icon: :exclude) if mapping.ignores.any?
-        end
+        info("Mappings:", icon: :config)
+        mappings.each { |mapping| info("  #{mapping}") }
       end
 
       def setup_listeners
@@ -51,7 +48,7 @@ module Dotsync
       def handle_file_changes(mapping, modified, added, removed)
         (modified + added).each do |path|
           new_mapping = mapping.applied_to(path)
-          logger.info("Copied file: #{new_mapping.original_src}", icon: :copy)
+          logger.info("Copied file: #{new_mapping}", icon: :copy)
           Dotsync::FileTransfer.new(new_mapping).transfer
         end
         removed.each do |path|

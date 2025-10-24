@@ -36,8 +36,8 @@ RSpec.describe Dotsync::WatchAction do
       allow_any_instance_of(Listen::Listener).to receive(:start)
       Thread.new { sleep 0.5; Process.kill('INT', Process.pid) }
 
-      expect(logger).to receive(:info).with("Mappings:", icon: :watch).ordered.once
-      expect(logger).to receive(:info).with("  #{src} → #{dest}", {icon: :copy}).ordered.once
+      expect(logger).to receive(:info).with("Mappings:", icon: :config).ordered.once
+      expect(logger).to receive(:info).with("  #{src} → #{dest}").ordered.once
       expect(logger).to receive(:info).with('Press Ctrl+C to exit.').ordered.once
       expect(logger).to receive(:action).with('Shutting down listeners...', icon: :bell).ordered
 
@@ -63,7 +63,7 @@ RSpec.describe Dotsync::WatchAction do
       expect(FileUtils).to receive(:mkdir_p).with(File.dirname(sanitized_dest)).ordered
       expect(FileUtils).to receive(:cp).with(sanitized_src, sanitized_dest).ordered
 
-      expect(logger).to receive(:info).with("Copied file: #{testfile_src}", icon: :copy)
+      expect(logger).to receive(:info).with("Copied file: /tmp/dotsync/src/testfile → /tmp/dotsync/dest/testfile", icon: :copy)
 
       expect { action.execute }.to raise_error(SystemExit)
     end

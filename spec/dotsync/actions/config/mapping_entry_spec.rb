@@ -72,5 +72,64 @@ RSpec.describe Dotsync::MappingEntry do
       end
     end
   end
+
+  describe '#to_s' do
+    context 'when there are ignores and force enabled' do
+      it 'returns a formatted string with force and ignore icons' do
+        expect(mapping_entry.to_s).to include("#{mapping_entry.original_src} → #{mapping_entry.original_dest}")
+        expect(mapping_entry.to_s).to include(Dotsync::Logger::ICONS[:clean])
+        expect(mapping_entry.to_s).to include(Dotsync::Logger::ICONS[:skip])
+      end
+    end
+
+    context 'when only force is enabled' do
+      let(:mapping_hash) do
+        {
+          "src" => src,
+          "dest" => dest,
+          "force" => true,
+          "ignore" => []
+        }
+      end
+
+      it 'returns a formatted string with only the force icon' do
+        expect(mapping_entry.to_s).to include(Dotsync::Logger::ICONS[:clean])
+        expect(mapping_entry.to_s).not_to include(Dotsync::Logger::ICONS[:skip])
+      end
+    end
+
+    context 'when only ignores are specified' do
+      let(:mapping_hash) do
+        {
+          "src" => src,
+          "dest" => dest,
+          "force" => false,
+          "ignore" => ["ignored_file"]
+        }
+      end
+
+      it 'returns a formatted string with only the ignore icon' do
+        expect(mapping_entry.to_s).to include(Dotsync::Logger::ICONS[:skip])
+        expect(mapping_entry.to_s).not_to include(Dotsync::Logger::ICONS[:clean])
+      end
+    end
+
+    context 'when there are no ignores and force is disabled' do
+      let(:mapping_hash) do
+        {
+          "src" => src,
+          "dest" => dest,
+          "force" => false,
+          "ignore" => []
+        }
+      end
+
+      it 'returns a formatted string without force and ignore icons' do
+        expect(mapping_entry.to_s).to include("#{mapping_entry.original_src} → #{mapping_entry.original_dest}")
+        expect(mapping_entry.to_s).not_to include(Dotsync::Logger::ICONS[:clean])
+        expect(mapping_entry.to_s).not_to include(Dotsync::Logger::ICONS[:skip])
+      end
+    end
+  end
 end
 

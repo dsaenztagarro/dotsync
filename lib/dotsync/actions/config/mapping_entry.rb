@@ -32,12 +32,14 @@ module Dotsync
     end
 
     def valid?
-      File.exist?(@sanitized_src) && File.exist?(@sanitized_dest)
+      File.exist?(@sanitized_src) && File.exist?(File.dirname(@sanitized_dest))
     end
 
     def to_s
-      force_icon = force? ? "  #{icon_delete}" : ""
-      "#{original_src} → #{original_dest}#{force_icon}"
+      ignore_icon = @original_ignores.empty? ? "" : "  #{Dotsync::Logger::ICONS[:ignore]}"
+      force_icon = force? ? " #{ICON_FORCE}" : ""
+      ignore_icon = ignores? ? " #{ICON_IGNORE}" : ""
+      "#{original_src} → #{original_dest}#{force_icon}#{ignore_icon}"
     end
 
     def applied_to(path)
@@ -57,8 +59,11 @@ module Dotsync
 
     private
 
-    def icon_delete
-      Dotsync::Logger::ICONS[:delete]
+    ICON_FORCE = Dotsync::Logger::ICONS[:clean]
+    ICON_IGNORE = Dotsync::Logger::ICONS[:skip]
+
+    def ignores?
+      @original_ignores.any?
     end
   end
 end

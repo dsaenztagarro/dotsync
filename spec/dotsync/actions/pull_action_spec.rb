@@ -59,11 +59,11 @@ RSpec.describe Dotsync::PullAction do
     it 'shows config' do
       action.execute
 
-      icon_delete = Dotsync::Logger::ICONS[:delete]
+      icon_force = Dotsync::Logger::ICONS[:clean]
 
-      expect(logger).to have_received(:info).with("Mappings:", icon: :source_dest).ordered.once
-      expect(logger).to have_received(:info).with("  src: /tmp/dotsync/src/folder_src -> dest: /tmp/dotsync/dest/folder_dest #{icon_delete}", {icon: :copy}).ordered.once
-      expect(logger).to have_received(:info).with("  src: /tmp/dotsync/src/file2 -> dest: /tmp/dotsync/dest/file2", {icon: :copy}).ordered.once
+      expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
+      expect(logger).to have_received(:info).with("  /tmp/dotsync/src/folder_src → /tmp/dotsync/dest/folder_dest #{icon_force}").ordered.once
+      expect(logger).to have_received(:info).with("  /tmp/dotsync/src/file2 → /tmp/dotsync/dest/file2").ordered.once
     end
 
     it "transfers mappings correctly" do
