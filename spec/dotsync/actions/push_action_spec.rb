@@ -1,22 +1,26 @@
 require "spec_helper"
 
 RSpec.describe Dotsync::PushAction do
-  let(:mappings) do
-    [
-      Dotsync::MappingEntry.new(
-        "src" => "/tmp/dotsync_src1",
-        "dest" => "/tmp/dotsync_dest1",
-        "force" => true,
-        "ignore" => []
-      ),
-      Dotsync::MappingEntry.new(
-        "src" => "/tmp/dotsync_src2",
-        "dest" => "/tmp/dotsync_dest2",
-        "force" => false,
-        "ignore" => []
-      )
-    ]
+  let(:root) { File.join("/tmp", "dotsync") }
+  let(:src) { File.join(root, "src") }
+  let(:dest) { File.join(root, "dest") }
+  let(:mapping1) do
+    Dotsync::MappingEntry.new(
+      "src" => File.join(root, "src1"),
+      "dest" => File.join(root, "dest1"),
+      "force" => true,
+      "ignore" => []
+    )
   end
+  let(:mapping2) do
+    Dotsync::MappingEntry.new(
+      "src" => File.join(root, "src2"),
+      "dest" => File.join(root, "dest2"),
+      "force" => false,
+      "ignore" => []
+    )
+  end
+  let(:mappings) { [mapping1, mapping2] }
   let(:config) do
     instance_double(
       'Dotsync::PushActionConfig',
@@ -31,6 +35,16 @@ RSpec.describe Dotsync::PushAction do
   before do
     allow(logger).to receive(:info)
     allow(logger).to receive(:action)
+    allow(logger).to receive(:error)
+    FileUtils.mkdir_p(root)
+    FileUtils.touch(mapping1.src)
+    FileUtils.touch(mapping1.dest)
+    FileUtils.touch(mapping2.src)
+    FileUtils.touch(mapping2.dest)
+  end
+
+  after do
+    FileUtils.rm_rf(root)
   end
 
   describe '#execute' do
@@ -47,8 +61,8 @@ RSpec.describe Dotsync::PushAction do
       icon_force = Dotsync::Logger::ICONS[:clean]
 
       expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
-      expect(logger).to have_received(:info).with("  /tmp/dotsync_src1 → /tmp/dotsync_dest1 #{icon_force}").ordered.once
-      expect(logger).to have_received(:info).with("  /tmp/dotsync_src2 → /tmp/dotsync_dest2").ordered.once
+      expect(logger).to have_received(:info).with("  /tmp/dotsync/src1 → /tmp/dotsync/dest1 #{icon_force}").ordered.once
+      expect(logger).to have_received(:info).with("  /tmp/dotsync/src2 → /tmp/dotsync/dest2").ordered.once
     end
 
     it "transfers mappings correctly" do
@@ -56,6 +70,23 @@ RSpec.describe Dotsync::PushAction do
 
       expect(file_transfer1).to have_received(:transfer)
       expect(file_transfer2).to have_received(:transfer)
+    end
+
+    context "with invalid mapping" do
+      before do
+        FileUtils.rm(mapping2.src)
+        FileUtils.rm(mapping2.dest)
+      end
+
+      it "transfers mappings correctly and logs skipped invalid mapping" do
+        action.execute
+
+        expect(file_transfer1).to have_received(:transfer)
+        expect(file_transfer2).to_not have_received(:transfer)
+
+        expect(logger).to have_received(:error).with("Skipped invalid mappings:")
+        expect(logger).to have_received(:info).with("  /tmp/dotsync/src2 → /tmp/dotsync/dest2").twice
+      end
     end
   end
 end
