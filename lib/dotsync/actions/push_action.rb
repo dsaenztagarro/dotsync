@@ -34,9 +34,5 @@ module Dotsync
 
       action("Dotfiles pushed", icon: :copy)
     end
-
-    def icon_delete
-      Dotsync::Logger::ICONS[:delete]
-    end
   end
 end

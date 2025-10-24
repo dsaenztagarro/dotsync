@@ -62,9 +62,5 @@ module Dotsync
         mappings.each { |mapping| Dotsync::FileTransfer.new(mapping).transfer }
         action("Dotfiles pulled", icon: :copy)
       end
-
-      def icon_delete
-        Dotsync::Logger::ICONS[:delete]
-      end
   end
 end
