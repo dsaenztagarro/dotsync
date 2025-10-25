@@ -81,6 +81,31 @@ Each mapping entry supports the following options:
 
 These options apply when the source is a directory and are relevant for both `push` and `pull` operations.
 
+### Rendering Mappings with Icons
+
+When running `push` or `pull` actions, the mappings are rendered in the console with relevant icons to provide visual feedback on the status of each mapping. To correctly view these icons, ensure you are using a terminal that supports a patched [Nerd Font](https://www.nerdfonts.com). Below are some examples of how the mappings are displayed:
+
+- **Force Icon**:
+  ```
+  Mappings:
+    $DOTFILES_DIR/config/ → $XDG_CONFIG_HOME ⚡
+  ```
+  The ⚡ icon (`Dotsync::Icons::FORCE`) indicates that the `force` option is enabled and the destination folder will be cleared before the transfer.
+
+- **Ignore Icon**:
+  ```
+  Mappings:
+    $DOTFILES_DIR/home/.zshenv → $HOME 🚫
+  ```
+  The 🚫 icon (`Dotsync::Icons::IGNORE`) indicates that certain files or patterns are being ignored during the transfer.
+
+- **Invalid Icon**:
+  ```
+  Mappings:
+    $DOTFILES_DIR/home/.vimrc → $HOME ❌
+  ```
+  The ❌ icon (`Dotsync::Icons::INVALID`) indicates that the mapping is invalid due to missing source or destination paths.
+
 ### Pro Tips
 
 - **Using rbenv**: To ensure the gem uses the correct Ruby version managed by rbenv, you can run:

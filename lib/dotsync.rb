@@ -10,6 +10,7 @@ require 'ostruct'
 require_relative "dotsync/errors"
 
 # Utils
+require_relative 'dotsync/icons'
 require_relative 'dotsync/logger'
 require_relative 'dotsync/file_transfer'
 require_relative 'dotsync/path_utils'
@@ -21,6 +22,9 @@ require_relative "dotsync/actions/config/base_config"
 require_relative "dotsync/actions/config/pull_action_config"
 require_relative "dotsync/actions/config/push_action_config"
 require_relative "dotsync/actions/config/watch_action_config"
+
+# Concerns
+require_relative "dotsync/actions/concerns/mappings_transfer"
 
 # Actions
 require_relative "dotsync/actions/base_action"

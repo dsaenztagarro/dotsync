@@ -36,10 +36,11 @@ module Dotsync
     end
 
     def to_s
-      ignore_icon = @original_ignores.empty? ? "" : "  #{Dotsync::Logger::ICONS[:ignore]}"
-      force_icon = force? ? " #{ICON_FORCE}" : ""
-      ignore_icon = ignores? ? " #{ICON_IGNORE}" : ""
-      "#{original_src} → #{original_dest}#{force_icon}#{ignore_icon}"
+      msg = ["#{original_src} → #{original_dest}"]
+      msg << Icons::FORCE if force?
+      msg << Icons::IGNORE if ignores?
+      msg << Icons::INVALID unless valid?
+      msg.join(" ")
     end
 
     def applied_to(path)
@@ -58,9 +59,6 @@ module Dotsync
     end
 
     private
-
-    ICON_FORCE = Dotsync::Logger::ICONS[:clean]
-    ICON_IGNORE = Dotsync::Logger::ICONS[:skip]
 
     def ignores?
       @original_ignores.any?

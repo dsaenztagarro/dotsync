@@ -48,6 +48,9 @@ RSpec.describe Dotsync::PushAction do
   end
 
   describe '#execute' do
+    let(:icon_force) { Dotsync::Icons::FORCE }
+    let(:icon_invalid) { Dotsync::Icons::INVALID }
+
     before do
       allow(Dotsync::FileTransfer).to receive(:new).with(mappings[0]).and_return(file_transfer1)
       allow(Dotsync::FileTransfer).to receive(:new).with(mappings[1]).and_return(file_transfer2)
@@ -57,8 +60,6 @@ RSpec.describe Dotsync::PushAction do
 
     it 'shows config' do
       action.execute
-
-      icon_force = Dotsync::Logger::ICONS[:clean]
 
       expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
       expect(logger).to have_received(:info).with("  /tmp/dotsync/src1 → /tmp/dotsync/dest1 #{icon_force}").ordered.once
@@ -81,11 +82,12 @@ RSpec.describe Dotsync::PushAction do
       it "transfers mappings correctly and logs skipped invalid mapping" do
         action.execute
 
+        expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
+        expect(logger).to have_received(:info).with("  /tmp/dotsync/src1 → /tmp/dotsync/dest1 #{icon_force}").ordered.once
+        expect(logger).to have_received(:info).with("  /tmp/dotsync/src2 → /tmp/dotsync/dest2 #{icon_invalid}").ordered.once
+
         expect(file_transfer1).to have_received(:transfer)
         expect(file_transfer2).to_not have_received(:transfer)
-
-        expect(logger).to have_received(:error).with("Skipped invalid mappings:")
-        expect(logger).to have_received(:info).with("  /tmp/dotsync/src2 → /tmp/dotsync/dest2").twice
       end
     end
   end

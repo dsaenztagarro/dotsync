@@ -2,24 +2,6 @@ module Dotsync
   class Logger
     attr_accessor :output
 
-    # 🎨 Nerd Font Icons
-    ICONS = {
-      config:  " ",
-      info:    " ",
-      listen:  " ",
-      error:   " ",
-      watch:   " ",
-      source:  " ", #  ",
-      dest:    " ", # " ",
-      delete:  " ",
-      bell:    " ",
-      copy:    " ",
-      skip:    " ",
-      done:    " ",
-      backup:  " ",
-      clean:   " ",
-    }
-
     def initialize(output = $stdout)
       @output = output
     end
@@ -45,7 +27,7 @@ module Dotsync
     end
 
     def log(type, message, options = {})
-      icon = options[:icon]
+      icon = Icons::MAPPINGS(options[:icon])
       color = {
         info: 103, action: 153, error: 196, event: 141, warning: 31, copy: 32,
         skip: 33, done: 32, backup: 35,

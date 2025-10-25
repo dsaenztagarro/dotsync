@@ -1,6 +1,6 @@
 module Dotsync
   class PushAction < BaseAction
-    def_delegator :@config, :mappings
+    include MappingsTransfer
 
     def execute
       show_config
@@ -10,27 +10,11 @@ module Dotsync
     private
 
     def show_config
-      info("Mappings:", icon: :config)
-
-      mappings.each do |mapping|
-        info("  #{mapping}")
-      end
+      show_mappings
     end
 
     def push_dotfiles
-      valid_mappings, invalid_mappings = mappings.partition(&:valid?)
-
-      valid_mappings.each do |mapping|
-        Dotsync::FileTransfer.new(mapping).transfer
-      end
-
-      if invalid_mappings.any?
-        logger.error("Skipped invalid mappings:")
-
-        invalid_mappings.each do |mapping|
-          logger.info("  #{mapping}")
-        end
-      end
+      transfer_mappings
 
       action("Dotfiles pushed", icon: :copy)
     end

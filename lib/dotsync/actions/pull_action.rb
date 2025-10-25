@@ -1,6 +1,7 @@
 module Dotsync
   class PullAction < BaseAction
-    def_delegator :@config, :mappings
+    include MappingsTransfer
+
     def_delegator :@config, :backups_root
 
     def execute
@@ -15,8 +16,13 @@ module Dotsync
     private
 
       def show_config
-        info("Mappings:", icon: :config)
-        mappings.each { |mapping| info("  #{mapping}") }
+        show_mappings
+      end
+
+      def pull_dotfiles
+        transfer_mappings
+
+        action("Dotfiles pulled", icon: :copy)
       end
 
       def show_backup
@@ -33,7 +39,7 @@ module Dotsync
       end
 
       def create_backup
-        return false unless mappings.any? { |mapping| File.exist?(mapping.dest) }
+        return false unless valid_mappings.any?
         FileUtils.mkdir_p(backup_path)
         mappings.each do |mapping|
           next unless File.exist?(mapping.dest)
@@ -56,11 +62,6 @@ module Dotsync
             info("Old backup deleted: #{path}", icon: :delete)
           end
         end
-      end
-
-      def pull_dotfiles
-        mappings.each { |mapping| Dotsync::FileTransfer.new(mapping).transfer }
-        action("Dotfiles pulled", icon: :copy)
       end
   end
 end
