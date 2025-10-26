@@ -5,7 +5,6 @@ module Dotsync
     def initialize(config, logger)
       super
       setup_listeners
-      # setup_logger_thread
       setup_signal_trap
     end
 
@@ -61,6 +60,7 @@ module Dotsync
           # Using a new thread to handle the signal trap context,
           # as Signal.trap runs in a more restrictive environment
           Thread.new do
+            logger.log("")
             logger.action("Shutting down listeners...")
             @listeners.each(&:stop)
             exit
