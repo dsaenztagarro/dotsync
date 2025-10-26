@@ -29,7 +29,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "listen", "~> 3.9.0"
   spec.add_dependency "fileutils", "~> 1.7.3"
   spec.add_dependency "logger", "~> 1.7.0" # No longer part of default gems from Ruby 3.5
-  spec.add_dependency "ostruct", "~> 0.6.3" # No longer part of default gems from Ruby 3.5
   spec.add_development_dependency "rake", "~> 13.3.0"
   spec.add_development_dependency "rspec", "~> 3.13.1"
   spec.add_development_dependency "rubocop", "~> 1.81.1"

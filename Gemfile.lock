@@ -1,11 +1,10 @@
 PATH
   remote: .
   specs:
-    dotsync (0.1.2)
+    dotsync (0.1.3)
       fileutils (~> 1.7.3)
       listen (~> 3.9.0)
       logger (~> 1.7.0)
-      ostruct (~> 0.6.3)
       toml-rb (~> 4.0.0)
 
 GEM
@@ -33,7 +32,6 @@ GEM
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
     logger (1.7.0)
-    ostruct (0.6.3)
     parallel (1.27.0)
     parser (3.3.9.0)
       ast (~> 2.4.1)
