@@ -14,7 +14,7 @@ module Dotsync
 
       @listeners.each(&:start)
 
-      logger.action("Listening for changes...", icon: :listen)
+      logger.action("Listening for changes...")
       logger.action("Press Ctrl+C to exit.")
       sleep
     end
@@ -57,13 +57,12 @@ module Dotsync
       end
 
       def setup_signal_trap
-        listeners = @listeners.dup
         Signal.trap("INT") do
           # Using a new thread to handle the signal trap context,
           # as Signal.trap runs in a more restrictive environment
           Thread.new do
             logger.action("Shutting down listeners...")
-            listeners.each(&:stop)
+            @listeners.each(&:stop)
             exit
           end
         end

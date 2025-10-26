@@ -33,12 +33,13 @@ RSpec.describe Dotsync::WatchAction do
   end
 
   describe '#execute' do
-    it 'shows config' do
+    it 'shows config and logs listening actions' do
       allow_any_instance_of(Listen::Listener).to receive(:start)
       Thread.new { sleep 0.5; Process.kill('INT', Process.pid) }
 
       expect(logger).to receive(:info).with("Mappings:", icon: :config).ordered.once
       expect(logger).to receive(:log).with("  #{src} → #{dest}").ordered.once
+      expect(logger).to receive(:action).with('Listening for changes...').ordered.once
       expect(logger).to receive(:action).with('Press Ctrl+C to exit.').ordered.once
       expect(logger).to receive(:action).with('Shutting down listeners...').ordered
 
