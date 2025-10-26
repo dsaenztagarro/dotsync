@@ -5,7 +5,7 @@ module Dotsync
     def initialize(config, logger)
       super
       setup_listeners
-      setup_logger_thread
+      # setup_logger_thread
       setup_signal_trap
     end
 
