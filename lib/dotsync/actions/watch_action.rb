@@ -15,15 +15,15 @@ module Dotsync
       @listeners.each(&:start)
 
       logger.action("Listening for changes...", icon: :listen)
-      info("Press Ctrl+C to exit.")
+      logger.action("Press Ctrl+C to exit.")
       sleep
     end
 
     private
 
       def show_config
-        info("Mappings:", icon: :config)
-        mappings.each { |mapping| info("  #{mapping}") }
+        logger.info("Mappings:", icon: :config)
+        mappings.each { |mapping| logger.log("  #{mapping}") }
       end
 
       def setup_listeners
@@ -52,7 +52,7 @@ module Dotsync
           Dotsync::FileTransfer.new(new_mapping).transfer
         end
         removed.each do |path|
-          logger.info("File removed: #{path}", icon: :delete)
+          logger.info("File removed: #{path}", icon: :delete, bold: false)
         end
       end
 
@@ -62,7 +62,7 @@ module Dotsync
           # Using a new thread to handle the signal trap context,
           # as Signal.trap runs in a more restrictive environment
           Thread.new do
-            logger.action("Shutting down listeners...", icon: :bell)
+            logger.action("Shutting down listeners...")
             listeners.each(&:stop)
             exit
           end

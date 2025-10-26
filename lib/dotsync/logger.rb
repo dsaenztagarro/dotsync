@@ -2,43 +2,36 @@ module Dotsync
   class Logger
     attr_accessor :output
 
+    # NOTE: use Rake tasks "palette:fg" and "palette:bg" to select a proper ASCII color code
+
     def initialize(output = $stdout)
       @output = output
     end
 
-    def info(message, options = {})
-      log(:info, message, options)
+    def action(message, color: 153, bold: true, icon: :console)
+      log(message, color: color, bold: bold, icon: icon)
     end
 
-    def action(message, options = {})
-      log(:action, message, options)
+    def info(message, color: 103, bold: true, icon: :info)
+      log(message, color: color, bold: bold, icon: icon)
     end
 
-    def success(message)
-      log(:success, message, icon: :done)
+    def error(message, color: 196, bold: true, icon: :error)
+      log(message, color: color, bold: bold, icon: icon)
     end
 
-    def error(message)
-      log(:error, message, icon: :error)
-    end
+    def log(message, color: 0, bold: false, icon: nil)
+      mapped_icon = Dotsync::Icons::MAPPINGS[icon] if icon
 
-    def warning(message, options = {})
-      log(:warning, message, options)
-    end
+      msg = []
+      msg << "\e[38;5;#{color}m" if color > 0
+      msg << "\e[1m" if bold
+      msg << mapped_icon if mapped_icon
+      msg << message
+      msg << "\e[0m" if color > 0 # reset color
+      msg = msg.join("")
 
-    def log(type, message, options = {})
-      icon = Icons::MAPPINGS(options[:icon])
-      color = {
-        info: 103, action: 153, error: 196, event: 141, warning: 31, copy: 32,
-        skip: 33, done: 32, backup: 35,
-        clean: 34
-      }[type] || 0
-
-      if icon.nil?
-        @output.puts message
-      else
-        @output.puts "\e[38;5;#{color}m\e[1m#{ICONS[icon]}#{message}\e[0m"
-      end
+      @output.puts msg
     end
   end
 end

@@ -77,8 +77,8 @@ RSpec.describe Dotsync::MappingEntry do
     context 'when there are ignores and force enabled' do
       it 'returns a formatted string with force and ignore icons' do
         expect(mapping_entry.to_s).to include("#{mapping_entry.original_src} → #{mapping_entry.original_dest}")
-        expect(mapping_entry.to_s).to include(Dotsync::Icons::FORCE)
-        expect(mapping_entry.to_s).to include(Dotsync::Icons::IGNORE)
+        expect(mapping_entry.to_s).to include(Dotsync::Icons.force)
+        expect(mapping_entry.to_s).to include(Dotsync::Icons.ignore)
       end
     end
 
@@ -93,8 +93,8 @@ RSpec.describe Dotsync::MappingEntry do
       end
 
       it 'returns a formatted string with only the force icon' do
-        expect(mapping_entry.to_s).to include(Dotsync::Icons::FORCE)
-        expect(mapping_entry.to_s).not_to include(Dotsync::Icons::IGNORE)
+        expect(mapping_entry.to_s).to include(Dotsync::Icons.force)
+        expect(mapping_entry.to_s).not_to include(Dotsync::Icons.ignore)
       end
     end
 
@@ -109,8 +109,8 @@ RSpec.describe Dotsync::MappingEntry do
       end
 
       it 'returns a formatted string with only the ignore icon' do
-        expect(mapping_entry.to_s).to include(Dotsync::Icons::IGNORE)
-        expect(mapping_entry.to_s).not_to include(Dotsync::Icons::FORCE)
+        expect(mapping_entry.to_s).to include(Dotsync::Icons.ignore)
+        expect(mapping_entry.to_s).not_to include(Dotsync::Icons.force)
       end
     end
 
@@ -126,8 +126,8 @@ RSpec.describe Dotsync::MappingEntry do
 
       it 'returns a formatted string without force and ignore icons' do
         expect(mapping_entry.to_s).to include("#{mapping_entry.original_src} → #{mapping_entry.original_dest}")
-        expect(mapping_entry.to_s).not_to include(Dotsync::Icons::FORCE)
-        expect(mapping_entry.to_s).not_to include(Dotsync::Icons::IGNORE)
+        expect(mapping_entry.to_s).not_to include(Dotsync::Icons.force)
+        expect(mapping_entry.to_s).not_to include(Dotsync::Icons.ignore)
       end
     end
   end

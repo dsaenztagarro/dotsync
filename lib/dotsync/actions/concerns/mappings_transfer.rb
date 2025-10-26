@@ -5,7 +5,7 @@ module Dotsync
     def_delegator :@config, :mappings
 
     def show_mappings
-      info("Mappings:", icon: :config)
+      info("Mappings:", icon: :config, )
 
       mappings.each do |mapping|
         info("  #{mapping}")

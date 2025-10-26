@@ -48,8 +48,8 @@ RSpec.describe Dotsync::PushAction do
   end
 
   describe '#execute' do
-    let(:icon_force) { Dotsync::Icons::FORCE }
-    let(:icon_invalid) { Dotsync::Icons::INVALID }
+    let(:icon_force) { Dotsync::Icons.force }
+    let(:icon_invalid) { Dotsync::Icons.invalid }
 
     before do
       allow(Dotsync::FileTransfer).to receive(:new).with(mappings[0]).and_return(file_transfer1)

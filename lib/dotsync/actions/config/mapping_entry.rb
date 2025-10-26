@@ -37,9 +37,9 @@ module Dotsync
 
     def to_s
       msg = ["#{original_src} → #{original_dest}"]
-      msg << Icons::FORCE if force?
-      msg << Icons::IGNORE if ignores?
-      msg << Icons::INVALID unless valid?
+      msg << Icons.force if force?
+      msg << Icons.ignore if ignores?
+      msg << Icons.invalid unless valid?
       msg.join(" ")
     end
 

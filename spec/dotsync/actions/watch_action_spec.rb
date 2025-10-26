@@ -24,6 +24,7 @@ RSpec.describe Dotsync::WatchAction do
     [src, dest].each { |path| FileUtils.mkdir_p(path) }
     FileUtils.mkdir_p(dest)
     allow(logger).to receive(:info)
+    allow(logger).to receive(:log)
     allow(logger).to receive(:action)
   end
 
@@ -37,9 +38,9 @@ RSpec.describe Dotsync::WatchAction do
       Thread.new { sleep 0.5; Process.kill('INT', Process.pid) }
 
       expect(logger).to receive(:info).with("Mappings:", icon: :config).ordered.once
-      expect(logger).to receive(:info).with("  #{src} → #{dest}").ordered.once
-      expect(logger).to receive(:info).with('Press Ctrl+C to exit.').ordered.once
-      expect(logger).to receive(:action).with('Shutting down listeners...', icon: :bell).ordered
+      expect(logger).to receive(:log).with("  #{src} → #{dest}").ordered.once
+      expect(logger).to receive(:action).with('Press Ctrl+C to exit.').ordered.once
+      expect(logger).to receive(:action).with('Shutting down listeners...').ordered
 
       expect { action.execute }.to raise_error(SystemExit)
     end
