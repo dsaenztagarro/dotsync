@@ -6,6 +6,7 @@ Extracted icons to its own module
 Reviewed icons
 Updated README with existing mapping entries icons
 Customizable icons
+Logger review
 
 # 0.1.2
 
