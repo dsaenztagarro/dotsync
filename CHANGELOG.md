@@ -1,3 +1,8 @@
+# 0.1.4
+
+Colorized environment variables
+Fixed colorized mapping entries
+
 # 0.1.3
 
 PushAction: Avoid error on missing destination

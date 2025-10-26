@@ -34,8 +34,9 @@ RSpec.describe Dotsync::PushAction do
 
   before do
     allow(logger).to receive(:info)
-    allow(logger).to receive(:action)
     allow(logger).to receive(:error)
+    allow(logger).to receive(:log)
+    allow(logger).to receive(:action)
     FileUtils.mkdir_p(root)
     FileUtils.touch(mapping1.src)
     FileUtils.touch(mapping1.dest)
@@ -62,8 +63,8 @@ RSpec.describe Dotsync::PushAction do
       action.execute
 
       expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
-      expect(logger).to have_received(:info).with("  /tmp/dotsync/src1 → /tmp/dotsync/dest1 #{icon_force}").ordered.once
-      expect(logger).to have_received(:info).with("  /tmp/dotsync/src2 → /tmp/dotsync/dest2").ordered.once
+      expect(logger).to have_received(:log).with("  /tmp/dotsync/src1 → /tmp/dotsync/dest1 #{icon_force}").ordered.once
+      expect(logger).to have_received(:log).with("  /tmp/dotsync/src2 → /tmp/dotsync/dest2").ordered.once
     end
 
     it "transfers mappings correctly" do
@@ -83,8 +84,8 @@ RSpec.describe Dotsync::PushAction do
         action.execute
 
         expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
-        expect(logger).to have_received(:info).with("  /tmp/dotsync/src1 → /tmp/dotsync/dest1 #{icon_force}").ordered.once
-        expect(logger).to have_received(:info).with("  /tmp/dotsync/src2 → /tmp/dotsync/dest2 #{icon_invalid}").ordered.once
+        expect(logger).to have_received(:log).with("  /tmp/dotsync/src1 → /tmp/dotsync/dest1 #{icon_force}").ordered.once
+        expect(logger).to have_received(:log).with("  /tmp/dotsync/src2 → /tmp/dotsync/dest2 #{icon_invalid}").ordered.once
 
         expect(file_transfer1).to have_received(:transfer)
         expect(file_transfer2).to_not have_received(:transfer)

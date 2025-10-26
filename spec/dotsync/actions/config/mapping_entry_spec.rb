@@ -74,11 +74,12 @@ RSpec.describe Dotsync::MappingEntry do
   end
 
   describe '#to_s' do
+    let(:subject) { mapping_entry.to_s }
     context 'when there are ignores and force enabled' do
       it 'returns a formatted string with force and ignore icons' do
-        expect(mapping_entry.to_s).to include("#{mapping_entry.original_src} → #{mapping_entry.original_dest}")
-        expect(mapping_entry.to_s).to include(Dotsync::Icons.force)
-        expect(mapping_entry.to_s).to include(Dotsync::Icons.ignore)
+        expect(subject).to include("#{mapping_entry.original_src} → #{mapping_entry.original_dest}")
+        expect(subject).to include(Dotsync::Icons.force)
+        expect(subject).to include(Dotsync::Icons.ignore)
       end
     end
 
@@ -93,8 +94,8 @@ RSpec.describe Dotsync::MappingEntry do
       end
 
       it 'returns a formatted string with only the force icon' do
-        expect(mapping_entry.to_s).to include(Dotsync::Icons.force)
-        expect(mapping_entry.to_s).not_to include(Dotsync::Icons.ignore)
+        expect(subject).to include(Dotsync::Icons.force)
+        expect(subject).not_to include(Dotsync::Icons.ignore)
       end
     end
 
@@ -109,8 +110,8 @@ RSpec.describe Dotsync::MappingEntry do
       end
 
       it 'returns a formatted string with only the ignore icon' do
-        expect(mapping_entry.to_s).to include(Dotsync::Icons.ignore)
-        expect(mapping_entry.to_s).not_to include(Dotsync::Icons.force)
+        expect(subject).to include(Dotsync::Icons.ignore)
+        expect(subject).not_to include(Dotsync::Icons.force)
       end
     end
 
@@ -125,11 +126,19 @@ RSpec.describe Dotsync::MappingEntry do
       end
 
       it 'returns a formatted string without force and ignore icons' do
-        expect(mapping_entry.to_s).to include("#{mapping_entry.original_src} → #{mapping_entry.original_dest}")
-        expect(mapping_entry.to_s).not_to include(Dotsync::Icons.force)
-        expect(mapping_entry.to_s).not_to include(Dotsync::Icons.ignore)
+        expect(subject).to include("#{mapping_entry.original_src} → #{mapping_entry.original_dest}")
+        expect(subject).not_to include(Dotsync::Icons.force)
+        expect(subject).not_to include(Dotsync::Icons.ignore)
+      end
+    end
+
+    context "when src and dest contains env vars" do
+      let(:root) { "$HOME" }
+      let(:color) { 104 }
+
+      it 'returns colorized env vars' do
+        expect(subject).to include("\e[38;5;#{color}m$HOME\e[0m/src → \e[38;5;#{color}m$HOME\e[0m/dest 󰁪  󰈉  󱏏 ")
       end
     end
   end
 end
-

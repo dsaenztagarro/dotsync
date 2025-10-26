@@ -1,7 +1,13 @@
 module Dotsync
   module PathUtils
+    ENV_VARS_COLOR = 104
+
     def expand_env_vars(path)
       path.gsub(/\$(\w+)/) { ENV[$1] }
+    end
+
+    def colorize_env_vars(path)
+      path.gsub(/\$(\w+)/) { "\e[38;5;#{ENV_VARS_COLOR}m$#{$1}\e[0m" }
     end
 
     # Translates /tmp paths to /private/tmp paths on macOS

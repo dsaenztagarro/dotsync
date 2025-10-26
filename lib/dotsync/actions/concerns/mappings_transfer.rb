@@ -8,7 +8,7 @@ module Dotsync
       info("Mappings:", icon: :config, )
 
       mappings.each do |mapping|
-        info("  #{mapping}")
+        logger.log("  #{mapping}")
       end
     end
 

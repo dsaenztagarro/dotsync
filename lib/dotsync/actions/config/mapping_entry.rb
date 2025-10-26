@@ -36,7 +36,9 @@ module Dotsync
     end
 
     def to_s
-      msg = ["#{original_src} → #{original_dest}"]
+      colorized_src = colorize_env_vars(original_src)
+      colorized_dest = colorize_env_vars(original_dest)
+      msg = ["#{colorized_src} → #{colorized_dest}"]
       msg << Icons.force if force?
       msg << Icons.ignore if ignores?
       msg << Icons.invalid unless valid?

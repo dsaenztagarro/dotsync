@@ -27,7 +27,7 @@ module Dotsync
 
       def show_backup
         action("Backup created:", icon: :backup)
-        info("  #{backup_path}")
+        logger.log("  #{backup_path}")
       end
 
       def timestamp

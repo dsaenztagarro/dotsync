@@ -40,6 +40,7 @@ RSpec.describe Dotsync::PullAction do
   before do
     allow(logger).to receive(:info)
     allow(logger).to receive(:error)
+    allow(logger).to receive(:log)
     allow(logger).to receive(:action)
     FileUtils.mkdir_p(mapping1.src)
     FileUtils.mkdir_p(mapping1.dest)
@@ -66,8 +67,8 @@ RSpec.describe Dotsync::PullAction do
       action.execute
 
       expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
-      expect(logger).to have_received(:info).with("  /tmp/dotsync/src/folder_src → /tmp/dotsync/dest/folder_dest #{icon_force}").ordered.once
-      expect(logger).to have_received(:info).with("  /tmp/dotsync/src/file2 → /tmp/dotsync/dest/file2").ordered.once
+      expect(logger).to have_received(:log).with("  /tmp/dotsync/src/folder_src → /tmp/dotsync/dest/folder_dest #{icon_force}").ordered.once
+      expect(logger).to have_received(:log).with("  /tmp/dotsync/src/file2 → /tmp/dotsync/dest/file2").ordered.once
     end
 
     it "transfers mappings correctly" do
@@ -87,8 +88,8 @@ RSpec.describe Dotsync::PullAction do
         action.execute
 
         expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
-        expect(logger).to have_received(:info).with("  /tmp/dotsync/src/folder_src → /tmp/dotsync/dest/folder_dest #{icon_force}").ordered.once
-        expect(logger).to have_received(:info).with("  /tmp/dotsync/src/file2 → /tmp/dotsync/dest/file2 #{icon_invalid}").ordered.once
+        expect(logger).to have_received(:log).with("  /tmp/dotsync/src/folder_src → /tmp/dotsync/dest/folder_dest #{icon_force}").ordered.once
+        expect(logger).to have_received(:log).with("  /tmp/dotsync/src/file2 → /tmp/dotsync/dest/file2 #{icon_invalid}").ordered.once
 
         expect(file_transfer1).to have_received(:transfer)
         expect(file_transfer2).to_not have_received(:transfer)
@@ -131,7 +132,7 @@ RSpec.describe Dotsync::PullAction do
           expect(File.read(File.join(backup_dir, "file2"))).to eq("#{file2_dest} content")
 
           expect(logger).to have_received(:action).with("Backup created:", icon: :backup)
-          expect(logger).to have_received(:info).with("  #{backup_dir}")
+          expect(logger).to have_received(:log).with("  #{backup_dir}")
         end
 
         context 'when there are more than 10 backups' do
