@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dotsync
   # BaseConfig serves as an abstract class to define the structure
   # and validation rules for configuration files in the Dotsync system.
@@ -15,7 +17,6 @@ module Dotsync
     end
 
     private
-
       # Validates the configuration file.
       #
       # @raise [NotImplementedError] if not implemented by a subclass.

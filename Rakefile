@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 require "bundler/gem_tasks"
 require "rspec/core/rake_task"
 
-require 'dotsync'
+require "dotsync"
 
 # Load all tasks
-Dir.glob(File.join(Gem.loaded_specs['dotsync'].full_gem_path, 'lib', 'dotsync', 'tasks', '**/*.rake')).each { |f| load f }
+Dir.glob(File.join(Gem.loaded_specs["dotsync"].full_gem_path, "lib", "dotsync", "tasks", "**/*.rake")).each { |f| load f }
 
 RSpec::Core::RakeTask.new(:spec) do |t|
   # ENV['TEST_ENV'] = 'true'

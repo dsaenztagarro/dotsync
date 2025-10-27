@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dotsync
   module MappingsTransfer
     extend Forwardable # def_delegator
@@ -5,7 +7,7 @@ module Dotsync
     def_delegator :@config, :mappings
 
     def show_mappings
-      info("Mappings:", icon: :config, )
+      info("Mappings:", icon: :config,)
 
       mappings.each do |mapping|
         logger.log("  #{mapping}")

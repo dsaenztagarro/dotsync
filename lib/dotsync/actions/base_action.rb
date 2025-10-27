@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dotsync
   class BaseAction
     include Dotsync::PathUtils

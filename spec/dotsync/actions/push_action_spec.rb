@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 RSpec.describe Dotsync::PushAction do
@@ -23,7 +25,7 @@ RSpec.describe Dotsync::PushAction do
   let(:mappings) { [mapping1, mapping2] }
   let(:config) do
     instance_double(
-      'Dotsync::PushActionConfig',
+      "Dotsync::PushActionConfig",
       mappings: mappings
     )
   end
@@ -48,7 +50,7 @@ RSpec.describe Dotsync::PushAction do
     FileUtils.rm_rf(root)
   end
 
-  describe '#execute' do
+  describe "#execute" do
     let(:icon_force) { Dotsync::Icons.force }
     let(:icon_invalid) { Dotsync::Icons.invalid }
 
@@ -59,7 +61,7 @@ RSpec.describe Dotsync::PushAction do
       allow(file_transfer2).to receive(:transfer)
     end
 
-    it 'shows config' do
+    it "shows config" do
       action.execute
 
       expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once

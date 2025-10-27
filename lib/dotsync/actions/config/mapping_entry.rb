@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dotsync
   class MappingEntry
     include Dotsync::PathUtils
@@ -32,7 +34,19 @@ module Dotsync
     end
 
     def valid?
-      File.exist?(@sanitized_src) && File.exist?(File.dirname(@sanitized_dest))
+      (File.file?(src) && File.file?(dest)) ||
+      (File.directory?(src) && File.directory?(dest)) ||
+      (File.file?(src) && !File.exist?(dest) && File.directory?(File.dirname(dest)))
+    end
+
+    def backup_possible?
+      valid? && File.exist?(dest)
+    end
+
+    def backup_basename
+      return unless valid?
+      return File.dirname(dest) unless File.exist?(dest)
+      File.basename(dest)
     end
 
     def to_s
@@ -61,10 +75,8 @@ module Dotsync
     end
 
     private
-
-    def ignores?
-      @original_ignores.any?
-    end
+      def ignores?
+        @original_ignores.any?
+      end
   end
 end
-

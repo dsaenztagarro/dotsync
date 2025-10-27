@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dotsync
   module Icons
     # Log level icons

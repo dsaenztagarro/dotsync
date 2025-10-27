@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dotsync
   class PullActionConfig < BaseConfig
     include XDGBaseDirectorySpec
@@ -12,7 +14,6 @@ module Dotsync
     end
 
     private
-
       SECTION_NAME = "pull"
 
       def section_name

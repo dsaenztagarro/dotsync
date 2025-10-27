@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 desc "Sync Dotfiles"
 task :sync do
-  ds = Dotsync::SyncAction.new
+  Dotsync::SyncAction.new
 end
 
 desc "Watch Dotfiles"

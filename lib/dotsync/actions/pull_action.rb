@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dotsync
   class PullAction < BaseAction
     include MappingsTransfer
@@ -14,7 +16,6 @@ module Dotsync
     end
 
     private
-
       def show_config
         show_mappings
       end
@@ -27,33 +28,34 @@ module Dotsync
 
       def show_backup
         action("Backup created:", icon: :backup)
-        logger.log("  #{backup_path}")
+        logger.log("  #{backup_root_path}")
       end
 
       def timestamp
-        Time.now.strftime('%Y%m%d%H%M%S')
+        Time.now.strftime("%Y%m%d%H%M%S")
       end
 
-      def backup_path
-        @backup_path ||= File.join(backups_root, timestamp)
+      def backup_root_path
+        @backup_root_path ||= File.join(backups_root, timestamp)
       end
 
       def create_backup
         return false unless valid_mappings.any?
-        FileUtils.mkdir_p(backup_path)
-        mappings.each do |mapping|
-          next unless File.exist?(mapping.dest)
+        FileUtils.mkdir_p(backup_root_path)
+        valid_mappings.each do |mapping|
+          next unless mapping.backup_possible?
+          backup_path = File.join(backup_root_path, mapping.backup_basename)
           if File.file?(mapping.src)
-            FileUtils.cp(mapping.dest, File.join(backup_path, File.basename(mapping.dest)))
+            FileUtils.cp(mapping.dest, backup_path)
           else
-            FileUtils.cp_r(mapping.dest, File.join(backup_path, File.basename(mapping.dest)))
+            FileUtils.cp_r(mapping.dest, backup_path)
           end
         end
         true
       end
 
       def purge_old_backups
-        backups = Dir[File.join(backups_root, '*')].sort.reverse
+        backups = Dir[File.join(backups_root, "*")].sort.reverse
         if backups.size > 10
           info("Maximum of 10 backups retained")
 

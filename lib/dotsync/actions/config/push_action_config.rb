@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dotsync
   class PushActionConfig < BaseConfig
     def mappings
@@ -6,7 +8,6 @@ module Dotsync
     end
 
     private
-
       SECTION_NAME = "push"
 
       def section_name

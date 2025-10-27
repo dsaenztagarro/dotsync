@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dotsync
   module PathUtils
     ENV_VARS_COLOR = 104
@@ -15,8 +17,8 @@ module Dotsync
     # @param [String] path The input path to translate
     # @return [String] The translated path
     def translate_tmp_path(path)
-      if path.start_with?('/tmp') && RUBY_PLATFORM.include?('darwin')
-        path.sub('/tmp', '/private/tmp')
+      if path.start_with?("/tmp") && RUBY_PLATFORM.include?("darwin")
+        path.sub("/tmp", "/private/tmp")
       else
         path
       end

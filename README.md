@@ -11,7 +11,7 @@ Welcome to Dotsync! This gem helps you manage and synchronize your dotfiles effo
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'dotsync'
+gem "dotsync"
 ```
 
 And then execute:

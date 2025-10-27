@@ -1,17 +1,21 @@
+# 0.1.5
+
+Fixes backup when destination folder does not exist
+
 # 0.1.4
 
-Colorized environment variables
-Fixed colorized mapping entries
+- Colorized environment variables
+- Fixed colorized mapping entries
 
 # 0.1.3
 
-PushAction: Avoid error on missing destination
-Unify mappings print. Use icon for ignores presence.
-Extracted icons to its own module
-Reviewed icons
-Updated README with existing mapping entries icons
-Customizable icons
-Logger review
+- PushAction: Avoid error on missing destination
+- Unify mappings print. Use icon for ignores presence.
+- Extracted icons to its own module
+- Reviewed icons
+- Updated README with existing mapping entries icons
+- Customizable icons
+- Logger review
 
 # 0.1.2
 

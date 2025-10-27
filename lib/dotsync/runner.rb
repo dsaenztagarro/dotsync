@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dotsync
   class Runner
     def initialize(logger: nil)
@@ -32,42 +34,41 @@ module Dotsync
     end
 
     private
+      def setup_config
+        require "toml-rb"
+        require "fileutils"
 
-    def setup_config
-      require 'toml-rb'
-      require 'fileutils'
+        config_path = File.expand_path(Dotsync.config_path)
+        FileUtils.mkdir_p(File.dirname(config_path))
 
-      config_path = File.expand_path(Dotsync.config_path)
-      FileUtils.mkdir_p(File.dirname(config_path))
-
-      example_mappings = {
-        "pull" => {
-          "mappings" => [
-            { "src" => "$DOTFILES_DIR/config/", "dest" => "$XDG_CONFIG_HOME", "force" => false },
-            { "src" => "$DOTFILES_DIR/home/.zshenv", "dest" => "$HOME" }
-          ],
-        },
-        "push" => {
-          "mappings" => [
-            { "src" => "$HOME/.zshenv", "dest" => "$DOTFILES_DIR/home/.zshenv" },
-            { "src" => "$XDG_CONFIG_HOME/alacritty", "dest" => "$DOTFILES_DIR/config/alacritty" }
-          ]
-        },
-        "watch" => {
-          "mappings" => [
-            { "src" => "$HOME/.zshenv", "dest" => "$DOTFILES_DIR/home/.zshenv" },
-            { "src" => "$XDG_CONFIG_HOME/alacritty", "dest" => "$DOTFILES_DIR/config/alacritty" }
-          ]
+        example_mappings = {
+          "pull" => {
+            "mappings" => [
+              { "src" => "$DOTFILES_DIR/config/", "dest" => "$XDG_CONFIG_HOME", "force" => false },
+              { "src" => "$DOTFILES_DIR/home/.zshenv", "dest" => "$HOME" }
+            ],
+          },
+          "push" => {
+            "mappings" => [
+              { "src" => "$HOME/.zshenv", "dest" => "$DOTFILES_DIR/home/.zshenv" },
+              { "src" => "$XDG_CONFIG_HOME/alacritty", "dest" => "$DOTFILES_DIR/config/alacritty" }
+            ]
+          },
+          "watch" => {
+            "mappings" => [
+              { "src" => "$HOME/.zshenv", "dest" => "$DOTFILES_DIR/home/.zshenv" },
+              { "src" => "$XDG_CONFIG_HOME/alacritty", "dest" => "$DOTFILES_DIR/config/alacritty" }
+            ]
+          }
         }
-      }
 
-      File.write(config_path, TomlRB.dump(example_mappings))
-      @logger.info("Configuration file created at #{config_path}")
-    end
+        File.write(config_path, TomlRB.dump(example_mappings))
+        @logger.info("Configuration file created at #{config_path}")
+      end
 
-    # Utility to convert 'pull' to 'Pull', 'sync' to 'Sync', etc.
-    def camelize(str)
-      str.split('_').map(&:capitalize).join
-    end
+      # Utility to convert 'pull' to 'Pull', 'sync' to 'Sync', etc.
+      def camelize(str)
+        str.split("_").map(&:capitalize).join
+      end
   end
 end

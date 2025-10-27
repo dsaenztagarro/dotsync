@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require "spec_helper"
 
 RSpec.describe Dotsync::MappingEntry do
   include Dotsync::PathUtils
@@ -30,26 +32,26 @@ RSpec.describe Dotsync::MappingEntry do
     FileUtils.rm_rf(root)
   end
 
-  describe '#src' do
-    it 'returns the sanitized expanded source path' do
+  describe "#src" do
+    it "returns the sanitized expanded source path" do
       expect(mapping_entry.src).to eq(sanitize_path(src))
     end
   end
 
-  describe '#dest' do
-    it 'returns the sanitized expanded destination path' do
+  describe "#dest" do
+    it "returns the sanitized expanded destination path" do
       expect(mapping_entry.dest).to eq(sanitize_path(dest))
     end
   end
 
-  describe '#force?' do
-    it 'returns true if force is enabled' do
+  describe "#force?" do
+    it "returns true if force is enabled" do
       expect(mapping_entry.force?).to be true
     end
   end
 
-  describe '#ignores' do
-    it 'returns the sanitized expanded paths of ignored files/folders' do
+  describe "#ignores" do
+    it "returns the sanitized expanded paths of ignored files/folders" do
       expect(mapping_entry.ignores).to include(
         sanitize_path(ignored_file),
         sanitize_path(ignored_folder)
@@ -57,33 +59,33 @@ RSpec.describe Dotsync::MappingEntry do
     end
   end
 
-  describe '#valid?' do
-    context 'when both src and dest exist' do
-      it 'returns true' do
+  describe "#valid?" do
+    context "when both src and dest exist" do
+      it "returns true" do
         expect(mapping_entry.valid?).to be true
       end
     end
 
-    context 'when either src or dest does not exist' do
+    context "when either src or dest does not exist" do
       before { FileUtils.rm_rf(src) }
 
-      it 'returns false' do
+      it "returns false" do
         expect(mapping_entry.valid?).to be false
       end
     end
   end
 
-  describe '#to_s' do
+  describe "#to_s" do
     let(:subject) { mapping_entry.to_s }
-    context 'when there are ignores and force enabled' do
-      it 'returns a formatted string with force and ignore icons' do
+    context "when there are ignores and force enabled" do
+      it "returns a formatted string with force and ignore icons" do
         expect(subject).to include("#{mapping_entry.original_src} → #{mapping_entry.original_dest}")
         expect(subject).to include(Dotsync::Icons.force)
         expect(subject).to include(Dotsync::Icons.ignore)
       end
     end
 
-    context 'when only force is enabled' do
+    context "when only force is enabled" do
       let(:mapping_hash) do
         {
           "src" => src,
@@ -93,13 +95,13 @@ RSpec.describe Dotsync::MappingEntry do
         }
       end
 
-      it 'returns a formatted string with only the force icon' do
+      it "returns a formatted string with only the force icon" do
         expect(subject).to include(Dotsync::Icons.force)
         expect(subject).not_to include(Dotsync::Icons.ignore)
       end
     end
 
-    context 'when only ignores are specified' do
+    context "when only ignores are specified" do
       let(:mapping_hash) do
         {
           "src" => src,
@@ -109,13 +111,13 @@ RSpec.describe Dotsync::MappingEntry do
         }
       end
 
-      it 'returns a formatted string with only the ignore icon' do
+      it "returns a formatted string with only the ignore icon" do
         expect(subject).to include(Dotsync::Icons.ignore)
         expect(subject).not_to include(Dotsync::Icons.force)
       end
     end
 
-    context 'when there are no ignores and force is disabled' do
+    context "when there are no ignores and force is disabled" do
       let(:mapping_hash) do
         {
           "src" => src,
@@ -125,7 +127,7 @@ RSpec.describe Dotsync::MappingEntry do
         }
       end
 
-      it 'returns a formatted string without force and ignore icons' do
+      it "returns a formatted string without force and ignore icons" do
         expect(subject).to include("#{mapping_entry.original_src} → #{mapping_entry.original_dest}")
         expect(subject).not_to include(Dotsync::Icons.force)
         expect(subject).not_to include(Dotsync::Icons.ignore)
@@ -136,7 +138,7 @@ RSpec.describe Dotsync::MappingEntry do
       let(:root) { "$HOME" }
       let(:color) { 104 }
 
-      it 'returns colorized env vars' do
+      it "returns colorized env vars" do
         expect(subject).to include("\e[38;5;#{color}m$HOME\e[0m/src → \e[38;5;#{color}m$HOME\e[0m/dest 󰁪  󰈉  󱏏 ")
       end
     end

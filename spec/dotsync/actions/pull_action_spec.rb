@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 RSpec.describe Dotsync::PullAction do
@@ -27,7 +29,7 @@ RSpec.describe Dotsync::PullAction do
   let(:backups_root) { File.join(root, "backups") }
   let(:config) do
     instance_double(
-      'Dotsync::PullActionConfig',
+      "Dotsync::PullActionConfig",
       mappings: mappings,
       backups_root: backups_root
     )
@@ -52,7 +54,7 @@ RSpec.describe Dotsync::PullAction do
     FileUtils.rm_rf(root)
   end
 
-  describe '#execute' do
+  describe "#execute" do
     let(:icon_force) { Dotsync::Icons.force }
     let(:icon_invalid) { Dotsync::Icons.invalid }
 
@@ -63,7 +65,7 @@ RSpec.describe Dotsync::PullAction do
       allow(file_transfer2).to receive(:transfer)
     end
 
-    it 'shows config' do
+    it "shows config" do
       action.execute
 
       expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
@@ -93,26 +95,25 @@ RSpec.describe Dotsync::PullAction do
 
         expect(file_transfer1).to have_received(:transfer)
         expect(file_transfer2).to_not have_received(:transfer)
-
       end
     end
 
     context "backup" do
-      context 'without valid mappings' do
+      context "without valid mappings" do
         before do
           FileUtils.rm_rf(dest)
         end
 
-        it 'does not create a backup folder' do
+        it "does not create a backup folder" do
           action.execute
 
-          timestamp = Time.now.strftime('%Y%m%d%H%M%S')
+          timestamp = Time.now.strftime("%Y%m%d%H%M%S")
           backup_dir = File.join(backups_root, timestamp)
           expect(Dir.exist?(backup_dir)).to eq(false)
         end
       end
 
-      context 'with valid mappings' do
+      context "with valid mappings" do
         before do
           require "timecop"
           Timecop.freeze(2025, 2, 1)
@@ -122,10 +123,10 @@ RSpec.describe Dotsync::PullAction do
           files.each { |file| File.write(file, "#{file} content") }
         end
 
-        it 'creates a backup with the proper content' do
+        it "creates a backup with the proper content" do
           action.execute
 
-          timestamp = Time.now.strftime('%Y%m%d%H%M%S')
+          timestamp = Time.now.strftime("%Y%m%d%H%M%S")
           backup_dir = File.join(backups_root, timestamp)
           expect(Dir.exist?(backup_dir)).to eq(true)
           expect(File.read(File.join(backup_dir, "folder_dest", "file1"))).to eq("#{file1_dest} content")
@@ -135,18 +136,18 @@ RSpec.describe Dotsync::PullAction do
           expect(logger).to have_received(:log).with("  #{backup_dir}")
         end
 
-        context 'when there are more than 10 backups' do
+        context "when there are more than 10 backups" do
           before do
             1.upto(12) do |day|
-              date = Date.new(2025, 1, day).strftime('%Y%m%d%H%M%S')
+              date = Date.new(2025, 1, day).strftime("%Y%m%d%H%M%S")
               FileUtils.mkdir_p(File.join(backups_root, date))
             end
           end
 
-          it 'cleans up old backups and creates a new one' do
+          it "cleans up old backups and creates a new one" do
             action.execute
 
-            expect(Dir[File.join(backups_root, '*')].size).to eq(10)
+            expect(Dir[File.join(backups_root, "*")].size).to eq(10)
             expect(logger).to have_received(:info).with("Maximum of 10 backups retained")
             1.upto(2) do |day|
               expect(logger).to have_received(:info).with("Old backup deleted: #{File.join(backups_root, "2025010#{day}000000")}", icon: :delete)

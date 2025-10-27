@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dotsync
   class WatchAction < BaseAction
     def_delegator :@config, :mappings
@@ -19,7 +21,6 @@ module Dotsync
     end
 
     private
-
       def show_config
         logger.info("Mappings:", icon: :config)
         mappings.each { |mapping| logger.log("  #{mapping}") }

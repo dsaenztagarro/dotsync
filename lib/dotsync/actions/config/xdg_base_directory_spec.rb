@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dotsync
   # https://specifications.freedesktop.org/basedir-spec/latest/
   module XDGBaseDirectorySpec

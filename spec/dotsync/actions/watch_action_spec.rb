@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require "spec_helper"
 
 RSpec.describe Dotsync::WatchAction do
   include Dotsync::PathUtils
@@ -13,7 +15,7 @@ RSpec.describe Dotsync::WatchAction do
   end
   let(:config) do
     instance_double(
-      'Dotsync::WatchActionConfig',
+      "Dotsync::WatchActionConfig",
       mappings: mappings
     )
   end
@@ -32,21 +34,21 @@ RSpec.describe Dotsync::WatchAction do
     FileUtils.rm_rf(root)
   end
 
-  describe '#execute' do
-    it 'shows config and logs listening actions' do
+  describe "#execute" do
+    it "shows config and logs listening actions" do
       allow_any_instance_of(Listen::Listener).to receive(:start)
-      Thread.new { sleep 0.5; Process.kill('INT', Process.pid) }
+      Thread.new { sleep 0.5; Process.kill("INT", Process.pid) }
 
       expect(logger).to receive(:info).with("Mappings:", icon: :config).ordered.once
       expect(logger).to receive(:log).with("  #{src} → #{dest}").ordered.once
-      expect(logger).to receive(:action).with('Listening for changes...').ordered.once
-      expect(logger).to receive(:action).with('Press Ctrl+C to exit.').ordered.once
-      expect(logger).to receive(:action).with('Shutting down listeners...').ordered
+      expect(logger).to receive(:action).with("Listening for changes...").ordered.once
+      expect(logger).to receive(:action).with("Press Ctrl+C to exit.").ordered.once
+      expect(logger).to receive(:action).with("Shutting down listeners...").ordered
 
       expect { action.execute }.to raise_error(SystemExit)
     end
 
-    it 'copies a file to the destination and logs the action when added' do
+    it "copies a file to the destination and logs the action when added" do
       testfile_src = File.join(src, "testfile")
       testfile_dest = File.join(dest, "testfile")
       sanitized_src = sanitize_path testfile_src
@@ -57,9 +59,9 @@ RSpec.describe Dotsync::WatchAction do
 
       Thread.new do
         sleep 0.5 # Ensure listeners ready
-        File.write(testfile_src, 'source content')
+        File.write(testfile_src, "source content")
         sleep 0.5 # Ensure files handled
-        Process.kill('INT', Process.pid)
+        Process.kill("INT", Process.pid)
       end
 
       expect(FileUtils).to receive(:mkdir_p).with(File.dirname(sanitized_dest)).ordered

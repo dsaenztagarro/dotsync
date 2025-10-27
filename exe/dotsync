@@ -1,9 +1,10 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
-require_relative '../lib/dotsync'
-require 'optparse'
+require_relative "../lib/dotsync"
+require "optparse"
 
-options = {}
+{}
 
 opt_parser = OptionParser.new do |opts|
   opts.banner = <<~BANNER
@@ -44,4 +45,3 @@ else
   end
   exit 1
 end
-
