@@ -17,8 +17,8 @@ module Dotsync
           config_class = Dotsync.const_get("#{camelize(action_name.to_s)}ActionConfig")
 
           config = config_class.new(Dotsync.config_path)
-          Dotsync::Icons.load_custom_icons(config)
-          Dotsync::Colors.load_custom_colors(config)
+          Dotsync::Icons.load_custom_icons(config.to_h)
+          Dotsync::Colors.load_custom_colors(config.to_h)
 
           action = action_class.new(config, @logger)
 

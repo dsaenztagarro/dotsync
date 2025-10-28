@@ -10,9 +10,9 @@ module Dotsync
 
     def self.load_custom_colors(config)
       @custom_colors = {
-        diff_additions: config.dig("colors", "diff_additions") || DEFAULT_FORCE,
-        diff_modifications: config.dig("colors", "diff_modifications") || DEFAULT_IGNORE,
-        diff_removals: config.dig("colors", "diff_removals") || DEFAULT_INVALID
+        diff_additions: config.dig("colors", "diff_additions") || DEFAULT_DIFF_ADDITIONS,
+        diff_modifications: config.dig("colors", "diff_modifications") || DEFAULT_DIFF_MODIFICATIONS,
+        diff_removals: config.dig("colors", "diff_removals") || DEFAULT_DIFF_REMOVALS
       }
     end
 

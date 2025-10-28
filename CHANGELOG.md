@@ -1,3 +1,7 @@
+# 0.1.7
+
+- Fixes broken runner
+
 # 0.1.6
 
 - Show diff changes on PushAction and PullAction.

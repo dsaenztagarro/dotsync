@@ -16,6 +16,10 @@ module Dotsync
       validate!
     end
 
+    def to_h
+      @config
+    end
+
     private
       # Validates the configuration file.
       #
