@@ -8,7 +8,6 @@
 - Fixes backup when destination folder does not exist
 - Add rubocop to Github Actions
 
-
 # 0.1.4
 
 - Colorized environment variables
