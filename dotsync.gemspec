@@ -37,6 +37,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rubocop", "~> 1.81.1"
   spec.add_development_dependency "rubocop-rspec"
   spec.add_development_dependency "rubocop-performance"
+  spec.add_development_dependency "rubocop-rake"
   spec.add_development_dependency "rubocop-md"
   spec.add_development_dependency "timecop", "~> 0.9.10"
   spec.add_development_dependency "ruby-lsp", "~> 0.26.1"

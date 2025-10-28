@@ -1,6 +1,8 @@
 # 0.1.5
 
-Fixes backup when destination folder does not exist
+- Fixes backup when destination folder does not exist
+- Add rubocop
+
 
 # 0.1.4
 

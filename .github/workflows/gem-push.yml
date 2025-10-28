@@ -29,6 +29,10 @@ jobs:
         run: |
           bundle exec rake
 
+      - name: Run RuboCop
+        run: |
+          bundle exec rubocop
+
       - name: Publish to RubyGems
         if: matrix.ruby == '3.2'
         run: |
