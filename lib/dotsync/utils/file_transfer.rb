@@ -21,6 +21,7 @@ module Dotsync
     end
 
     private
+
       def transfer_file(file_src, file_dest)
         FileUtils.mkdir_p(File.dirname(file_dest))
         FileUtils.cp(file_src, file_dest)
