@@ -6,6 +6,7 @@ module Dotsync
 
     def execute
       show_config
+      show_changes
       push_dotfiles
     end
 

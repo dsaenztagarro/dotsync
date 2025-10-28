@@ -16,14 +16,49 @@ module Dotsync
       @src = mapping.src
       @dest = mapping.dest
       @force = mapping.force?
-      @ignores = mapping.ignores || []
+      @ignores = mapping.original_ignores || []
     end
 
     def diff
-      diffs = collect_src_diffs
-      diffs += collect_dest_diffs if @force
-      diffs -= @ignores
-      diffs.uniq
+      additions = []
+      modifications = []
+      removals = []
+
+      Find.find(src) do |src_path|
+        rel_path = src_path.sub(/^#{Regexp.escape(src)}\/?/, '')
+        next if rel_path.empty?
+
+        dest_path = File.join(dest, rel_path)
+
+        if !File.exist?(dest_path)
+          additions << rel_path
+        elsif File.file?(src_path) && File.file?(dest_path)
+          if File.size(src_path) != File.size(dest_path)
+            modifications << rel_path
+          end
+        end
+      end
+
+      if @force
+        Find.find(dest) do |dest_path|
+          rel_path = dest_path.sub(/^#{Regexp.escape(dest)}\/?/, '')
+          next if rel_path.empty?
+
+          src_path = File.join(src, rel_path)
+
+          if !File.exist?(src_path)
+            removals << rel_path
+          end
+        end
+      end
+
+      if @ignores.any?
+        additions = filter_paths(additions, @ignores)
+        modifications = filter_paths(modifications, @ignores)
+        removals = filter_paths(removals, @ignores)
+      end
+
+      Dotsync::Diff.new(additions: additions, modifications: modifications, removals: removals)
     end
 
     private
@@ -62,6 +97,14 @@ module Dotsync
           end
         end
         diffs
+      end
+
+      def filter_paths(all_paths, ignore_paths)
+        all_paths.reject do |path|
+          ignore_paths.any? do |ignore|
+            path == ignore || path.start_with?("#{ignore}/")
+          end
+        end
       end
   end
 end

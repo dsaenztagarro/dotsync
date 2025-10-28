@@ -17,6 +17,7 @@ require_relative "dotsync/utils/path_utils"
 
 # Models
 require_relative "dotsync/models/mapping"
+require_relative "dotsync/models/diff"
 
 # Config
 require_relative "dotsync/config/xdg_base_directory_spec"

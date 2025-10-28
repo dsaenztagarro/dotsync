@@ -8,6 +8,7 @@ module Dotsync
 
     def execute
       show_config
+      show_changes
       if create_backup
         show_backup
         purge_old_backups
