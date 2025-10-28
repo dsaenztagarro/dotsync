@@ -17,7 +17,11 @@ module Dotsync
           config_class = Dotsync.const_get("#{camelize(action_name.to_s)}ActionConfig")
 
           config = config_class.new(Dotsync.config_path)
+          Dotsync::Icons.load_custom_icons(config)
+          Dotsync::Colors.load_custom_colors(config)
+
           action = action_class.new(config, @logger)
+
           action.execute
         rescue ConfigError => e
           @logger.error("[#{action_name}] config error:")

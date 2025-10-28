@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dotsync
   # Represents the differences between two directories
   class Diff
@@ -14,4 +16,3 @@ module Dotsync
     end
   end
 end
-

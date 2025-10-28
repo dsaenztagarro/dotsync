@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Dotsync
   # Usage:
   # differ = DirectoryDiffer.new("/path/to/src", "/path/to/dest")
@@ -25,7 +27,7 @@ module Dotsync
       removals = []
 
       Find.find(src) do |src_path|
-        rel_path = src_path.sub(/^#{Regexp.escape(src)}\/?/, '')
+        rel_path = src_path.sub(/^#{Regexp.escape(src)}\/?/, "")
         next if rel_path.empty?
 
         dest_path = File.join(dest, rel_path)
@@ -41,7 +43,7 @@ module Dotsync
 
       if @force
         Find.find(dest) do |dest_path|
-          rel_path = dest_path.sub(/^#{Regexp.escape(dest)}\/?/, '')
+          rel_path = dest_path.sub(/^#{Regexp.escape(dest)}\/?/, "")
           next if rel_path.empty?
 
           src_path = File.join(src, rel_path)
@@ -62,11 +64,10 @@ module Dotsync
     end
 
     private
-
       def collect_src_diffs
         diffs = []
         Find.find(src) do |src_path|
-          rel_path = src_path.sub(/^#{Regexp.escape(src)}\/?/, '')
+          rel_path = src_path.sub(/^#{Regexp.escape(src)}\/?/, "")
           next if rel_path.empty?
 
           dest_path = File.join(dest, rel_path)
@@ -89,7 +90,7 @@ module Dotsync
       def collect_dest_diffs
         diffs = []
         Find.find(dest) do |dest_path|
-          rel_path = dest_path.sub(/^#{Regexp.escape(dest)}\/?/, '')
+          rel_path = dest_path.sub(/^#{Regexp.escape(dest)}\/?/, "")
           next if rel_path.empty?
           src_path = File.join(src, rel_path)
           if !File.exist?(src_path)

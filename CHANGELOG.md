@@ -1,6 +1,7 @@
 # 0.1.6
 
 - Show diff changes on PushAction and PullAction.
+- Fixed load custom config (Icons, Colors)
 
 # 0.1.5
 

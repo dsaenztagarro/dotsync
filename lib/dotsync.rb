@@ -38,6 +38,7 @@ require_relative "dotsync/actions/watch_action"
 # Base classes
 require_relative "dotsync/errors"
 require_relative "dotsync/icons"
+require_relative "dotsync/colors"
 require_relative "dotsync/runner"
 require_relative "dotsync/version"
 

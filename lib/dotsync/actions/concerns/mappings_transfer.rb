@@ -19,13 +19,13 @@ module Dotsync
         Dotsync::DirectoryDiffer.new(mapping).diff
       end
       diffs.flat_map(&:additions).sort.each do |path|
-        logger.log("  #{path}", color: 34)
+        logger.log("  #{path}", color: Dotsync::Colors.diff_additions)
       end
       diffs.flat_map(&:modifications).sort.each do |path|
-        logger.log("  #{path}", color: 36)
+        logger.log("  #{path}", color: Dotsync::Colors.diff_modifications)
       end
       diffs.flat_map(&:removals).sort.each do |path|
-        logger.log("  #{path}", color: 88)
+        logger.log("  #{path}", color: Dotsync::Colors.diff_removals)
       end
     end
 
