@@ -8,25 +8,18 @@ RSpec.describe Dotsync::MappingEntry do
   let(:root) { File.join("/tmp", "dotsync") }
   let(:src) { File.join(root, "src") }
   let(:dest) { File.join(root, "dest") }
-  let(:ignored_file) { File.join(src, "ignored_file") }
-  let(:ignored_folder) { File.join(src, "ignored_folder") }
-
-  let(:mapping_hash) do
+  let(:force) { false }
+  let(:ignore) { [] }
+  let(:attributes) do
     {
       "src" => src,
       "dest" => dest,
-      "force" => true,
-      "ignore" => ["ignored_file", "ignored_folder"]
+      "force" => force,
+      "ignore" => ignore
     }
   end
 
-  subject(:mapping_entry) { described_class.new(mapping_hash) }
-
-  before do
-    FileUtils.mkdir_p(ignored_folder)
-    File.write(ignored_file, "content")
-    FileUtils.mkdir_p(dest)
-  end
+  subject(:mapping_entry) { described_class.new(attributes) }
 
   after do
     FileUtils.rm_rf(root)
@@ -45,29 +38,94 @@ RSpec.describe Dotsync::MappingEntry do
   end
 
   describe "#force?" do
-    it "returns true if force is enabled" do
-      expect(mapping_entry.force?).to be true
+    context "without attribute force" do
+      let(:attributes) { { "src" => src, "dest" => dest } }
+
+      it "returns false by default" do
+        expect(mapping_entry.force?).to be false
+      end
+    end
+
+    context "with attribute force" do
+      let(:force) { true }
+
+      it "returns true" do
+        expect(mapping_entry.force?).to be true
+      end
     end
   end
 
   describe "#ignores" do
-    it "returns the sanitized expanded paths of ignored files/folders" do
-      expect(mapping_entry.ignores).to include(
-        sanitize_path(ignored_file),
-        sanitize_path(ignored_folder)
-      )
+    context "without ignore attribute" do
+      let(:attributes) { { "src" => src, "dest" => dest } }
+
+      it "returns false by default" do
+        expect(mapping_entry.ignores).to eq([])
+      end
+    end
+
+    context "with ignore attribute" do
+      let(:ignored_file) { File.join(src, "ignored_file") }
+      let(:ignored_folder) { File.join(src, "ignored_folder") }
+      let(:ignore) { ["ignored_file", "ignored_folder"] }
+
+      it "returns the sanitized expanded paths of ignored files/folders" do
+        expect(mapping_entry.ignores).to include(
+          sanitize_path(ignored_file),
+          sanitize_path(ignored_folder)
+        )
+      end
     end
   end
 
   describe "#valid?" do
-    context "when both src and dest exist" do
+    context "when both src and dest are files" do
+      before do
+        FileUtils.mkdir_p(root)
+        FileUtils.touch(src)
+        FileUtils.touch(dest)
+      end
+
+      it "returns true" do
+        expect(mapping_entry.valid?).to be true
+      end
+
+      context "and dest file does not exist" do
+        before do
+          FileUtils.rm(dest)
+        end
+
+        it "returns true" do
+          expect(mapping_entry.valid?).to be true
+        end
+      end
+    end
+
+    context "when both src and dest are directories" do
+      before do
+        FileUtils.mkdir_p(src)
+        FileUtils.mkdir_p(dest)
+      end
+
       it "returns true" do
         expect(mapping_entry.valid?).to be true
       end
     end
 
-    context "when either src or dest does not exist" do
-      before { FileUtils.rm_rf(src) }
+    context "when src does not exist" do
+      before do
+        FileUtils.mkdir_p(dest)
+      end
+
+      it "returns false" do
+        expect(mapping_entry.valid?).to be false
+      end
+    end
+
+    context "when dest does not exist" do
+      before do
+        FileUtils.mkdir_p(src)
+      end
 
       it "returns false" do
         expect(mapping_entry.valid?).to be false
@@ -77,69 +135,129 @@ RSpec.describe Dotsync::MappingEntry do
 
   describe "#to_s" do
     let(:subject) { mapping_entry.to_s }
-    context "when there are ignores and force enabled" do
-      it "returns a formatted string with force and ignore icons" do
-        expect(subject).to include("#{mapping_entry.original_src} → #{mapping_entry.original_dest}")
-        expect(subject).to include(Dotsync::Icons.force)
-        expect(subject).to include(Dotsync::Icons.ignore)
-      end
+
+    before do
+      FileUtils.mkdir_p(src)
+      FileUtils.mkdir_p(dest)
     end
 
-    context "when only force is enabled" do
-      let(:mapping_hash) do
-        {
-          "src" => src,
-          "dest" => dest,
-          "force" => true,
-          "ignore" => []
-        }
-      end
-
-      it "returns a formatted string with only the force icon" do
-        expect(subject).to include(Dotsync::Icons.force)
-        expect(subject).not_to include(Dotsync::Icons.ignore)
-      end
-    end
-
-    context "when only ignores are specified" do
-      let(:mapping_hash) do
-        {
-          "src" => src,
-          "dest" => dest,
-          "force" => false,
-          "ignore" => ["ignored_file"]
-        }
-      end
-
-      it "returns a formatted string with only the ignore icon" do
-        expect(subject).to include(Dotsync::Icons.ignore)
-        expect(subject).not_to include(Dotsync::Icons.force)
-      end
-    end
-
-    context "when there are no ignores and force is disabled" do
-      let(:mapping_hash) do
-        {
-          "src" => src,
-          "dest" => dest,
-          "force" => false,
-          "ignore" => []
-        }
-      end
-
-      it "returns a formatted string without force and ignore icons" do
-        expect(subject).to include("#{mapping_entry.original_src} → #{mapping_entry.original_dest}")
-        expect(subject).not_to include(Dotsync::Icons.force)
-        expect(subject).not_to include(Dotsync::Icons.ignore)
-      end
+    it "returns a formatted string without icons" do
+      expect(subject).to include("#{mapping_entry.original_src} → #{mapping_entry.original_dest}")
+      expect(subject).to_not include(Dotsync::Icons.force)
+      expect(subject).to_not include(Dotsync::Icons.ignore)
+      expect(subject).to_not include(Dotsync::Icons.invalid)
     end
 
     context "when src and dest contains env vars" do
       let(:root) { "$HOME" }
       let(:color) { 104 }
 
+      before do
+        ENV["HOME"] = File.join("/tmp", "dotsync")
+      end
+
       it "returns colorized env vars" do
-        expect(subject).to include("\e[38;5;#{color}m$HOME\e[0m/src → \e[38;5;#{color}m$HOME\e[0m/dest 󰁪  󰈉  󱏏 ")
+        expect(subject).to include("\e[38;5;#{color}m$HOME\e[0m/src → \e[38;5;#{color}m$HOME\e[0m/dest")
+      end
+    end
+
+    context "when force is enabled" do
+      let(:force) { true }
+
+      it "returns a formatted string with force icon" do
+        expect(subject).to include(Dotsync::Icons.force)
+        expect(subject).to_not include(Dotsync::Icons.ignore)
+        expect(subject).to_not include(Dotsync::Icons.invalid)
+      end
+    end
+
+    context "when ignores is set" do
+      let(:ignore) { ["ignored_file"] }
+
+      it "returns a formatted string with ignore icon" do
+        expect(subject).to include(Dotsync::Icons.ignore)
+        expect(subject).to_not include(Dotsync::Icons.force)
+        expect(subject).to_not include(Dotsync::Icons.invalid)
+      end
+    end
+
+    context "when mapping is invalid" do
+      before do
+        FileUtils.rm_rf(root)
+      end
+
+      it "returns a formatted string with invalid icon" do
+        expect(subject).to include(Dotsync::Icons.invalid)
+        expect(subject).to_not include(Dotsync::Icons.ignore)
+        expect(subject).to_not include(Dotsync::Icons.force)
+      end
+    end
+  end
+
+  describe "#backup_possible?" do
+    context "when valid and dest exists" do
+      before do
+        FileUtils.mkdir_p(src)
+        FileUtils.mkdir_p(dest)
+      end
+
+      it "returns true" do
+        expect(mapping_entry.backup_possible?).to be true
+      end
+    end
+
+    context "when valid but dest does not exist" do
+      before { FileUtils.rm_rf(dest) }
+
+      it "returns false" do
+        expect(mapping_entry.backup_possible?).to be false
+      end
+    end
+
+    context "when invalid" do
+      before { FileUtils.rm_rf(src) }
+
+      it "returns false" do
+        expect(mapping_entry.backup_possible?).to be false
+      end
+    end
+  end
+
+  describe "#backup_basename" do
+    it "returns nil with invalid mapping" do
+      expect(mapping_entry.backup_basename).to be_nil
+    end
+
+    context "when dest is file" do
+      before do
+        FileUtils.mkdir_p(root)
+        FileUtils.touch(src)
+        FileUtils.touch(dest)
+      end
+
+      it "returns the basename of the dest" do
+        expect(mapping_entry.backup_basename).to eq(File.basename(dest))
+      end
+
+      context "when dest file does not exist" do
+        before do
+          FileUtils.rm(dest)
+        end
+
+        it "returns the basename of parent directory of dest" do
+          expect(mapping_entry.backup_basename).to eq(sanitize_path File.dirname(dest))
+        end
+      end
+    end
+
+    context "when dest is directory" do
+      before do
+        FileUtils.mkdir_p(src)
+        FileUtils.mkdir_p(dest)
+      end
+
+      it "returns the basename of the dest" do
+        expect(mapping_entry.backup_basename).to eq(File.basename(dest))
       end
     end
   end

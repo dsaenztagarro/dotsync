@@ -6,11 +6,11 @@ module Dotsync
 
     attr_reader :original_src, :original_dest, :original_ignores
 
-    def initialize(hash)
-      @original_src = hash["src"]
-      @original_dest = hash["dest"]
-      @original_ignores = Array(hash["ignore"])
-      @force = hash["force"] || false
+    def initialize(attributes)
+      @original_src = attributes["src"]
+      @original_dest = attributes["dest"]
+      @original_ignores = Array(attributes["ignore"])
+      @force = attributes["force"] || false
 
       @sanitized_src = sanitize_path(@original_src)
       @sanitized_dest = sanitize_path(@original_dest)

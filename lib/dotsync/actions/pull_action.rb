@@ -23,11 +23,11 @@ module Dotsync
       def pull_dotfiles
         transfer_mappings
 
-        action("Dotfiles pulled", icon: :copy)
+        action("Dotfiles pulled")
       end
 
       def show_backup
-        action("Backup created:", icon: :backup)
+        action("Backup created:")
         logger.log("  #{backup_root_path}")
       end
 
@@ -57,11 +57,12 @@ module Dotsync
       def purge_old_backups
         backups = Dir[File.join(backups_root, "*")].sort.reverse
         if backups.size > 10
-          info("Maximum of 10 backups retained")
+          logger.log("Maximum of 10 backups retained")
 
+          action("Backup deleted:")
           backups[10..].each do |path|
             FileUtils.rm_rf(path)
-            info("Old backup deleted: #{path}", icon: :delete)
+            logger.log("  #{path}")
           end
         end
       end

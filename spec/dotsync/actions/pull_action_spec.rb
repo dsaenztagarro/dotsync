@@ -132,7 +132,7 @@ RSpec.describe Dotsync::PullAction do
           expect(File.read(File.join(backup_dir, "folder_dest", "file1"))).to eq("#{file1_dest} content")
           expect(File.read(File.join(backup_dir, "file2"))).to eq("#{file2_dest} content")
 
-          expect(logger).to have_received(:action).with("Backup created:", icon: :backup)
+          expect(logger).to have_received(:action).with("Backup created:")
           expect(logger).to have_received(:log).with("  #{backup_dir}")
         end
 
@@ -148,9 +148,11 @@ RSpec.describe Dotsync::PullAction do
             action.execute
 
             expect(Dir[File.join(backups_root, "*")].size).to eq(10)
-            expect(logger).to have_received(:info).with("Maximum of 10 backups retained")
+            expect(logger).to have_received(:log).with("Maximum of 10 backups retained").ordered.once
+            expect(logger).to have_received(:action).with("Backup deleted:").ordered.once
             1.upto(2) do |day|
-              expect(logger).to have_received(:info).with("Old backup deleted: #{File.join(backups_root, "2025010#{day}000000")}", icon: :delete)
+              backup_path = File.join(backups_root, "2025010#{day}000000")
+              expect(logger).to have_received(:log).with("  #{backup_path}")
             end
           end
         end
