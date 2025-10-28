@@ -16,6 +16,7 @@ module Dotsync
 
     def transfer_mappings
       valid_mappings.each do |mapping|
+        Dotsync::DirectoryDiffer.new(mapping).diff
         Dotsync::FileTransfer.new(mapping).transfer
       end
     end
