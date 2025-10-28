@@ -9,7 +9,7 @@ module Dotsync
     # Configuration icon
     CONFIG = " "
 
-    # Default MappingEntry icons
+    # Default Mapping icons
     DEFAULT_FORCE = "󰁪 "
     DEFAULT_IGNORE = "󰈉 "
     DEFAULT_INVALID = "󱏏 "

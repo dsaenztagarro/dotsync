@@ -4,9 +4,18 @@
 class DirectoryDiffer
   attr_reader :src, :dest
 
-  def initialize(src, dest)
-    @src = File.expand_path(src)
-    @dest = File.expand_path(dest)
+  # Initializes a new DirectoryDiffer.
+  #
+  # @param mapping [Dotsync::Mapping] the mapping object containing source, destination, force, and ignore details
+  # @option mapping [String] :src the source directory path
+  # @option mapping [String] :dest the destination directory path
+  # @option mapping [Boolean] :force? optional flag to force actions
+  # @option mapping [Array<String>] :ignores optional list of files/directories to ignore
+  def initialize(mapping)
+    @src = mapping.src
+    @dest = mapping.dest
+    @force = mapping.force?
+    @ignores = mapping.ignores || []
   end
 
   def diff

@@ -4,11 +4,18 @@ module Dotsync
   class FileTransfer
     attr_reader :ignores
 
-    def initialize(config)
-      @src = config.src
-      @dest = config.dest
-      @force = config.force?
-      @ignores = config.ignores || []
+    # Initializes a new FileTransfer instance
+    #
+    # @param mapping [Dotsync::Mapping] the mapping object containing source, destination, force, and ignore details
+    # @option mapping [String] :src the source directory path
+    # @option mapping [String] :dest the destination directory path
+    # @option mapping [Boolean] :force? optional flag to force actions
+    # @option mapping [Array<String>] :ignores optional list of files/directories to ignore
+    def initialize(mapping)
+      @src = mapping.src
+      @dest = mapping.dest
+      @force = mapping.force?
+      @ignores = mapping.ignores || []
     end
 
     def transfer
@@ -21,7 +28,6 @@ module Dotsync
     end
 
     private
-
       def transfer_file(file_src, file_dest)
         FileUtils.mkdir_p(File.dirname(file_dest))
         FileUtils.cp(file_src, file_dest)

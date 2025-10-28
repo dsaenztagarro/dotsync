@@ -15,9 +15,11 @@ require_relative "dotsync/utils/file_transfer"
 require_relative "dotsync/utils/directory_differ"
 require_relative "dotsync/utils/path_utils"
 
+# Models
+require_relative "dotsync/models/mapping"
+
 # Config
 require_relative "dotsync/config/xdg_base_directory_spec"
-require_relative "dotsync/config/mapping_entry"
 require_relative "dotsync/config/base_config"
 require_relative "dotsync/config/pull_action_config"
 require_relative "dotsync/config/push_action_config"

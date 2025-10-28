@@ -12,7 +12,7 @@ RSpec.describe Dotsync::PullAction do
   let(:file2_dest) { File.join(dest, "file2") }
   let(:files) { [file1_src, file2_src, file1_dest, file2_dest] }
   let(:mapping1) do
-    Dotsync::MappingEntry.new(
+    Dotsync::Mapping.new(
       "src" => File.join(src, "folder_src"),
       "dest" => File.join(dest, "folder_dest"),
       "force" => true,
@@ -20,7 +20,7 @@ RSpec.describe Dotsync::PullAction do
     )
   end
   let(:mapping2) do
-    Dotsync::MappingEntry.new(
+    Dotsync::Mapping.new(
       "src" => file2_src,
       "dest" => file2_dest
     )

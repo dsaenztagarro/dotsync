@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Dotsync
-  class MappingEntry
+  class Mapping
     include Dotsync::PathUtils
 
     attr_reader :original_src, :original_dest, :original_ignores
@@ -66,7 +66,7 @@ module Dotsync
         path
       end
 
-      Dotsync::MappingEntry.new(
+      Dotsync::Mapping.new(
         "src" => File.join(@original_src, relative_path),
         "dest" => File.join(@original_dest, relative_path),
         "force" => @force,

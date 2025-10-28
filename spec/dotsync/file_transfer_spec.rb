@@ -4,7 +4,7 @@ require "spec_helper"
 
 RSpec.describe Dotsync::FileTransfer do
   let(:config) do
-    Dotsync::MappingEntry.new(
+    Dotsync::Mapping.new(
       "src" => src,
       "dest" => dest,
       "force" => force,

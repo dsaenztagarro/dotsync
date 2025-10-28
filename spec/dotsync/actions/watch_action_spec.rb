@@ -10,7 +10,7 @@ RSpec.describe Dotsync::WatchAction do
   let(:dest) { File.join(root, "dest") }
   let(:mappings) do
     [
-      Dotsync::MappingEntry.new("src" => src, "dest" => dest)
+      Dotsync::Mapping.new("src" => src, "dest" => dest)
     ]
   end
   let(:config) do

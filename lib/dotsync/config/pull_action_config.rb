@@ -6,7 +6,7 @@ module Dotsync
 
     def mappings
       mappings_list = section["mappings"]
-      Array(mappings_list).map { |mapping| Dotsync::MappingEntry.new(mapping) }
+      Array(mappings_list).map { |mapping| Dotsync::Mapping.new(mapping) }
     end
 
     def backups_root

@@ -7,7 +7,7 @@ RSpec.describe Dotsync::PushAction do
   let(:src) { File.join(root, "src") }
   let(:dest) { File.join(root, "dest") }
   let(:mapping1) do
-    Dotsync::MappingEntry.new(
+    Dotsync::Mapping.new(
       "src" => File.join(root, "src1"),
       "dest" => File.join(root, "dest1"),
       "force" => true,
@@ -15,7 +15,7 @@ RSpec.describe Dotsync::PushAction do
     )
   end
   let(:mapping2) do
-    Dotsync::MappingEntry.new(
+    Dotsync::Mapping.new(
       "src" => File.join(root, "src2"),
       "dest" => File.join(root, "dest2"),
       "force" => false,

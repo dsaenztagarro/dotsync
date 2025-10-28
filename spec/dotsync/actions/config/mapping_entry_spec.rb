@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Dotsync::MappingEntry do
+RSpec.describe Dotsync::Mapping do
   include Dotsync::PathUtils
 
   let(:root) { File.join("/tmp", "dotsync") }
