@@ -1,3 +1,7 @@
+# 0.1.6
+
+- Show diff changes on PushAction and PullAction.
+
 # 0.1.5
 
 - Fixes backup when destination folder does not exist
