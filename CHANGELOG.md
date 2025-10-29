@@ -1,3 +1,8 @@
+# 0.1.8
+
+- Show full relative path on diff
+- Show Diff section header
+
 # 0.1.7
 
 - Fixes broken runner

@@ -8,6 +8,7 @@ module Dotsync
 
     # Configuration icon
     CONFIG = " "
+    DIFF = " "
 
     # Default Mapping icons
     DEFAULT_FORCE = "󰁪 "
@@ -57,6 +58,7 @@ module Dotsync
       info: INFO,
       error: ERROR,
       config: CONFIG,
+      diff: DIFF,
       force: -> { force },
       ignore: -> { ignore },
       pull: PULL,
