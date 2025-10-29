@@ -35,9 +35,9 @@ RSpec.describe Dotsync::DirectoryDiffer do
 
         diff = differ.diff
         expect(diff).to be_a(Dotsync::Diff)
-        expect(diff.additions).to include("file1.txt")
-        expect(diff.removals).to include("file2.txt")
-        expect(diff.modifications).to include("file3.txt")
+        expect(diff.additions).to include(File.join(dest, "file1.txt"))
+        expect(diff.removals).to include(File.join(dest, "file2.txt"))
+        expect(diff.modifications).to include(File.join(dest, "file3.txt"))
       end
     end
 

@@ -5,7 +5,12 @@ module Dotsync
   # differ = DirectoryDiffer.new("/path/to/src", "/path/to/dest")
   # differences = differ.diff
   class DirectoryDiffer
+    extend Forwardable
+
     attr_reader :src, :dest
+
+    def_delegator @mapping, :original_src
+    def_delegator @mapping, :original_dest
 
     # Initializes a new DirectoryDiffer.
     #
@@ -15,6 +20,7 @@ module Dotsync
     # @option mapping [Boolean] :force? optional flag to force actions
     # @option mapping [Array<String>] :ignores optional list of files/directories to ignore
     def initialize(mapping)
+      @mapping = mapping
       @src = mapping.src
       @dest = mapping.dest
       @force = mapping.force?
@@ -59,6 +65,10 @@ module Dotsync
         modifications = filter_paths(modifications, @ignores)
         removals = filter_paths(removals, @ignores)
       end
+
+      additions.map! { |rel_path| File.join(@mapping.original_dest, rel_path) }
+      modifications.map! { |rel_path| File.join(@mapping.original_dest, rel_path) }
+      removals.map! { |rel_path| File.join(@mapping.original_dest, rel_path) }
 
       Dotsync::Diff.new(additions: additions, modifications: modifications, removals: removals)
     end
