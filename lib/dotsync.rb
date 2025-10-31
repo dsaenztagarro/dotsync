@@ -19,8 +19,10 @@ require_relative "dotsync/utils/path_utils"
 require_relative "dotsync/models/mapping"
 require_relative "dotsync/models/diff"
 
+# Config Concerns
+require_relative "dotsync/config/concerns/xdg_base_directory"
+
 # Config
-require_relative "dotsync/config/xdg_base_directory_spec"
 require_relative "dotsync/config/base_config"
 require_relative "dotsync/config/pull_action_config"
 require_relative "dotsync/config/push_action_config"
