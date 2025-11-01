@@ -1,3 +1,8 @@
+# 0.1.10
+
+- Readme: add screenshot for PushAction
+- Readme: fixes character on sample config file
+
 # 0.1.9
 
 - Exe: improved banner with options

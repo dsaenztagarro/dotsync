@@ -38,6 +38,8 @@ Dotsync provides the following commands to manage your dotfiles:
   dotsync push
   ```
 
+  ![dotsync push](docs/images/dotsync_push_apply.png)
+
 - **Pull**: Synchronize dotfiles from the repository to your local machine.
   ```shell
   dotsync pull
@@ -66,7 +68,7 @@ dest = "$XDG_CONFIG_HOME"
 
 [[pull.mappings]]
 src = "$HOME_MIRROR/.zshenv"
-dest = "$HOME" }
+dest = "$HOME"
 
 
 [[push.mappings]]
