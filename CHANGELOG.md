@@ -1,11 +1,11 @@
 # 0.1.9
 
-- PushAction: added option "--apply"
-- PullAction: added option "--apply"
-- Review Differ to show full path using original mapping paths
-- Add gem version badge
+- Exe: improved banner with options
+- Options: added "--apply"
+- Options: added "--environment-variables"
+- Differ: show full path using original mapping paths
+- Readme: add gem version badge
 - Readme: add requirements section
-- exe/dotsync: improved banner with options
 
 # 0.1.8
 
