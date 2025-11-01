@@ -7,6 +7,7 @@ module Dotsync
     ERROR = " "
 
     # Configuration icon
+    OPTIONS = " "
     CONFIG = " "
     DIFF = " "
 
@@ -20,8 +21,8 @@ module Dotsync
     PUSH = " "
     WATCH = "󰛐 "
 
-    # TODO: review icons needed
     CONSOLE = "󰆍 "
+    # TODO: review icons needed
     LISTEN = " "
     SOURCE = " " #  "
     DEST = " " # " "
@@ -57,6 +58,7 @@ module Dotsync
     MAPPINGS = {
       info: INFO,
       error: ERROR,
+      options: OPTIONS,
       config: CONFIG,
       diff: DIFF,
       force: -> { force },

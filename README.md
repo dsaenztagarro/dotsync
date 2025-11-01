@@ -1,10 +1,15 @@
 # Dotsync
 
-**⚠️ Warning: This gem is under active development. You can expect new changes that may not be backward-compatible.**
-
+[![Gem Version](https://badge.fury.io/rb/sidekiq.svg)](https://rubygems.org/gems/sidekiq)
 [![Ruby Gem Test Status](https://github.com/dsaenztagarro/dotsync/actions/workflows/gem-push.yml/badge.svg)](https://github.com/dsaenztagarro/dotsync/actions)
 
+> [!WARNING]
+> This gem is under active development. You can expect new changes that may not be backward-compatible.
+
 Welcome to Dotsync! This gem helps you manage and synchronize your dotfiles effortlessly. Below you'll find information on installation, usage, and some tips for getting started.
+
+## Requirements
+- Ruby: MRI 3.2+
 
 ## Installation
 
@@ -55,24 +60,41 @@ Dotsync provides the following commands to manage your dotfiles:
 The configuration file uses a `mappings` structure to define the source and destination of your dotfiles. Here is an example:
 
 ```toml
-[pull]
-mappings = [
-  { src = "$DOTFILES_DIR/config/", dest = "$XDG_CONFIG_HOME", force = false },
-  { src = "$DOTFILES_DIR/home/.zshenv", dest = "$HOME" }
-]
+[[pull.mappings]]
+src = "$XDG_CONFIG_HOME_MIRROR"
+dest = "$XDG_CONFIG_HOME"
 
-[push]
-mappings = [
-  { src = "$HOME/.zshenv", dest = "$DOTFILES_DIR/home/.zshenv" },
-  { src = "$XDG_CONFIG_HOME/alacritty", dest = "$DOTFILES_DIR/config/alacritty" }
-]
+[[pull.mappings]]
+src = "$HOME_MIRROR/.zshenv"
+dest = "$HOME" }
 
-[watch]
-mappings = [
-  { src = "$HOME/.zshenv", dest = "$DOTFILES_DIR/home/.zshenv" },
-  { src = "$XDG_CONFIG_HOME/alacritty", dest = "$DOTFILES_DIR/config/alacritty" }
-]
+
+[[push.mappings]]
+src = "$HOME/.zshenv"
+src = "$HOME_MIRROR/.zshenv"
+
+[[push.mappings]]
+src = "$XDG_CONFIG_HOME/alacritty"
+dest = "$DOTFILES_DIR/config/alacritty"
+force = true # it forces the deletion of destination folder
+ignore = ["themes/rose-pine.toml"] # use relative paths to "dest" to ignore files and folders
+
+
+[[watch.mappings]]
+src = "$HOME/.zshenv"
+src = "$HOME_MIRROR/.zshenv"
+
+[[watch.mappings]]
+src = "$XDG_CONFIG_HOME/alacritty"
+dest = "$DOTFILES_DIR/config/alacritty"
 ```
+
+> [!TIP]
+> I use mirror environment variables to cleaner configuration
+>
+>  ```bash
+>  export XDG_CONFIG_HOME_MIRROR="$HOME/Code/dotfiles/xdg_config_home"
+>  ```
 
 #### `force` and `ignore` Options in Mappings
 

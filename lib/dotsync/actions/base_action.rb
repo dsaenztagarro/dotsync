@@ -18,5 +18,12 @@ module Dotsync
     def execute
       raise NotImplementedError
     end
+
+    private
+
+      def show_options(options)
+        info("Options:", icon: :options)
+        logger.log("  Apply: #{options[:apply] ? "TRUE" : "FALSE"}")
+      end
   end
 end

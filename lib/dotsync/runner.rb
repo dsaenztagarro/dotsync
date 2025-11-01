@@ -46,21 +46,28 @@ module Dotsync
         FileUtils.mkdir_p(File.dirname(config_path))
 
         example_mappings = {
+          "icons" => {
+            "options" => "⚙️",
+            "config" => "📄",
+            "force" => "🔥",
+            "ignore" => "🚫",
+            "invalid" => "❌"
+          },
           "pull" => {
             "mappings" => [
-              { "src" => "$DOTFILES_DIR/config/", "dest" => "$XDG_CONFIG_HOME", "force" => false },
-              { "src" => "$DOTFILES_DIR/home/.zshenv", "dest" => "$HOME" }
+              { "src" => "$XDG_CONFIG_HOME_MIRROR", "dest" => "$XDG_CONFIG_HOME" },
+              { "src" => "$HOME_MIRROR/.zshenv", "dest" => "$HOME" }
             ],
           },
           "push" => {
             "mappings" => [
               { "src" => "$HOME/.zshenv", "dest" => "$DOTFILES_DIR/home/.zshenv" },
-              { "src" => "$XDG_CONFIG_HOME/alacritty", "dest" => "$DOTFILES_DIR/config/alacritty" }
+              { "src" => "$XDG_CONFIG_HOME/alacritty", "dest" => "$XDG_CONFIG_HOME_MIRROR/alacritty" }
             ]
           },
           "watch" => {
             "mappings" => [
-              { "src" => "$HOME/.zshenv", "dest" => "$DOTFILES_DIR/home/.zshenv" },
+              { "src" => "$HOME/.zshenv", "dest" => "$HOME_MIRROR/.zshenv" },
               { "src" => "$XDG_CONFIG_HOME/alacritty", "dest" => "$DOTFILES_DIR/config/alacritty" }
             ]
           }

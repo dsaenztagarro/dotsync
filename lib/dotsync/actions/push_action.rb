@@ -5,6 +5,7 @@ module Dotsync
     include MappingsTransfer
 
     def execute(options = {})
+      show_options(options)
       show_mappings
       show_changes
       return unless options[:apply]
