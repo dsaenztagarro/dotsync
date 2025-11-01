@@ -16,6 +16,14 @@ module Dotsync
       path.gsub(/\$(\w+)/) { "\e[38;5;#{ENV_VARS_COLOR}m$#{$1}\e[0m" }
     end
 
+    # Converts an array of relative paths to absolute paths based on a specified base path
+    # @param [Array<String>] paths The array of relative paths
+    # @param [String] base_path The base absolute path to resolve relative paths
+    # @return [Array<String>] The array of absolute paths
+    def relative_to_absolute(paths, base_path)
+      paths.map { |path| File.expand_path(path, base_path) }
+    end
+
     # Translates /tmp paths to /private/tmp paths on macOS
     # Retains other paths as-is
     # @param [String] path The input path to translate

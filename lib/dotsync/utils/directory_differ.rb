@@ -2,6 +2,8 @@
 
 module Dotsync
   class DirectoryDiffer
+    include Dotsync::PathUtils
+
     extend Forwardable
 
     # attr_reader :src, :dest
@@ -58,15 +60,9 @@ module Dotsync
           end
         end
 
-        if ignores.any?
-          additions = filter_paths(additions, ignores)
-          modifications = filter_paths(modifications, ignores)
-          removals = filter_paths(removals, ignores)
-        end
-
-        additions.map! { |rel_path| File.join(mapping_original_dest, rel_path) }
-        modifications.map! { |rel_path| File.join(mapping_original_dest, rel_path) }
-        removals.map! { |rel_path| File.join(mapping_original_src, rel_path) }
+        additions = relative_to_absolute(filter_ignores(additions), mapping_original_dest)
+        modifications = relative_to_absolute(filter_ignores(modifications), mapping_original_dest)
+        removals = relative_to_absolute(filter_ignores(removals), mapping_original_src)
 
         Dotsync::Diff.new(additions: additions, modifications: modifications, removals: removals)
       end
@@ -81,9 +77,10 @@ module Dotsync
         end
       end
 
-      def filter_paths(all_paths, ignore_paths)
+      def filter_ignores(all_paths)
+        return all_paths unless ignores.any?
         all_paths.reject do |path|
-          ignore_paths.any? do |ignore|
+          ignores.any? do |ignore|
             path == ignore || path.start_with?("#{ignore}/")
           end
         end

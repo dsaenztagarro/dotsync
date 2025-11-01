@@ -10,10 +10,10 @@ require "ostruct"
 require "find"
 
 # Utils
+require_relative "dotsync/utils/path_utils"
 require_relative "dotsync/utils/logger"
 require_relative "dotsync/utils/file_transfer"
 require_relative "dotsync/utils/directory_differ"
-require_relative "dotsync/utils/path_utils"
 
 # Models
 require_relative "dotsync/models/mapping"
