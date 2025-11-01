@@ -1,6 +1,6 @@
 # Dotsync
 
-[![Gem Version](https://badge.fury.io/rb/sidekiq.svg)](https://rubygems.org/gems/sidekiq)
+[![Gem Version](https://badge.fury.io/rb/dotsync.svg)](https://rubygems.org/gems/dotsync)
 [![Ruby Gem Test Status](https://github.com/dsaenztagarro/dotsync/actions/workflows/gem-push.yml/badge.svg)](https://github.com/dsaenztagarro/dotsync/actions)
 
 > [!WARNING]

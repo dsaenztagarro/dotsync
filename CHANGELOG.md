@@ -1,3 +1,7 @@
+# 0.1.11
+
+- Readme: fixes badge icon
+
 # 0.1.10
 
 - Readme: add screenshot for PushAction
