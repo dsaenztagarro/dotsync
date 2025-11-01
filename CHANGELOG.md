@@ -1,3 +1,7 @@
+# 0.1.12
+
+- FileTransfer: apply ignores both to src and dest
+
 # 0.1.11
 
 - Readme: fixes badge icon

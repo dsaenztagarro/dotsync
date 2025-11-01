@@ -22,7 +22,7 @@ module Dotsync
       if File.file?(@src)
         transfer_file(@src, @dest)
       else
-        FileUtils.rm_rf(Dir.glob(File.join(@dest, "*"))) if @force
+        cleanup_folder(@dest, @ignores) if @force
         transfer_folder(@src, @dest)
       end
     end
@@ -46,6 +46,32 @@ module Dotsync
             FileUtils.cp(full_path, target)
           else
             transfer_folder(full_path, target)
+          end
+        end
+      end
+
+      def cleanup_folder(target_dir, exclusions = [])
+        exclusions = exclusions.map { |ex| File.expand_path(ex) }
+        target_dir = File.expand_path(target_dir)
+
+        # The `Find.find` method in Ruby performs a depth-first traversal of the
+        # file hierarchy. This means it will explore all files and subdirectories
+        # within a directory before returning to process the parent directory.
+        # Because of this order, `FileUtils.rmdir` can be executed safely at the
+        # end of the traversal, as all files and subdirectories within a directory
+        # would have already been processed and removed.
+
+        Find.find(target_dir) do |path|
+          next if path == target_dir
+          abs_path = File.expand_path(path)
+          if exclusions.any? { |ex| abs_path.start_with?(ex) }
+            Find.prune if File.directory?(path)
+            next
+          end
+          if File.file?(path)
+            FileUtils.rm(path)
+          elsif File.directory?(path) && Dir.empty?(path)
+            FileUtils.rmdir(path)
           end
         end
       end

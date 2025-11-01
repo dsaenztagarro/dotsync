@@ -68,7 +68,7 @@ module Dotsync
       msg.join(" ")
     end
 
-    def applied_to(path)
+    def apply_to(path)
       relative_path = if Pathname.new(path).absolute?
         path.delete_prefix(File.join(src, "/"))
       else
@@ -91,7 +91,9 @@ module Dotsync
       def process_paths(src, dest, ignores)
         sanitized_src = sanitize_path(src)
         sanitized_dest = sanitize_path(dest)
-        sanitized_ignore = ignores.map { |path| File.join(sanitized_src, path) }
+        sanitized_ignore = ignores.flat_map do |path|
+          [File.join(sanitized_src, path), File.join(sanitized_dest, path)]
+        end
         [sanitized_src, sanitized_dest, sanitized_ignore]
       end
   end

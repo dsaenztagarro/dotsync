@@ -47,7 +47,7 @@ module Dotsync
 
       def handle_file_changes(mapping, modified, added, removed)
         (modified + added).each do |path|
-          new_mapping = mapping.applied_to(path)
+          new_mapping = mapping.apply_to(path)
           logger.info("Copied file: #{new_mapping}", icon: :copy)
           Dotsync::FileTransfer.new(new_mapping).transfer
         end
