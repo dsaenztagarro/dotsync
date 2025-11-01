@@ -8,6 +8,7 @@ module Dotsync
 
     # Configuration icon
     OPTIONS = " "
+    ENV_VARS = " "
     CONFIG = " "
     DIFF = " "
 
@@ -58,6 +59,7 @@ module Dotsync
     MAPPINGS = {
       info: INFO,
       error: ERROR,
+      env_vars: ENV_VARS,
       options: OPTIONS,
       config: CONFIG,
       diff: DIFF,

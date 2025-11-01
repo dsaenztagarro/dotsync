@@ -8,6 +8,10 @@ module Dotsync
       path.gsub(/\$(\w+)/) { ENV[$1] }
     end
 
+    def extract_env_vars(path)
+      path.scan(/\$(\w+)/).flatten
+    end
+
     def colorize_env_vars(path)
       path.gsub(/\$(\w+)/) { "\e[38;5;#{ENV_VARS_COLOR}m$#{$1}\e[0m" }
     end

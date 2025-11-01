@@ -20,10 +20,12 @@ module Dotsync
     end
 
     private
-
       def show_options(options)
         info("Options:", icon: :options)
         logger.log("  Apply: #{options[:apply] ? "TRUE" : "FALSE"}")
+      end
+
+      def show_env_vars
       end
   end
 end

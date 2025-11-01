@@ -84,7 +84,6 @@ module Dotsync
     end
 
     private
-
       def ignores?
         @original_ignores.any?
       end

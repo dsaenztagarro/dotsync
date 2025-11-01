@@ -6,6 +6,16 @@ module Dotsync
 
     def_delegator :@config, :mappings
 
+    def show_env_vars
+      env_vars = mappings_env_vars
+      return unless env_vars.any?
+
+      info("Environment variables:", icon: :env_vars)
+      env_vars.each do |env_var|
+        logger.log("  #{env_var}: #{ENV[env_var]}")
+      end
+    end
+
     def show_mappings
       info("Mappings:", icon: :config)
 
@@ -38,8 +48,17 @@ module Dotsync
       end
     end
 
-    def valid_mappings
-      mappings.select(&:valid?)
-    end
+    private
+      def mappings_env_vars
+        paths = mappings.flat_map do |mapping|
+          [mapping.original_src, mapping.original_dest]
+        end
+
+        paths.flat_map { |path| extract_env_vars(path) }.uniq
+      end
+
+      def valid_mappings
+        mappings.select(&:valid?)
+      end
   end
 end
