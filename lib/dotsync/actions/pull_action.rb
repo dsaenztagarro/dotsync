@@ -6,27 +6,21 @@ module Dotsync
 
     def_delegator :@config, :backups_root
 
-    def execute
-      show_config
+    def execute(options = {})
+      show_mappings
       show_changes
+      return unless options[:apply]
+
       if create_backup
         show_backup
         purge_old_backups
       end
-      pull_dotfiles
+
+      transfer_mappings
+      action("Dotfiles pulled")
     end
 
     private
-      def show_config
-        show_mappings
-      end
-
-      def pull_dotfiles
-        transfer_mappings
-
-        action("Dotfiles pulled")
-      end
-
       def show_backup
         action("Backup created:")
         logger.log("  #{backup_root_path}")

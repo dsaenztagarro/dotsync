@@ -69,28 +69,41 @@ RSpec.describe Dotsync::PushAction do
       expect(logger).to have_received(:log).with("  /tmp/dotsync/src2 → /tmp/dotsync/dest2").ordered.once
     end
 
-    it "transfers mappings correctly" do
-      action.execute
-
-      expect(file_transfer1).to have_received(:transfer)
-      expect(file_transfer2).to have_received(:transfer)
-    end
-
-    context "with invalid mapping" do
-      before do
-        FileUtils.rm(mapping2.src)
-        FileUtils.rm(mapping2.dest)
-      end
-
-      it "transfers mappings correctly and logs skipped invalid mapping" do
+    context "without apply option" do
+      it "doest not transfer mappings" do
         action.execute
 
-        expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
-        expect(logger).to have_received(:log).with("  /tmp/dotsync/src1 → /tmp/dotsync/dest1 #{icon_force}").ordered.once
-        expect(logger).to have_received(:log).with("  /tmp/dotsync/src2 → /tmp/dotsync/dest2 #{icon_invalid}").ordered.once
+        expect(file_transfer1).to_not have_received(:transfer)
+        expect(file_transfer2).to_not have_received(:transfer)
+      end
+    end
+
+    context "with apply option" do
+      let(:subject) { action.execute(apply: true) }
+
+      it "transfers mappings correctly" do
+        subject
 
         expect(file_transfer1).to have_received(:transfer)
-        expect(file_transfer2).to_not have_received(:transfer)
+        expect(file_transfer2).to have_received(:transfer)
+      end
+
+      context "with invalid mapping" do
+        before do
+          FileUtils.rm(mapping2.src)
+          FileUtils.rm(mapping2.dest)
+        end
+
+        it "transfers mappings correctly and logs skipped invalid mapping" do
+          subject
+
+          expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
+          expect(logger).to have_received(:log).with("  /tmp/dotsync/src1 → /tmp/dotsync/dest1 #{icon_force}").ordered.once
+          expect(logger).to have_received(:log).with("  /tmp/dotsync/src2 → /tmp/dotsync/dest2 #{icon_invalid}").ordered.once
+
+          expect(file_transfer1).to have_received(:transfer)
+          expect(file_transfer2).to_not have_received(:transfer)
+        end
       end
     end
   end

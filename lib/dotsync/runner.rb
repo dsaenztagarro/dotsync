@@ -7,7 +7,7 @@ module Dotsync
     end
 
     # action_name should be a symbol, e.g., :pull, :watch, :sync
-    def run(action_name)
+    def run(action_name, options = {})
       case action_name
       when :setup
         setup_config
@@ -22,7 +22,7 @@ module Dotsync
 
           action = action_class.new(config, @logger)
 
-          action.execute
+          action.execute(options)
         rescue ConfigError => e
           @logger.error("[#{action_name}] config error:")
           @logger.info(e.message)

@@ -73,86 +73,90 @@ RSpec.describe Dotsync::PullAction do
       expect(logger).to have_received(:log).with("  /tmp/dotsync/src/file2 → /tmp/dotsync/dest/file2").ordered.once
     end
 
-    it "transfers mappings correctly" do
-      action.execute
+    context "with apply option" do
+      let(:subject) { action.execute(apply: true) }
 
-      expect(file_transfer1).to have_received(:transfer)
-      expect(file_transfer2).to have_received(:transfer)
-    end
-
-    context "with invalid mapping" do
-      before do
-        FileUtils.rm(mapping2.src)
-        FileUtils.rm(mapping2.dest)
-      end
-
-      it "transfers mappings correctly and logs skipped invalid mapping" do
-        action.execute
-
-        expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
-        expect(logger).to have_received(:log).with("  /tmp/dotsync/src/folder_src → /tmp/dotsync/dest/folder_dest #{icon_force}").ordered.once
-        expect(logger).to have_received(:log).with("  /tmp/dotsync/src/file2 → /tmp/dotsync/dest/file2 #{icon_invalid}").ordered.once
+      it "transfers mappings correctly" do
+        subject
 
         expect(file_transfer1).to have_received(:transfer)
-        expect(file_transfer2).to_not have_received(:transfer)
-      end
-    end
-
-    context "backup" do
-      context "without valid mappings" do
-        before do
-          FileUtils.rm_rf(dest)
-        end
-
-        it "does not create a backup folder" do
-          action.execute
-
-          timestamp = Time.now.strftime("%Y%m%d%H%M%S")
-          backup_dir = File.join(backups_root, timestamp)
-          expect(Dir.exist?(backup_dir)).to eq(false)
-        end
+        expect(file_transfer2).to have_received(:transfer)
       end
 
-      context "with valid mappings" do
+      context "with invalid mapping" do
         before do
-          require "timecop"
-          Timecop.freeze(2025, 2, 1)
-          FileUtils.mkdir_p(mapping1.src)
-          FileUtils.mkdir_p(mapping1.dest)
-          FileUtils.mkdir_p(backups_root)
-          files.each { |file| File.write(file, "#{file} content") }
+          FileUtils.rm(mapping2.src)
+          FileUtils.rm(mapping2.dest)
         end
 
-        it "creates a backup with the proper content" do
-          action.execute
+        it "transfers mappings correctly and logs skipped invalid mapping" do
+          subject
 
-          timestamp = Time.now.strftime("%Y%m%d%H%M%S")
-          backup_dir = File.join(backups_root, timestamp)
-          expect(Dir.exist?(backup_dir)).to eq(true)
-          expect(File.read(File.join(backup_dir, "folder_dest", "file1"))).to eq("#{file1_dest} content")
-          expect(File.read(File.join(backup_dir, "file2"))).to eq("#{file2_dest} content")
+          expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
+          expect(logger).to have_received(:log).with("  /tmp/dotsync/src/folder_src → /tmp/dotsync/dest/folder_dest #{icon_force}").ordered.once
+          expect(logger).to have_received(:log).with("  /tmp/dotsync/src/file2 → /tmp/dotsync/dest/file2 #{icon_invalid}").ordered.once
 
-          expect(logger).to have_received(:action).with("Backup created:")
-          expect(logger).to have_received(:log).with("  #{backup_dir}")
+          expect(file_transfer1).to have_received(:transfer)
+          expect(file_transfer2).to_not have_received(:transfer)
         end
+      end
 
-        context "when there are more than 10 backups" do
+      context "backup" do
+        context "without valid mappings" do
           before do
-            1.upto(12) do |day|
-              date = Date.new(2025, 1, day).strftime("%Y%m%d%H%M%S")
-              FileUtils.mkdir_p(File.join(backups_root, date))
-            end
+            FileUtils.rm_rf(dest)
           end
 
-          it "cleans up old backups and creates a new one" do
-            action.execute
+          it "does not create a backup folder" do
+            subject
 
-            expect(Dir[File.join(backups_root, "*")].size).to eq(10)
-            expect(logger).to have_received(:log).with("Maximum of 10 backups retained").ordered.once
-            expect(logger).to have_received(:action).with("Backup deleted:").ordered.once
-            1.upto(2) do |day|
-              backup_path = File.join(backups_root, "2025010#{day}000000")
-              expect(logger).to have_received(:log).with("  #{backup_path}")
+            timestamp = Time.now.strftime("%Y%m%d%H%M%S")
+            backup_dir = File.join(backups_root, timestamp)
+            expect(Dir.exist?(backup_dir)).to eq(false)
+          end
+        end
+
+        context "with valid mappings" do
+          before do
+            require "timecop"
+            Timecop.freeze(2025, 2, 1)
+            FileUtils.mkdir_p(mapping1.src)
+            FileUtils.mkdir_p(mapping1.dest)
+            FileUtils.mkdir_p(backups_root)
+            files.each { |file| File.write(file, "#{file} content") }
+          end
+
+          it "creates a backup with the proper content" do
+            subject
+
+            timestamp = Time.now.strftime("%Y%m%d%H%M%S")
+            backup_dir = File.join(backups_root, timestamp)
+            expect(Dir.exist?(backup_dir)).to eq(true)
+            expect(File.read(File.join(backup_dir, "folder_dest", "file1"))).to eq("#{file1_dest} content")
+            expect(File.read(File.join(backup_dir, "file2"))).to eq("#{file2_dest} content")
+
+            expect(logger).to have_received(:action).with("Backup created:")
+            expect(logger).to have_received(:log).with("  #{backup_dir}")
+          end
+
+          context "when there are more than 10 backups" do
+            before do
+              1.upto(12) do |day|
+                date = Date.new(2025, 1, day).strftime("%Y%m%d%H%M%S")
+                FileUtils.mkdir_p(File.join(backups_root, date))
+              end
+            end
+
+            it "cleans up old backups and creates a new one" do
+              subject
+
+              expect(Dir[File.join(backups_root, "*")].size).to eq(10)
+              expect(logger).to have_received(:log).with("Maximum of 10 backups retained").ordered.once
+              expect(logger).to have_received(:action).with("Backup deleted:").ordered.once
+              1.upto(2) do |day|
+                backup_path = File.join(backups_root, "2025010#{day}000000")
+                expect(logger).to have_received(:log).with("  #{backup_path}")
+              end
             end
           end
         end

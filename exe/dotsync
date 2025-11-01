@@ -4,7 +4,7 @@
 require_relative "../lib/dotsync"
 require "optparse"
 
-{}
+options = { apply: false }
 
 opt_parser = OptionParser.new do |opts|
   opts.banner = <<~BANNER
@@ -16,10 +16,18 @@ opt_parser = OptionParser.new do |opts|
       pull   Download remote changes to the local
       watch  Continuously monitor and sync changes
       setup  Initialize a default configuration file
+
+    Options:
+      -a, --apply   Apply changes (push or pull)
+      -h, --help    Show this help message
   BANNER
 
+  opts.on("-a", "--apply", "Apply changes (push or pull)") do
+    options[:apply] = true
+  end
+
   opts.on("-h", "--help", "Show this help message") do
-    puts opts
+    puts opt_parser.banner
     exit
   end
 end
@@ -30,9 +38,9 @@ command = ARGV.shift
 
 case command
 when "push"
-  Dotsync::Runner.new.run(:push)
+  Dotsync::Runner.new.run(:push, options)
 when "pull"
-  Dotsync::Runner.new.run(:pull)
+  Dotsync::Runner.new.run(:pull, options)
 when "watch"
   Dotsync::Runner.new.run(:watch)
 when "setup"
