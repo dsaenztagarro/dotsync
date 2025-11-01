@@ -2,7 +2,7 @@
 
 module Dotsync
   class PullActionConfig < BaseConfig
-    include XDGBaseDirectorySpec
+    include XDGBaseDirectory
 
     def mappings
       mappings_list = section["mappings"]

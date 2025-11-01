@@ -12,9 +12,11 @@ module Dotsync
       @original_ignores = Array(attributes["ignore"])
       @force = attributes["force"] || false
 
-      @sanitized_src = sanitize_path(@original_src)
-      @sanitized_dest = sanitize_path(@original_dest)
-      @sanitized_ignore = @original_ignores.map { |path| File.join(@sanitized_src, path) }
+      @sanitized_src, @sanitized_dest, @sanitized_ignore = process_paths(
+        @original_src,
+        @original_dest,
+        @original_ignores
+      )
     end
 
     def src
@@ -33,10 +35,17 @@ module Dotsync
       @force
     end
 
+    def directories?
+      File.directory?(src) && File.directory?(dest)
+    end
+
+    def files?
+      return true if File.file?(src) && File.file?(dest)
+      File.file?(src) && !File.exist?(dest) && File.directory?(File.dirname(dest))
+    end
+
     def valid?
-      (File.file?(src) && File.file?(dest)) ||
-      (File.directory?(src) && File.directory?(dest)) ||
-      (File.file?(src) && !File.exist?(dest) && File.directory?(File.dirname(dest)))
+      directories? || files?
     end
 
     def backup_possible?
@@ -75,8 +84,16 @@ module Dotsync
     end
 
     private
+
       def ignores?
         @original_ignores.any?
+      end
+
+      def process_paths(src, dest, ignores)
+        sanitized_src = sanitize_path(src)
+        sanitized_dest = sanitize_path(dest)
+        sanitized_ignore = ignores.map { |path| File.join(sanitized_src, path) }
+        [sanitized_src, sanitized_dest, sanitized_ignore]
       end
   end
 end
