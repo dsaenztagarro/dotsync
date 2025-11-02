@@ -69,9 +69,9 @@ module Dotsync
 
       def diff_mapping_files
         Dotsync::Diff.new.tap do |diff|
-          if !File.exist?(@mapping.dest)
+          if @mapping.file_present_in_src_only?
             diff.additions << @mapping.original_dest
-          else
+          elsif @mapping.file_changed?
             diff.modifications << @mapping.original_dest
           end
         end

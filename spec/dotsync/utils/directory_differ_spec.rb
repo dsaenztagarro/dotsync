@@ -9,8 +9,8 @@ RSpec.describe Dotsync::DirectoryDiffer do
   let(:ignore) { [] }
   let(:mapping) do
     Dotsync::Mapping.new(
-      "src" => src,
-      "dest" => dest,
+      "src" => mapping_src,
+      "dest" => mapping_dest,
       "force" => true,
       "ignore" => ignore
     )
@@ -27,7 +27,10 @@ RSpec.describe Dotsync::DirectoryDiffer do
   end
 
   describe "#diff" do
-    context "with mapping directories" do
+    context "mapping directories" do
+      let(:mapping_src) { src }
+      let(:mapping_dest) { dest }
+
       context "when files are added, modified, and removed" do
         before do
           FileUtils.mkdir_p(File.join(src, "fold"))
@@ -85,6 +88,42 @@ RSpec.describe Dotsync::DirectoryDiffer do
 
           expect(diff).to be_a(Dotsync::Diff)
           expect(diff.empty?).to be true
+        end
+      end
+    end
+
+    context "mapping files" do
+      let(:mapping_src) { File.join(src, "file.txt") }
+      let(:mapping_dest) { File.join(dest, "file.txt") }
+
+      context "when files exist only in src" do
+        before do
+          File.write(File.join(src, "file.txt"), "src content")
+        end
+
+        it "returns a Diff with additions" do
+          diff = differ.diff
+
+          expect(diff).to be_a(Dotsync::Diff)
+          expect(diff.additions).to include(File.join(dest, "file.txt"))
+          expect(diff.modifications).to be_empty
+          expect(diff.removals).to be_empty
+        end
+      end
+
+      context "when files exist in src and dest" do
+        before do
+          File.write(File.join(src, "file.txt"), "src content")
+          File.write(File.join(dest, "file.txt"), "dest content")
+        end
+
+        it "returns a Diff with modification" do
+          diff = differ.diff
+
+          expect(diff).to be_a(Dotsync::Diff)
+          expect(diff.additions).to be_empty
+          expect(diff.modifications).to include(File.join(dest, "file.txt"))
+          expect(diff.removals).to be_empty
         end
       end
     end

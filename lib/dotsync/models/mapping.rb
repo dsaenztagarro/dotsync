@@ -40,12 +40,23 @@ module Dotsync
     end
 
     def files?
-      return true if File.file?(src) && File.file?(dest)
+      files_present? || file_present_in_src_only?
+    end
+
+    def files_present?
+      File.file?(src) && File.file?(dest)
+    end
+
+    def file_present_in_src_only?
       File.file?(src) && !File.exist?(dest) && File.directory?(File.dirname(dest))
     end
 
     def valid?
-      directories? || files?
+      directories? || files? || file_present_in_src_only?
+    end
+
+    def file_changed?
+      files_present? && (File.size(src) != File.size(dest))
     end
 
     def backup_possible?
