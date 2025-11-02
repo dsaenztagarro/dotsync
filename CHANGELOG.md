@@ -1,6 +1,9 @@
 # 0.1.12
 
 - FileTransfer: apply ignores both to src and dest
+- DirectoryDiffer: fix diff on simple files
+- PullAction: fix deletion older backup
+- Readme: new screenshots
 
 # 0.1.11
 
@@ -16,7 +19,7 @@
 - Exe: improved banner with options
 - Options: added "--apply"
 - Options: added "--environment-variables"
-- Differ: show full path using original mapping paths
+- DirectoryDiffer: show full path using original mapping paths
 - Readme: add gem version badge
 - Readme: add requirements section
 
