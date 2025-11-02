@@ -28,18 +28,21 @@ module Dotsync
       diffs = valid_mappings.map do |mapping|
         Dotsync::DirectoryDiffer.new(mapping).diff
       end
-      if diffs.any?
-        info("Diff:", icon: :diff)
-        diffs.flat_map(&:additions).sort.each do |path|
-          logger.log("  #{path}", color: Dotsync::Colors.diff_additions)
-        end
-        diffs.flat_map(&:modifications).sort.each do |path|
-          logger.log("  #{path}", color: Dotsync::Colors.diff_modifications)
-        end
-        diffs.flat_map(&:removals).sort.each do |path|
-          logger.log("  #{path}", color: Dotsync::Colors.diff_removals)
-        end
+      has_diff = false
+      info("Diff:", icon: :diff)
+      diffs.flat_map(&:additions).sort.each do |path|
+        logger.log("  #{path}", color: Dotsync::Colors.diff_additions)
+        has_diff = true
       end
+      diffs.flat_map(&:modifications).sort.each do |path|
+        logger.log("  #{path}", color: Dotsync::Colors.diff_modifications)
+        has_diff = true
+      end
+      diffs.flat_map(&:removals).sort.each do |path|
+        logger.log("  #{path}", color: Dotsync::Colors.diff_removals)
+        has_diff = true
+      end
+      logger.log("  No differences") unless has_diff
     end
 
     def transfer_mappings

@@ -55,6 +55,7 @@ RSpec.describe Dotsync::PullAction do
   end
 
   describe "#execute" do
+    let(:color_modifications) { Dotsync::Colors.diff_modifications }
     let(:icon_force) { Dotsync::Icons.force }
     let(:icon_invalid) { Dotsync::Icons.invalid }
 
@@ -71,6 +72,27 @@ RSpec.describe Dotsync::PullAction do
       expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
       expect(logger).to have_received(:log).with("  /tmp/dotsync/src/folder_src → /tmp/dotsync/dest/folder_dest #{icon_force}").ordered.once
       expect(logger).to have_received(:log).with("  /tmp/dotsync/src/file2 → /tmp/dotsync/dest/file2").ordered.once
+    end
+
+    it "shows diff" do
+      action.execute
+
+      expect(logger).to have_received(:info).with("Diff:", icon: :diff).ordered.once
+      expect(logger).to have_received(:log).with("  /tmp/dotsync/dest/file2", color: color_modifications).ordered.once
+    end
+
+    context "without diff" do
+      before do
+        FileUtils.rm(mapping2.src)
+        FileUtils.rm(mapping2.dest)
+      end
+
+      it "shows diff" do
+        action.execute
+
+        expect(logger).to have_received(:info).with("Diff:", icon: :diff).ordered.once
+        expect(logger).to have_received(:log).with("  No differences").ordered.once
+      end
     end
 
     context "with apply option" do
