@@ -21,7 +21,7 @@ module Dotsync
     # @param [String] base_path The base absolute path to resolve relative paths
     # @return [Array<String>] The array of absolute paths
     def relative_to_absolute(paths, base_path)
-      paths.map { |path| File.expand_path(path, base_path) }
+      paths.map { |path| File.join(base_path, path) }
     end
 
     # Translates /tmp paths to /private/tmp paths on macOS
