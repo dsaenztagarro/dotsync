@@ -1,3 +1,8 @@
+# 0.1.13
+
+- PullAction: backup message simplified
+- MappingsTransfer: show No differences
+
 # 0.1.12
 
 - FileTransfer: apply ignores both to src and dest
