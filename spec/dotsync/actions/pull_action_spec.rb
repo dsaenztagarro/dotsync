@@ -173,8 +173,7 @@ RSpec.describe Dotsync::PullAction do
               subject
 
               expect(Dir[File.join(backups_root, "*")].size).to eq(10)
-              expect(logger).to have_received(:log).with("Maximum of 10 backups retained").ordered.once
-              expect(logger).to have_received(:action).with("Backup deleted:").ordered.once
+              expect(logger).to have_received(:action).with("Oldest backup deleted:").ordered.once
               1.upto(2) do |day|
                 backup_path = File.join(backups_root, "2025010#{day}000000")
                 expect(logger).to have_received(:log).with("  #{backup_path}")

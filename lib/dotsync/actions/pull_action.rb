@@ -54,9 +54,7 @@ module Dotsync
       def purge_old_backups
         backups = Dir[File.join(backups_root, "*")].sort.reverse
         if backups.size > 10
-          logger.log("Maximum of 10 backups retained")
-
-          action("Backup deleted:")
+          action("Oldest backup deleted:")
           backups[10..].each do |path|
             FileUtils.rm_rf(path)
             logger.log("  #{path}")
