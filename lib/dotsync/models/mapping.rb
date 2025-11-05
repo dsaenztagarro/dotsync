@@ -4,18 +4,20 @@ module Dotsync
   class Mapping
     include Dotsync::PathUtils
 
-    attr_reader :original_src, :original_dest, :original_ignores
+    attr_reader :original_src, :original_dest, :original_ignores, :original_only
 
     def initialize(attributes)
       @original_src = attributes["src"]
       @original_dest = attributes["dest"]
       @original_ignores = Array(attributes["ignore"])
+      @original_only = Array(attributes["only"])
       @force = attributes["force"] || false
 
-      @sanitized_src, @sanitized_dest, @sanitized_ignore = process_paths(
+      @sanitized_src, @sanitized_dest, @sanitized_ignore, @sanitized_only = process_paths(
         @original_src,
         @original_dest,
-        @original_ignores
+        @original_ignores,
+        @original_only
       )
     end
 
@@ -29,6 +31,10 @@ module Dotsync
 
     def ignores
       @sanitized_ignore
+    end
+
+    def inclusions
+      @sanitized_only
     end
 
     def force?
@@ -71,28 +77,25 @@ module Dotsync
 
     def icons
       msg = []
-      msg << Icons.force if force?
-      msg << Icons.ignore if ignores?
       msg << Icons.invalid unless valid?
+      msg << Icons.only if only?
+      msg << Icons.ignore if ignores?
+      msg << Icons.force if force?
       msg.join(" ")
-    end
-
-    def colorized_src
-      colorize_env_vars(original_src)
-    end
-
-    def colorized_dest
-      colorize_env_vars(original_dest)
     end
 
     def to_s
-      colorized_src = colorize_env_vars(original_src)
-      colorized_dest = colorize_env_vars(original_dest)
-      msg = ["#{colorized_src} → #{colorized_dest}"]
-      msg << Icons.force if force?
-      msg << Icons.ignore if ignores?
-      msg << Icons.invalid unless valid?
-      msg.join(" ")
+      msg = "#{decorated_src} → #{decorated_dest}"
+      msg += " #{icons}" if icons != ""
+      msg
+    end
+
+    def decorated_src
+      colorize_env_vars(original_src)
+    end
+
+    def decorated_dest
+      colorize_env_vars(original_dest)
     end
 
     def apply_to(path)
@@ -106,6 +109,7 @@ module Dotsync
         "src" => File.join(@original_src, relative_path),
         "dest" => File.join(@original_dest, relative_path),
         "force" => @force,
+        "only" => @only,
         "ignore" => @original_ignores
       )
     end
@@ -115,13 +119,20 @@ module Dotsync
         @original_ignores.any?
       end
 
-      def process_paths(src, dest, ignores)
-        sanitized_src = sanitize_path(src)
-        sanitized_dest = sanitize_path(dest)
-        sanitized_ignore = ignores.flat_map do |path|
+      def only?
+        @original_only.any?
+      end
+
+      def process_paths(raw_src, raw_dest, raw_ignores, raw_only)
+        sanitized_src = sanitize_path(raw_src)
+        sanitized_dest = sanitize_path(raw_dest)
+        sanitized_ignore = raw_ignores.flat_map do |path|
           [File.join(sanitized_src, path), File.join(sanitized_dest, path)]
         end
-        [sanitized_src, sanitized_dest, sanitized_ignore]
+        sanitized_only = raw_only.map do |path|
+          File.join(sanitized_src, path)
+        end
+        [sanitized_src, sanitized_dest, sanitized_ignore, sanitized_only]
       end
   end
 end

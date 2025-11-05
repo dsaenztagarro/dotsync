@@ -10,11 +10,13 @@ RSpec.describe Dotsync::Mapping do
   let(:dest) { File.join(root, "dest") }
   let(:force) { false }
   let(:ignore) { [] }
+  let(:only) { [] }
   let(:attributes) do
     {
       "src" => src,
       "dest" => dest,
       "force" => force,
+      "only" => only,
       "ignore" => ignore
     }
   end
@@ -133,22 +135,10 @@ RSpec.describe Dotsync::Mapping do
     end
   end
 
-  describe "#to_s" do
-    let(:subject) { mapping_entry.to_s }
+  describe "#decorated_src" do
+    let(:subject) { mapping_entry.decorated_src }
 
-    before do
-      FileUtils.mkdir_p(src)
-      FileUtils.mkdir_p(dest)
-    end
-
-    it "returns a formatted string without icons" do
-      expect(subject).to include("#{mapping_entry.original_src} → #{mapping_entry.original_dest}")
-      expect(subject).to_not include(Dotsync::Icons.force)
-      expect(subject).to_not include(Dotsync::Icons.ignore)
-      expect(subject).to_not include(Dotsync::Icons.invalid)
-    end
-
-    context "when src and dest contains env vars" do
+    context "when contains env var" do
       let(:root) { "$HOME" }
       let(:color) { 104 }
 
@@ -156,9 +146,22 @@ RSpec.describe Dotsync::Mapping do
         ENV["HOME"] = File.join("/tmp", "dotsync")
       end
 
-      it "returns colorized env vars" do
-        expect(subject).to include("\e[38;5;#{color}m$HOME\e[0m/src → \e[38;5;#{color}m$HOME\e[0m/dest")
+      it "returns colorized env var" do
+        expect(subject).to include("\e[38;5;#{color}m$HOME\e[0m/src")
       end
+    end
+  end
+
+  describe "#icons" do
+    let(:subject) { mapping_entry.icons }
+
+    before do
+      FileUtils.mkdir_p(src)
+      FileUtils.mkdir_p(dest)
+    end
+
+    it "returns an empty string without icons" do
+      expect(subject).to eq("")
     end
 
     context "when force is enabled" do
