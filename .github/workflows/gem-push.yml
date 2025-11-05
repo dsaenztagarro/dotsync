@@ -34,7 +34,7 @@ jobs:
           bundle exec rubocop
 
       - name: Publish to RubyGems
-        if: matrix.ruby == '3.2'
+        if: matrix.ruby == '3.2' && github.ref_name == 'master'
         run: |
           mkdir -p $HOME/.gem
           touch $HOME/.gem/credentials
