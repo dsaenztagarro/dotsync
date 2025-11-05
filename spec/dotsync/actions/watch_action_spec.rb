@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require_relative "support/logger_helper"
 
 RSpec.describe Dotsync::WatchAction do
+  include LoggerHelper
   include Dotsync::PathUtils
 
   let(:root) { File.join("/tmp", "dotsync") }
@@ -39,8 +41,9 @@ RSpec.describe Dotsync::WatchAction do
       allow_any_instance_of(Listen::Listener).to receive(:start)
       Thread.new { sleep 0.5; Process.kill("INT", Process.pid) }
 
-      expect(logger).to receive(:info).with("Mappings:", icon: :config).ordered.once
-      expect(logger).to receive(:log).with("  #{src} → #{dest}").ordered.once
+      expect_show_mappings_legend
+      expect_show_mappings([["", src, dest]])
+
       expect(logger).to receive(:action).with("Listening for changes...").ordered.once
       expect(logger).to receive(:action).with("Press Ctrl+C to exit.").ordered.once
       expect(logger).to receive(:action).with("Shutting down listeners...").ordered

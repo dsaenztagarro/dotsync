@@ -2,6 +2,8 @@
 
 module Dotsync
   class WatchAction < BaseAction
+    include Dotsync::MappingsTransfer
+
     def_delegator :@config, :mappings
 
     def initialize(config, logger)
@@ -11,7 +13,8 @@ module Dotsync
     end
 
     def execute
-      show_config
+      show_mappings_legend
+      show_mappings
 
       @listeners.each(&:start)
 
@@ -21,11 +24,6 @@ module Dotsync
     end
 
     private
-      def show_config
-        logger.info("Mappings:", icon: :config)
-        mappings.each { |mapping| logger.log("  #{mapping}") }
-      end
-
       def setup_listeners
         @listeners = mappings.map do |mapping|
           src = mapping.src
