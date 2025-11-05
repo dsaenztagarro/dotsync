@@ -9,6 +9,7 @@ module Dotsync
     def execute(options = {})
       show_options(options)
       show_env_vars
+      show_mappings_legend
       show_mappings
       show_changes
       return unless options[:apply]

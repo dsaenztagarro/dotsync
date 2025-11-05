@@ -4,6 +4,12 @@ module Dotsync
   module MappingsTransfer
     include Dotsync::PathUtils
 
+    LEGEND = [
+      [Dotsync::Icons.force, "The source will overwrite the destination"],
+      [Dotsync::Icons.ignore, "Paths configured to be ignored in the destination"],
+      [Dotsync::Icons.invalid, "Invalid paths detected in the source or destination"]
+    ]
+
     extend Forwardable # def_delegator
 
     def_delegator :@config, :mappings
@@ -20,14 +26,9 @@ module Dotsync
       logger.log("")
     end
 
-    def show_legend
+    def show_mappings_legend
       info("Legend:", icon: :legend)
-      rows = [
-        [Dotsync::Icons.force, "The source will overwrite the destination"],
-        [Dotsync::Icons.ignore, "Paths configured to be ignored in the destination"],
-        [Dotsync::Icons.invalid, "Invalid paths detected in the source or destination"]
-      ]
-      table = Terminal::Table.new(headings: ["Flags", "Source", "Destination"], rows: rows)
+      table = Terminal::Table.new(rows: LEGEND)
       logger.log(table)
       logger.log("")
     end

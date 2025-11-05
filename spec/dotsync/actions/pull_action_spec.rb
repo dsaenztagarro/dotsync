@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require_relative "support/logger_helper"
 
 RSpec.describe Dotsync::PullAction do
+  include LoggerHelper
+
   let(:root) { File.join("/tmp", "dotsync") }
   let(:src) { File.join(root, "src") }
   let(:dest) { File.join(root, "dest") }
@@ -67,20 +70,12 @@ RSpec.describe Dotsync::PullAction do
     end
 
     it "shows config" do
-      expect(logger).to receive(:info).with("Options:", icon: :options).ordered
-      expect(logger).to receive(:log).with("  Apply: FALSE").ordered
-      expect(logger).to receive(:log).with("").ordered
-
-      expect(logger).to receive(:info).with("Mappings:", icon: :config).ordered
-      expect(logger).to receive(:log) do |table|
-        expect(table).to be_a(Terminal::Table)
-        rows_cells = table.rows.map { |row| row.cells.map(&:value) }
-        expect(rows_cells).to eq([
-          [icon_force, "/tmp/dotsync/src/folder_src", "/tmp/dotsync/dest/folder_dest"],
-          ["", "/tmp/dotsync/src/file2", "/tmp/dotsync/dest/file2"]
-        ])
-      end
-      expect(logger).to receive(:log).with("").ordered
+      expect_show_options
+      expect_show_mappings_legend
+      expect_show_mappings([
+        [icon_force, "/tmp/dotsync/src/folder_src", "/tmp/dotsync/dest/folder_dest"],
+        ["", "/tmp/dotsync/src/file2", "/tmp/dotsync/dest/file2"]
+      ])
 
       action.execute
     end
@@ -123,20 +118,12 @@ RSpec.describe Dotsync::PullAction do
         end
 
         it "transfers mappings correctly and logs skipped invalid mapping" do
-          expect(logger).to receive(:info).with("Options:", icon: :options).ordered
-          expect(logger).to receive(:log).with("  Apply: TRUE").ordered
-          expect(logger).to receive(:log).with("").ordered
-
-          expect(logger).to receive(:info).with("Mappings:", icon: :config).ordered
-          expect(logger).to receive(:log) do |table|
-            expect(table).to be_a(Terminal::Table)
-            rows_cells = table.rows.map { |row| row.cells.map(&:value) }
-            expect(rows_cells).to eq([
-              [icon_force, "/tmp/dotsync/src/folder_src", "/tmp/dotsync/dest/folder_dest"],
-              [icon_invalid, "/tmp/dotsync/src/file2", "/tmp/dotsync/dest/file2"]
-            ])
-          end
-          expect(logger).to receive(:log).with("").ordered
+          expect_show_options(apply: true)
+          expect_show_mappings_legend
+          expect_show_mappings([
+            [icon_force, "/tmp/dotsync/src/folder_src", "/tmp/dotsync/dest/folder_dest"],
+            [icon_invalid, "/tmp/dotsync/src/file2", "/tmp/dotsync/dest/file2"]
+          ])
 
           expect(file_transfer1).to receive(:transfer)
           expect(file_transfer2).to_not receive(:transfer)

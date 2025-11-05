@@ -10,6 +10,13 @@ require "ostruct"
 require "find"
 require "terminal-table"
 
+# Base classes
+require_relative "dotsync/errors"
+require_relative "dotsync/icons"
+require_relative "dotsync/colors"
+require_relative "dotsync/runner"
+require_relative "dotsync/version"
+
 # Utils
 require_relative "dotsync/utils/path_utils"
 require_relative "dotsync/utils/logger"
@@ -37,13 +44,6 @@ require_relative "dotsync/actions/base_action"
 require_relative "dotsync/actions/pull_action"
 require_relative "dotsync/actions/push_action"
 require_relative "dotsync/actions/watch_action"
-
-# Base classes
-require_relative "dotsync/errors"
-require_relative "dotsync/icons"
-require_relative "dotsync/colors"
-require_relative "dotsync/runner"
-require_relative "dotsync/version"
 
 module Dotsync
   class << self
