@@ -12,7 +12,7 @@ module LoggerHelper
     expect(logger).to receive(:info).with("Legend:", icon: :legend).ordered
     expect_logger_log_table([
       [Dotsync::Icons.force, "The source will overwrite the destination"],
-      [Dotsync::Icons.only, ""],
+      [Dotsync::Icons.only, " Only paths configured to considered in the source"],
       [Dotsync::Icons.ignore, "Paths configured to be ignored in the destination"],
       [Dotsync::Icons.invalid, "Invalid paths detected in the source or destination"]
     ])

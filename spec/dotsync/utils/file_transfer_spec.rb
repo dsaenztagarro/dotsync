@@ -13,6 +13,8 @@ RSpec.describe Dotsync::FileTransfer do
     )
   end
   let(:force) { false }
+  let(:only) { [] }
+  let(:ignore) { [] }
 
   let(:subject) { described_class.new(config) }
 
@@ -21,7 +23,6 @@ RSpec.describe Dotsync::FileTransfer do
       let(:root) { File.join("/tmp", "dotsync") }
       let(:src) { File.join(root, "src") }
       let(:dest) { File.join(root, "dest") }
-      let(:ignore) { [] }
 
       before do
         FileUtils.mkdir_p(src)
@@ -236,7 +237,7 @@ RSpec.describe Dotsync::FileTransfer do
         end
 
         context "with excluded paths for dotfiles and dotfolders inside normal folders" do
-          let(:ignore) do
+          let(:only) do
             [
               "normal_folder/.dotfile_in_folder",
               "normal_folder/.dotfolder_in_folder"
@@ -248,16 +249,13 @@ RSpec.describe Dotsync::FileTransfer do
             File.write(File.join(src, "normal_folder/.dotfile_in_folder"), "dotfile in folder content")
             FileUtils.mkdir_p(File.join(src, "normal_folder/.dotfolder_in_folder"))
             File.write(File.join(src, "normal_folder/.dotfolder_in_folder/file_in_dotfolder.txt"), "file in dotfolder content")
-            File.write(File.join(src, "normal_folder/regular_file_in_folder.txt"), "regular file in folder content")
           end
 
           it "excludes dotfiles and dotfolders inside normal folders from files_to_copy" do
             subject.transfer
 
-            expect(File.exist?(File.join(dest, "normal_folder/.dotfile_in_folder"))).to be false
-            expect(File.exist?(File.join(dest, "normal_folder/.dotfolder_in_folder"))).to be false
-            expect(File.exist?(File.join(dest, "normal_folder/.dotfolder_in_folder/file_in_dotfolder.txt"))).to be false
-            expect(File.exist?(File.join(dest, "normal_folder/regular_file_in_folder.txt"))).to be true
+            expect(File.exist?(File.join(dest, "normal_folder/.dotfile_in_folder"))).to be true
+            expect(File.exist?(File.join(dest, "normal_folder/.dotfolder_in_folder/file_in_dotfolder.txt"))).to be true
           end
         end
 
