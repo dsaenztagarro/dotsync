@@ -193,12 +193,12 @@ RSpec.describe Dotsync::FileTransfer do
       end
 
       context "with only paths" do
-        let(:ignore) do
+        let(:only) do
           [
-            "folder2",
-            "folder3/subfolder2",
-            "folder3/subfolder3/sub2folder2",
-            "file7.txt"
+            "folder1",
+            "folder3/subfolder1",
+            "folder3/subfolder3/sub2folder1",
+            "file8.txt"
           ]
         end
 
@@ -222,7 +222,7 @@ RSpec.describe Dotsync::FileTransfer do
           FileUtils.mkdir_p(dest)
         end
 
-        it "excludes specified paths from files_to_copy including 3 subfolder levels" do
+        it "includes only specified paths in files_to_copy" do
           subject.transfer
 
           expect(File.exist?(File.join(dest, "folder1", "file1.txt"))).to be true

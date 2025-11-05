@@ -2,7 +2,7 @@
 
 - Render environment variables and mappings with a table
 - Added mappings legend
-- Added TOML "only" option
+- Added transfer files with "only" option
 
 # 0.1.13
 

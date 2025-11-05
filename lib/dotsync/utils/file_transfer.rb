@@ -15,6 +15,7 @@ module Dotsync
       @src = mapping.src
       @dest = mapping.dest
       @force = mapping.force?
+      @inclusions = mapping.inclusions || []
       @ignores = mapping.ignores || []
     end
 
@@ -39,6 +40,7 @@ module Dotsync
           next if [".", ".."].include?(File.basename(path))
 
           full_path = File.expand_path(path)
+          next unless inclusion?(full_path)
           next if ignore?(full_path)
 
           target = File.join(folder_dest, File.basename(path))
@@ -74,6 +76,11 @@ module Dotsync
             FileUtils.rmdir(path)
           end
         end
+      end
+
+      def inclusion?(path)
+        return true unless @inclusions.any?
+        @inclusions.any? { |inclusion| path.start_with?(inclusion) || inclusion.start_with?(path) }
       end
 
       def ignore?(path)

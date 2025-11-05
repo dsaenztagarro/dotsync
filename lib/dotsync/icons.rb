@@ -13,8 +13,9 @@ module Dotsync
     CONFIG = " "
     DIFF = " "
 
-    # Default Mapping icons
+    # Default Mapping Flags icons
     DEFAULT_FORCE = "󰁪 "
+    DEFAULT_ONLY = " "
     DEFAULT_IGNORE = "󰈉 "
     DEFAULT_INVALID = "󱏏 "
 
@@ -39,6 +40,7 @@ module Dotsync
     def self.load_custom_icons(config)
       @custom_icons = {
         force: config.dig("icons", "force") || DEFAULT_FORCE,
+        only: config.dig("icons", "only") || DEFAULT_ONLY,
         ignore: config.dig("icons", "ignore") || DEFAULT_IGNORE,
         invalid: config.dig("icons", "invalid") || DEFAULT_INVALID
       }
@@ -46,6 +48,10 @@ module Dotsync
 
     def self.force
       @custom_icons[:force] || DEFAULT_FORCE
+    end
+
+    def self.only
+      @custom_icons[:only] || DEFAULT_ONLY
     end
 
     def self.ignore
