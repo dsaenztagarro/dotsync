@@ -20,7 +20,7 @@ module Dotsync
       end
 
       transfer_mappings
-      action("Dotfiles pulled")
+      action("Mappings pulled", icon: :done)
     end
 
     private

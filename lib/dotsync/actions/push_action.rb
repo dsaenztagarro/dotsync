@@ -13,7 +13,7 @@ module Dotsync
       return unless options[:apply]
 
       transfer_mappings
-      action("Dotfiles pushed", icon: :copy)
+      action("Mappings pushed", icon: :done)
     end
   end
 end
