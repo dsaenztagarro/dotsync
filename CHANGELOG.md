@@ -1,3 +1,8 @@
+# 0.1.14
+
+- Render environment variables and mappings with a table
+- Added mappings legend
+
 # 0.1.13
 
 - PullAction: backup message simplified
