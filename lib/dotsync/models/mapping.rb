@@ -69,6 +69,22 @@ module Dotsync
       File.basename(dest)
     end
 
+    def icons
+      msg = []
+      msg << Icons.force if force?
+      msg << Icons.ignore if ignores?
+      msg << Icons.invalid unless valid?
+      msg.join(" ")
+    end
+
+    def colorized_src
+      colorize_env_vars(original_src)
+    end
+
+    def colorized_dest
+      colorize_env_vars(original_dest)
+    end
+
     def to_s
       colorized_src = colorize_env_vars(original_src)
       colorized_dest = colorize_env_vars(original_dest)

@@ -67,11 +67,22 @@ RSpec.describe Dotsync::PullAction do
     end
 
     it "shows config" do
-      action.execute
+      expect(logger).to receive(:info).with("Options:", icon: :options).ordered
+      expect(logger).to receive(:log).with("  Apply: FALSE").ordered
+      expect(logger).to receive(:log).with("").ordered
 
-      expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
-      expect(logger).to have_received(:log).with("  /tmp/dotsync/src/folder_src → /tmp/dotsync/dest/folder_dest #{icon_force}").ordered.once
-      expect(logger).to have_received(:log).with("  /tmp/dotsync/src/file2 → /tmp/dotsync/dest/file2").ordered.once
+      expect(logger).to receive(:info).with("Mappings:", icon: :config).ordered
+      expect(logger).to receive(:log) do |table|
+        expect(table).to be_a(Terminal::Table)
+        rows_cells = table.rows.map { |row| row.cells.map(&:value) }
+        expect(rows_cells).to eq([
+          [icon_force, "/tmp/dotsync/src/folder_src", "/tmp/dotsync/dest/folder_dest"],
+          ["", "/tmp/dotsync/src/file2", "/tmp/dotsync/dest/file2"]
+        ])
+      end
+      expect(logger).to receive(:log).with("").ordered
+
+      action.execute
     end
 
     it "shows diff" do
@@ -112,14 +123,25 @@ RSpec.describe Dotsync::PullAction do
         end
 
         it "transfers mappings correctly and logs skipped invalid mapping" do
+          expect(logger).to receive(:info).with("Options:", icon: :options).ordered
+          expect(logger).to receive(:log).with("  Apply: TRUE").ordered
+          expect(logger).to receive(:log).with("").ordered
+
+          expect(logger).to receive(:info).with("Mappings:", icon: :config).ordered
+          expect(logger).to receive(:log) do |table|
+            expect(table).to be_a(Terminal::Table)
+            rows_cells = table.rows.map { |row| row.cells.map(&:value) }
+            expect(rows_cells).to eq([
+              [icon_force, "/tmp/dotsync/src/folder_src", "/tmp/dotsync/dest/folder_dest"],
+              [icon_invalid, "/tmp/dotsync/src/file2", "/tmp/dotsync/dest/file2"]
+            ])
+          end
+          expect(logger).to receive(:log).with("").ordered
+
+          expect(file_transfer1).to receive(:transfer)
+          expect(file_transfer2).to_not receive(:transfer)
+
           subject
-
-          expect(logger).to have_received(:info).with("Mappings:", icon: :config).ordered.once
-          expect(logger).to have_received(:log).with("  /tmp/dotsync/src/folder_src → /tmp/dotsync/dest/folder_dest #{icon_force}").ordered.once
-          expect(logger).to have_received(:log).with("  /tmp/dotsync/src/file2 → /tmp/dotsync/dest/file2 #{icon_invalid}").ordered.once
-
-          expect(file_transfer1).to have_received(:transfer)
-          expect(file_transfer2).to_not have_received(:transfer)
         end
       end
 

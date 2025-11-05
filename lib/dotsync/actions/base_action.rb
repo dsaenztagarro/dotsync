@@ -23,6 +23,7 @@ module Dotsync
       def show_options(options)
         info("Options:", icon: :options)
         logger.log("  Apply: #{options[:apply] ? "TRUE" : "FALSE"}")
+        logger.log("")
       end
   end
 end

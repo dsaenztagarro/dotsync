@@ -9,6 +9,7 @@ module Dotsync
     # Configuration icon
     OPTIONS = " "
     ENV_VARS = " "
+    LEGEND = " "
     CONFIG = " "
     DIFF = " "
 
@@ -61,6 +62,7 @@ module Dotsync
       error: ERROR,
       env_vars: ENV_VARS,
       options: OPTIONS,
+      legend: LEGEND,
       config: CONFIG,
       diff: DIFF,
       force: -> { force },

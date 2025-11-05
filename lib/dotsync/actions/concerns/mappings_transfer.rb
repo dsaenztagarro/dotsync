@@ -2,6 +2,8 @@
 
 module Dotsync
   module MappingsTransfer
+    include Dotsync::PathUtils
+
     extend Forwardable # def_delegator
 
     def_delegator :@config, :mappings
@@ -11,17 +13,38 @@ module Dotsync
       return unless env_vars.any?
 
       info("Environment variables:", icon: :env_vars)
-      env_vars.each do |env_var|
-        logger.log("  #{env_var}: #{ENV[env_var]}")
-      end
+
+      rows = env_vars.map { |env_var| [env_var, ENV[env_var]] }.sort_by(&:first)
+      table = Terminal::Table.new(rows: rows)
+      logger.log(table)
+      logger.log("")
+    end
+
+    def show_legend
+      info("Legend:", icon: :legend)
+      rows = [
+        [Dotsync::Icons.force, "The source will overwrite the destination"],
+        [Dotsync::Icons.ignore, "Paths configured to be ignored in the destination"],
+        [Dotsync::Icons.invalid, "Invalid paths detected in the source or destination"]
+      ]
+      table = Terminal::Table.new(headings: ["Flags", "Source", "Destination"], rows: rows)
+      logger.log(table)
+      logger.log("")
     end
 
     def show_mappings
       info("Mappings:", icon: :config)
 
-      mappings.each do |mapping|
-        logger.log("  #{mapping}")
+      rows = mappings.map do |mapping|
+        [
+          mapping.icons,
+          colorize_env_vars(mapping.original_src),
+          colorize_env_vars(mapping.original_dest)
+        ]
       end
+      table = Terminal::Table.new(headings: ["Flags", "Source", "Destination"], rows: rows)
+      logger.log(table)
+      logger.log("")
     end
 
     def show_changes

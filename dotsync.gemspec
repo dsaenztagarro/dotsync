@@ -33,6 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "logger", "~> 1.7.0" # No longer part of default gems from Ruby 3.5
   spec.add_dependency "ostruct", "~> 0.6.3" # No longer part of default gems from Ruby 3.5
   spec.add_dependency "find", "~> 0.2.0"
+  spec.add_dependency "terminal-table", "~> 4.0.0"
 
   # Debug with:
   # require 'debug'; binding.break

@@ -8,6 +8,7 @@ require "logger"
 require "forwardable" # Ruby standard library
 require "ostruct"
 require "find"
+require "terminal-table"
 
 # Utils
 require_relative "dotsync/utils/path_utils"

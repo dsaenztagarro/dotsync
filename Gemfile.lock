@@ -7,6 +7,7 @@ PATH
       listen (~> 3.9.0)
       logger (~> 1.7.0)
       ostruct (~> 0.6.3)
+      terminal-table (~> 4.0.0)
       toml-rb (~> 4.0.0)
 
 GEM
@@ -118,6 +119,8 @@ GEM
       rbs (>= 3, < 5)
     ruby-progressbar (1.13.0)
     stringio (3.1.7)
+    terminal-table (4.0.0)
+      unicode-display_width (>= 1.1.1, < 4)
     timecop (0.9.10)
     toml-rb (4.0.0)
       citrus (~> 3.0, > 3.0)
