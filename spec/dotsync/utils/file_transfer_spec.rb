@@ -8,6 +8,7 @@ RSpec.describe Dotsync::FileTransfer do
       "src" => src,
       "dest" => dest,
       "force" => force,
+      "only" => only,
       "ignore" => ignore
     )
   end
@@ -73,6 +74,125 @@ RSpec.describe Dotsync::FileTransfer do
       end
 
       context "with ignore paths" do
+        let(:ignore) do
+          [
+            "folder2",
+            "folder3/subfolder2",
+            "folder3/subfolder3/sub2folder2",
+            "file7.txt"
+          ]
+        end
+
+        before do
+          FileUtils.mkdir_p(File.join(src, "folder1"))
+          FileUtils.mkdir_p(File.join(src, "folder2"))
+          FileUtils.mkdir_p(File.join(src, "folder3", "subfolder1"))
+          FileUtils.mkdir_p(File.join(src, "folder3", "subfolder2"))
+          FileUtils.mkdir_p(File.join(src, "folder3", "subfolder3", "sub2folder1"))
+          FileUtils.mkdir_p(File.join(src, "folder3", "subfolder3", "sub2folder2"))
+
+          File.write(File.join(src, "folder1", "file1.txt"), "content")
+          File.write(File.join(src, "folder2", "file2.txt"), "content")
+          File.write(File.join(src, "folder3", "subfolder1", "file3.txt"), "content")
+          File.write(File.join(src, "folder3", "subfolder2", "file4.txt"), "content")
+          File.write(File.join(src, "folder3", "subfolder3", "sub2folder1", "file5.txt"), "src content")
+          File.write(File.join(src, "folder3", "subfolder3", "sub2folder2", "file6.txt"), "src content")
+          File.write(File.join(src, "file7.txt"), "content")
+          File.write(File.join(src, "file8.txt"), "content")
+
+          FileUtils.mkdir_p(dest)
+        end
+
+        it "excludes specified paths from files_to_copy including 3 subfolder levels" do
+          subject.transfer
+
+          expect(File.exist?(File.join(dest, "folder1", "file1.txt"))).to be true
+          expect(File.exist?(File.join(dest, "folder2", "file2.txt"))).to be false
+          expect(File.exist?(File.join(dest, "folder3", "subfolder1", "file3.txt"))).to be true
+          expect(File.exist?(File.join(dest, "folder3", "subfolder2", "file4.txt"))).to be false
+          expect(File.exist?(File.join(dest, "folder3", "subfolder3", "sub2folder1", "file5.txt"))).to be true
+          expect(File.exist?(File.join(dest, "folder3", "subfolder3", "sub2folder2", "file6.txt"))).to be false
+          expect(File.exist?(File.join(dest, "file7.txt"))).to be false
+          expect(File.exist?(File.join(dest, "file8.txt"))).to be true
+        end
+
+        context "with excluded paths for dotfiles and dotfolders inside normal folders" do
+          let(:ignore) do
+            [
+              "normal_folder/.dotfile_in_folder",
+              "normal_folder/.dotfolder_in_folder"
+            ]
+          end
+
+          before do
+            FileUtils.mkdir_p(File.join(src, "normal_folder"))
+            File.write(File.join(src, "normal_folder/.dotfile_in_folder"), "dotfile in folder content")
+            FileUtils.mkdir_p(File.join(src, "normal_folder/.dotfolder_in_folder"))
+            File.write(File.join(src, "normal_folder/.dotfolder_in_folder/file_in_dotfolder.txt"), "file in dotfolder content")
+            File.write(File.join(src, "normal_folder/regular_file_in_folder.txt"), "regular file in folder content")
+          end
+
+          it "excludes dotfiles and dotfolders inside normal folders from files_to_copy" do
+            subject.transfer
+
+            expect(File.exist?(File.join(dest, "normal_folder/.dotfile_in_folder"))).to be false
+            expect(File.exist?(File.join(dest, "normal_folder/.dotfolder_in_folder"))).to be false
+            expect(File.exist?(File.join(dest, "normal_folder/.dotfolder_in_folder/file_in_dotfolder.txt"))).to be false
+            expect(File.exist?(File.join(dest, "normal_folder/regular_file_in_folder.txt"))).to be true
+          end
+        end
+
+        context "with force option" do
+          let(:force) { true }
+          let(:ignore) do
+            [
+              "folder2/file2.txt",
+              "folder3/subfolder2",
+              "folder3/subfolder3/sub2folder1/file5.txt",
+              "file7.txt"
+            ]
+          end
+
+          before do
+            FileUtils.rm_rf(src)
+            FileUtils.mkdir_p(src)
+
+            FileUtils.mkdir_p(File.join(dest, "folder1"))
+            FileUtils.mkdir_p(File.join(dest, "folder2"))
+            FileUtils.mkdir_p(File.join(dest, "folder3", "subfolder1"))
+            FileUtils.mkdir_p(File.join(dest, "folder3", "subfolder2"))
+            FileUtils.mkdir_p(File.join(dest, "folder3", "subfolder3", "sub2folder1"))
+            FileUtils.mkdir_p(File.join(dest, "folder3", "subfolder3", "sub2folder2"))
+
+            File.write(File.join(dest, "folder1", "file1.txt"), "content")
+            File.write(File.join(dest, "folder2", "file2.txt"), "content")
+            File.write(File.join(dest, "folder3", "subfolder1", "file3.txt"), "content")
+            File.write(File.join(dest, "folder3", "subfolder2", "file4.txt"), "content")
+            File.write(File.join(dest, "folder3", "subfolder3", "sub2folder1", "file5.txt"), "dest content")
+            File.write(File.join(dest, "folder3", "subfolder3", "sub2folder2", "file6.txt"), "dest content")
+            File.write(File.join(dest, "file7.txt"), "content")
+            File.write(File.join(dest, "file8.txt"), "content")
+          end
+
+          it "ignores files on destination" do
+            subject.transfer
+
+            # Ignored files
+            expect(File.exist?(File.join(dest, "folder2", "file2.txt"))).to be true
+            expect(File.exist?(File.join(dest, "folder3", "subfolder2", "file4.txt"))).to be true
+            expect(File.exist?(File.join(dest, "folder3", "subfolder3", "sub2folder1", "file5.txt"))).to be true
+            expect(File.exist?(File.join(dest, "file7.txt"))).to be true
+
+            # Files removed because they don't exist anymore on source
+            expect(File.exist?(File.join(dest, "folder1", "file1.txt"))).to be false
+            expect(File.exist?(File.join(dest, "folder3", "subfolder1", "file3.txt"))).to be false
+            expect(File.exist?(File.join(dest, "folder3", "subfolder3", "sub2folder2", "file6.txt"))).to be false
+            expect(File.exist?(File.join(dest, "file8.txt"))).to be false
+          end
+        end
+      end
+
+      context "with only paths" do
         let(:ignore) do
           [
             "folder2",
