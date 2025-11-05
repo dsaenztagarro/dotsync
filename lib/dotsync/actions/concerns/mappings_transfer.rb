@@ -6,7 +6,7 @@ module Dotsync
 
     LEGEND = [
       [Dotsync::Icons.force, "The source will overwrite the destination"],
-      [Dotsync::Icons.only, " Only paths configured to considered in the source"],
+      [Dotsync::Icons.only, "Paths designated explicitly as source only"],
       [Dotsync::Icons.ignore, "Paths configured to be ignored in the destination"],
       [Dotsync::Icons.invalid, "Invalid paths detected in the source or destination"]
     ]
