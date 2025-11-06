@@ -13,7 +13,7 @@ module Dotsync
       @original_only = Array(attributes["only"])
       @force = attributes["force"] || false
 
-      @sanitized_src, @sanitized_dest, @sanitized_ignore, @sanitized_only = process_paths(
+      @sanitized_src, @sanitized_dest, @sanitized_ignores, @sanitized_only = process_paths(
         @original_src,
         @original_dest,
         @original_ignores,
@@ -30,7 +30,7 @@ module Dotsync
     end
 
     def ignores
-      @sanitized_ignore
+      @sanitized_ignores
     end
 
     def inclusions
@@ -78,10 +78,10 @@ module Dotsync
     def icons
       msg = []
       msg << Icons.force if force?
-      msg << Icons.only if only?
-      msg << Icons.ignore if ignores?
+      msg << Icons.only if has_inclusions?
+      msg << Icons.ignore if has_ignores?
       msg << Icons.invalid unless valid?
-      msg.join(" ")
+      msg.join
     end
 
     def to_s
@@ -114,25 +114,35 @@ module Dotsync
       )
     end
 
+    def include?(path)
+      return true unless has_inclusions?
+      return true if path == src
+      inclusions.any? { |inclusion| path_is_parent_or_same?(inclusion, path) }
+    end
+
+    def ignore?(path)
+      ignores.any? { |ignore| path.start_with?(ignore) }
+    end
+
     private
-      def ignores?
+      def has_ignores?
         @original_ignores.any?
       end
 
-      def only?
+      def has_inclusions?
         @original_only.any?
       end
 
       def process_paths(raw_src, raw_dest, raw_ignores, raw_only)
         sanitized_src = sanitize_path(raw_src)
         sanitized_dest = sanitize_path(raw_dest)
-        sanitized_ignore = raw_ignores.flat_map do |path|
+        sanitized_ignores = raw_ignores.flat_map do |path|
           [File.join(sanitized_src, path), File.join(sanitized_dest, path)]
         end
         sanitized_only = raw_only.map do |path|
           File.join(sanitized_src, path)
         end
-        [sanitized_src, sanitized_dest, sanitized_ignore, sanitized_only]
+        [sanitized_src, sanitized_dest, sanitized_ignores, sanitized_only]
       end
   end
 end

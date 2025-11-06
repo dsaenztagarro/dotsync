@@ -36,6 +36,11 @@ module Dotsync
         Find.find(mapping_src) do |src_path|
           rel_path = src_path.sub(/^#{Regexp.escape(mapping_src)}\/?/, "")
 
+          unless @mapping.include?(src_path)
+            Find.prune
+            next
+          end
+
           dest_path = File.join(mapping_dest, rel_path)
 
           if !File.exist?(dest_path)
