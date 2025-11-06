@@ -120,6 +120,12 @@ module Dotsync
       inclusions.any? { |inclusion| path_is_parent_or_same?(inclusion, path) }
     end
 
+    def bidirectional_include?(path)
+      return true unless has_inclusions?
+      return true if path == src
+      inclusions.any? { |inclusion| path_is_parent_or_same?(inclusion, path) || path_is_parent_or_same?(path, inclusion) }
+    end
+
     def ignore?(path)
       ignores.any? { |ignore| path.start_with?(ignore) }
     end

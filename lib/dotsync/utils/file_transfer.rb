@@ -37,11 +37,16 @@ module Dotsync
 
       def transfer_folder(folder_src, folder_dest)
         FileUtils.mkdir_p(folder_dest)
+
+        # `Dir.glob("#{folder_src}/*")` retrieves only the immediate contents
+        # (files and directories) within the specified directory (`folder_src`),
+        # without descending into subdirectories.
+
         Dir.glob("#{folder_src}/*", File::FNM_DOTMATCH).each do |path|
           next if [".", ".."].include?(File.basename(path))
 
           full_path = File.expand_path(path)
-          next unless mapping.include?(full_path)
+          next unless mapping.bidirectional_include?(full_path)
           next if mapping.ignore?(full_path)
 
           target = File.join(folder_dest, File.basename(path))
