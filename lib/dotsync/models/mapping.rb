@@ -77,10 +77,10 @@ module Dotsync
 
     def icons
       msg = []
-      msg << Icons.invalid unless valid?
+      msg << Icons.force if force?
       msg << Icons.only if only?
       msg << Icons.ignore if ignores?
-      msg << Icons.force if force?
+      msg << Icons.invalid unless valid?
       msg.join(" ")
     end
 
