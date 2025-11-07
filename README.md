@@ -114,6 +114,14 @@ dest = "$DOTFILES_DIR/config/alacritty"
 Each mapping entry supports the following options:
 
 - **`force`**: A boolean (true/false) value. When set to `true`, it forces deletion of the destination folder before transferring files from the source. This is particularly useful when you need to ensure that the destination is clean before a transfer.
+- **`only`**: An array of files or folders. This option ensures that only the specified files or folders from the `src` directory are transferred to the `dest` directory. Example:
+  ```toml
+  [[push.mappings]]
+  src = "$XDG_CONFIG_HOME"
+  dest = "$DOTFILES_DIR/config"
+  only = ["config.yml", "themes"]
+
+  ```
 - **`ignore`**: An array of patterns or file names to exclude during the transfer. This allows you to specify files or folders that should not be copied from the source to the destination.
 
 These options apply when the source is a directory and are relevant for both `push` and `pull` operations.

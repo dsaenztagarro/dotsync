@@ -1,3 +1,10 @@
+# 0.1.15
+
+- Readme: update screenshots in docs
+- Consistent order of icons on Legend and Mappings
+- DirectoryDiffer: implements only option
+- Show Flags icons closer
+
 # 0.1.14
 
 - Render environment variables and mappings with a table

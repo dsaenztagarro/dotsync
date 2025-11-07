@@ -2,8 +2,6 @@
 
 module Dotsync
   class FileTransfer
-    attr_reader :ignores
-
     # Initializes a new FileTransfer instance
     #
     # @param mapping [Dotsync::Mapping] the mapping object containing source, destination, force, and ignore details
@@ -12,6 +10,7 @@ module Dotsync
     # @option mapping [Boolean] :force? optional flag to force actions
     # @option mapping [Array<String>] :ignores optional list of files/directories to ignore
     def initialize(mapping)
+      @mapping = mapping
       @src = mapping.src
       @dest = mapping.dest
       @force = mapping.force?
@@ -29,6 +28,8 @@ module Dotsync
     end
 
     private
+      attr_reader :mapping, :ignores
+
       def transfer_file(file_src, file_dest)
         FileUtils.mkdir_p(File.dirname(file_dest))
         FileUtils.cp(file_src, file_dest)
@@ -36,12 +37,17 @@ module Dotsync
 
       def transfer_folder(folder_src, folder_dest)
         FileUtils.mkdir_p(folder_dest)
+
+        # `Dir.glob("#{folder_src}/*")` retrieves only the immediate contents
+        # (files and directories) within the specified directory (`folder_src`),
+        # without descending into subdirectories.
+
         Dir.glob("#{folder_src}/*", File::FNM_DOTMATCH).each do |path|
           next if [".", ".."].include?(File.basename(path))
 
           full_path = File.expand_path(path)
-          next unless inclusion?(full_path)
-          next if ignore?(full_path)
+          next unless mapping.bidirectional_include?(full_path)
+          next if mapping.ignore?(full_path)
 
           target = File.join(folder_dest, File.basename(path))
           if File.file?(full_path)
@@ -76,15 +82,6 @@ module Dotsync
             FileUtils.rmdir(path)
           end
         end
-      end
-
-      def inclusion?(path)
-        return true unless @inclusions.any?
-        @inclusions.any? { |inclusion| path.start_with?(inclusion) || inclusion.start_with?(path) }
-      end
-
-      def ignore?(path)
-        @ignores.any? { |ignore| path.start_with?(ignore) }
       end
   end
 end

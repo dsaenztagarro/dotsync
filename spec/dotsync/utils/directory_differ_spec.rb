@@ -6,12 +6,14 @@ RSpec.describe Dotsync::DirectoryDiffer do
   let(:root) { File.join("/tmp", "dotsync") }
   let(:src) { File.join(root, "src") }
   let(:dest) { File.join(root, "dest") }
+  let(:only) { [] }
   let(:ignore) { [] }
   let(:mapping) do
     Dotsync::Mapping.new(
       "src" => mapping_src,
       "dest" => mapping_dest,
       "force" => true,
+      "only" => only,
       "ignore" => ignore
     )
   end
@@ -63,7 +65,38 @@ RSpec.describe Dotsync::DirectoryDiffer do
           end
         end
 
-        context "with directory ignored" do
+        context "with only option" do
+          context "including a file" do
+            let(:only) { [File.join("fold", "file2.txt")] }
+
+            it "returns a Diff object with correct additions, modifications, and removals" do
+              diff = differ.diff
+
+              expect(diff).to be_a(Dotsync::Diff)
+              expect(diff.additions).to_not include(File.join(dest, "fold", "file1.txt"))
+              expect(diff.removals).to include(File.join(src, "fold", "file2.txt"))
+              expect(diff.modifications).to_not include(File.join(dest, "fold", "file3.txt"))
+            end
+          end
+
+          context "including a directory" do
+            let(:only) { [File.join("fold")] }
+
+            before do
+              FileUtils.mkdir_p(File.join(src, "fold2"))
+              File.write(File.join(src, "fold2", "file4.txt"), "content")
+            end
+
+            it "returns a Diff object with correct additions, modifications, and removals" do
+              diff = differ.diff
+
+              expect(diff).to be_a(Dotsync::Diff)
+              expect(diff.additions).to_not include(File.join(dest, "fold2", "file4.txt"))
+            end
+          end
+        end
+
+        context "with ignore option" do
           let(:ignore) { ["fold"] }
 
           it "returns a Diff without ignored directory" do

@@ -24,6 +24,12 @@ module Dotsync
       paths.map { |path| File.join(base_path, path) }
     end
 
+    def path_is_parent_or_same?(parent, child)
+      parent = Pathname.new(parent).expand_path
+      child  = Pathname.new(child).expand_path
+      child.ascend.any? { |ancestor| ancestor == parent }
+    end
+
     # Translates /tmp paths to /private/tmp paths on macOS
     # Retains other paths as-is
     # @param [String] path The input path to translate
