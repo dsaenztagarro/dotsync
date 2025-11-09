@@ -22,7 +22,7 @@ module Dotsync
       if File.file?(@src)
         transfer_file(@src, @dest)
       else
-        cleanup_folder(@dest, @ignores) if @force
+        cleanup_folder(@dest) if @force
         transfer_folder(@src, @dest)
       end
     end
@@ -58,8 +58,7 @@ module Dotsync
         end
       end
 
-      def cleanup_folder(target_dir, exclusions = [])
-        exclusions = exclusions.map { |ex| File.expand_path(ex) }
+      def cleanup_folder(target_dir)
         target_dir = File.expand_path(target_dir)
 
         # The `Find.find` method in Ruby performs a depth-first traversal of the
@@ -72,7 +71,7 @@ module Dotsync
         Find.find(target_dir) do |path|
           next if path == target_dir
           abs_path = File.expand_path(path)
-          if exclusions.any? { |ex| abs_path.start_with?(ex) }
+          if @mapping.ignore?(abs_path)
             Find.prune if File.directory?(path)
             next
           end
