@@ -83,7 +83,7 @@ RSpec.describe Dotsync::PullAction do
     it "shows diff" do
       action.execute
 
-      expect(logger).to have_received(:info).with("Diff:", icon: :diff).ordered.once
+      expect(logger).to have_received(:info).with("Differences:", icon: :diff).ordered.once
       expect(logger).to have_received(:log).with("  /tmp/dotsync/dest/file2", color: color_modifications).ordered.once
     end
 
@@ -96,7 +96,7 @@ RSpec.describe Dotsync::PullAction do
       it "shows diff" do
         action.execute
 
-        expect(logger).to have_received(:info).with("Diff:", icon: :diff).ordered.once
+        expect(logger).to have_received(:info).with("Differences:", icon: :diff).ordered.once
         expect(logger).to have_received(:log).with("  No differences").ordered.once
       end
     end

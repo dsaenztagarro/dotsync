@@ -11,7 +11,7 @@ module Dotsync
       show_env_vars
       show_mappings_legend
       show_mappings
-      show_changes
+      show_differences
       return unless options[:apply]
 
       if create_backup

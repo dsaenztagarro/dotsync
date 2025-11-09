@@ -1,6 +1,7 @@
 # 0.1.16
 
 - DirectoryDiffer: fixes path on removal difference
+- MappingsTransfer: fixes "Differences" label text for clarity
 
 # 0.1.15
 

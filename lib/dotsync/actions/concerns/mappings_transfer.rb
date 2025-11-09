@@ -49,12 +49,12 @@ module Dotsync
       logger.log("")
     end
 
-    def show_changes
+    def show_differences
       diffs = valid_mappings.map do |mapping|
         Dotsync::DirectoryDiffer.new(mapping).diff
       end
       has_diff = false
-      info("Diff:", icon: :diff)
+      info("Differences:", icon: :diff)
       diffs.flat_map(&:additions).sort.each do |path|
         logger.log("  #{path}", color: Dotsync::Colors.diff_additions)
         has_diff = true
