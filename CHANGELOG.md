@@ -3,6 +3,7 @@
 - DirectoryDiffer: fixes path on removal difference
 - MappingsTransfer: fixes "Differences" label text for clarity
 - Add Difference Legend
+- Show Difference Legend only if there are any difference
 
 # 0.1.15
 

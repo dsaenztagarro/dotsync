@@ -11,6 +11,10 @@ module Dotsync
       @removals = removals
     end
 
+    def any?
+      @additions.any? || @modifications.any? || @removals.any?
+    end
+
     def empty?
       @additions.empty? && @modifications.empty? && @removals.empty?
     end

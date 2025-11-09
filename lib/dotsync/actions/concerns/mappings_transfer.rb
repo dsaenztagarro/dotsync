@@ -63,24 +63,17 @@ module Dotsync
     end
 
     def show_differences
-      diffs = valid_mappings.map do |mapping|
-        Dotsync::DirectoryDiffer.new(mapping).diff
-      end
-      has_diff = false
       info("Differences:", icon: :diff)
-      diffs.flat_map(&:additions).sort.each do |path|
+      differs.flat_map(&:additions).sort.each do |path|
         logger.log("#{Icons.diff_created}#{path}", color: Colors.diff_additions)
-        has_diff = true
       end
-      diffs.flat_map(&:modifications).sort.each do |path|
+      differs.flat_map(&:modifications).sort.each do |path|
         logger.log("#{Icons.diff_updated}#{path}", color: Colors.diff_modifications)
-        has_diff = true
       end
-      diffs.flat_map(&:removals).sort.each do |path|
+      differs.flat_map(&:removals).sort.each do |path|
         logger.log("#{Icons.diff_removed}#{path}", color: Colors.diff_removals)
-        has_diff = true
       end
-      logger.log("  No differences") unless has_diff
+      logger.log("  No differences") unless has_differences?
       logger.log("")
     end
 
@@ -91,6 +84,16 @@ module Dotsync
     end
 
     private
+      def differs
+        @differs ||= valid_mappings.map do |mapping|
+          Dotsync::DirectoryDiffer.new(mapping).diff
+        end
+      end
+
+      def has_differences?
+        differs.any? { |differ| differ.any? }
+      end
+
       def mappings_env_vars
         paths = mappings.flat_map do |mapping|
           [mapping.original_src, mapping.original_dest]

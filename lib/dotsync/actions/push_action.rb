@@ -9,7 +9,7 @@ module Dotsync
       show_env_vars
       show_mappings_legend
       show_mappings
-      show_differences_legend
+      show_differences_legend if has_differences?
       show_differences
       return unless options[:apply]
 

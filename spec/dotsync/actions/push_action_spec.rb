@@ -45,8 +45,8 @@ RSpec.describe Dotsync::PushAction do
     FileUtils.mkdir_p(root)
     FileUtils.touch(mapping1.src)
     FileUtils.touch(mapping1.dest)
-    FileUtils.touch(mapping2.src)
-    FileUtils.touch(mapping2.dest)
+    File.write(mapping2.src, "#{mapping2.src} content")
+    File.write(mapping2.dest, "#{mapping2.dest} content")
   end
 
   after do
@@ -56,6 +56,8 @@ RSpec.describe Dotsync::PushAction do
   describe "#execute" do
     let(:icon_force) { Dotsync::Icons.force }
     let(:icon_invalid) { Dotsync::Icons.invalid }
+    let(:icon_diff_updated) { Dotsync::Icons.diff_updated }
+    let(:color_diff_updated) { Dotsync::Colors.diff_modifications }
 
     before do
       allow(Dotsync::FileTransfer).to receive(:new).with(mappings[0]).and_return(file_transfer1)
@@ -72,8 +74,23 @@ RSpec.describe Dotsync::PushAction do
         ["", "/tmp/dotsync/src2", "/tmp/dotsync/dest2"]
       ])
       expect_show_differences_legend
+      expect_show_differences([
+        { text: "#{icon_diff_updated}/tmp/dotsync/dest2", color: color_diff_updated }
+      ])
 
       action.execute
+    end
+
+    context "without differences" do
+      before do
+        File.write(mapping2.dest, "#{mapping2.src} content")
+      end
+
+      it "shows no differences" do
+        expect_show_no_differences
+
+        action.execute
+      end
     end
 
     context "without apply option" do

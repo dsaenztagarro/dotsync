@@ -26,6 +26,19 @@ module LoggerHelper
     expect(logger).to receive(:log).with("").ordered
   end
 
+  def expect_show_differences(rows)
+    expect(logger).to receive(:info).with("Differences:", icon: :diff).ordered
+    rows.each do |row|
+      expect(logger).to receive(:log).with(row[:text], color: row[:color]).ordered
+    end
+  end
+
+  def expect_show_no_differences
+    expect(logger).to_not receive(:info).with("Differences Legend:", icon: :legend)
+    expect(logger).to receive(:info).with("Differences:", icon: :diff).ordered
+    expect(logger).to receive(:log).with("  No differences").ordered
+  end
+
   private
     def expect_logger_log_table(expected_rows)
       expect(logger).to receive(:log) do |table|
