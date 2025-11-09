@@ -32,6 +32,10 @@ opt_parser = OptionParser.new do |opts|
       -h, --help            Show this help message
   BANNER
 
+  opts.on("-a", "--apply", "Apply changes") do
+    options[:apply] = true
+  end
+
   opts.on("-q", "--quiet", "Hide all non-essential output (only errors or final status)") do
     options[:quiet] = true
   end

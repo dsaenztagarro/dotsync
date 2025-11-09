@@ -19,9 +19,11 @@ module Dotsync
 
       return unless options[:apply]
 
-      if create_backup
-        show_backup
-        purge_old_backups
+      if has_differences?
+        if create_backup
+          show_backup
+          purge_old_backups
+        end
       end
 
       transfer_mappings

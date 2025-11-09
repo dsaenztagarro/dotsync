@@ -1,3 +1,10 @@
+# 0.1.17
+
+- Fixes skipped files
+- FileTransfer: fixes options
+- GithubActions: fixes generate release tag
+- Avoid backup without no difference
+
 # 0.1.16
 
 - DirectoryDiffer: fixes path on removal difference

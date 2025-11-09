@@ -131,6 +131,19 @@ RSpec.describe Dotsync::PullAction do
       end
 
       context "backup" do
+        context "without differences" do
+          before do
+            File.write(mapping2.src, "#{mapping2.src} content")
+            File.write(mapping2.dest, "#{mapping2.src} content")
+          end
+
+          it "does not create a backup" do
+            subject
+
+            expect(logger).to_not have_received(:action).with("Backup created:")
+          end
+        end
+
         context "without valid mappings" do
           before do
             FileUtils.rm_rf(dest)
