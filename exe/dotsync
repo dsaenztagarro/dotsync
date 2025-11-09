@@ -18,12 +18,58 @@ opt_parser = OptionParser.new do |opts|
       setup  Initialize a default configuration file
 
     Options:
-      -a, --apply   Apply changes (push or pull)
-      -h, --help    Show this help message
+      -a, --apply           Apply changes (push or pull)
+      -q, --quiet           Hide all non-essential output (only errors or final status)
+      --no-legend           Hide all legends for config, mappings, and differences
+      --no-config           Hide the config section in the output
+      --no-mappings         Hide the mappings and their legend
+      --no-diff-legend      Hide the differences legend only
+      --no-diff             Hide the differences section itself
+      --only-diff           Show only the differences section
+      --only-config         Show only the config section
+      --only-mappings       Show only the mappings section
+      -v, --verbose         Force showing all available information
+      -h, --help            Show this help message
   BANNER
 
-  opts.on("-a", "--apply", "Apply changes (push or pull)") do
-    options[:apply] = true
+  opts.on("-q", "--quiet", "Hide all non-essential output (only errors or final status)") do
+    options[:quiet] = true
+  end
+
+  opts.on("--no-legend", "Hide all legends for config, mappings, and differences") do
+    options[:no_legend] = true
+  end
+
+  opts.on("--no-config", "Hide the config section in the output") do
+    options[:no_config] = true
+  end
+
+  opts.on("--no-mappings", "Hide the mappings and their legend") do
+    options[:no_mappings] = true
+  end
+
+  opts.on("--no-diff-legend", "Hide the differences legend only") do
+    options[:no_diff_legend] = true
+  end
+
+  opts.on("--no-diff", "Hide the differences section itself") do
+    options[:no_diff] = true
+  end
+
+  opts.on("--only-diff", "Show only the differences section") do
+    options[:only_diff] = true
+  end
+
+  opts.on("--only-config", "Show only the config section") do
+    options[:only_config] = true
+  end
+
+  opts.on("--only-mappings", "Show only the mappings section") do
+    options[:only_mappings] = true
+  end
+
+  opts.on("-v", "--verbose", "Force showing all available information") do
+    options[:verbose] = true
   end
 
   opts.on("-h", "--help", "Show this help message") do
