@@ -48,7 +48,7 @@ RSpec.describe Dotsync::DirectoryDiffer do
 
           expect(diff).to be_a(Dotsync::Diff)
           expect(diff.additions).to include(File.join(dest, "fold", "file1.txt"))
-          expect(diff.removals).to include(File.join(src, "fold", "file2.txt"))
+          expect(diff.removals).to include(File.join(dest, "fold", "file2.txt"))
           expect(diff.modifications).to include(File.join(dest, "fold", "file3.txt"))
         end
 
@@ -74,7 +74,7 @@ RSpec.describe Dotsync::DirectoryDiffer do
 
               expect(diff).to be_a(Dotsync::Diff)
               expect(diff.additions).to_not include(File.join(dest, "fold", "file1.txt"))
-              expect(diff.removals).to include(File.join(src, "fold", "file2.txt"))
+              expect(diff.removals).to include(File.join(dest, "fold", "file2.txt"))
               expect(diff.modifications).to_not include(File.join(dest, "fold", "file3.txt"))
             end
           end

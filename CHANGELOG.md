@@ -1,3 +1,7 @@
+# 0.1.16
+
+- DirectoryDiffer: fixes path on removal difference
+
 # 0.1.15
 
 - Readme: update screenshots in docs

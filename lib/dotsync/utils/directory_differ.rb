@@ -67,7 +67,7 @@ module Dotsync
 
         additions = relative_to_absolute(filter_ignores(additions), mapping_original_dest)
         modifications = relative_to_absolute(filter_ignores(modifications), mapping_original_dest)
-        removals = relative_to_absolute(filter_ignores(removals), mapping_original_src)
+        removals = relative_to_absolute(filter_ignores(removals), mapping_original_dest)
 
         Dotsync::Diff.new(additions: additions, modifications: modifications, removals: removals)
       end
