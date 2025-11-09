@@ -8,6 +8,8 @@
 
 Welcome to Dotsync! This gem helps you manage and synchronize your dotfiles effortlessly. Below you'll find information on installation, usage, and some tips for getting started.
 
+  ![dotsync options](docs/images/dotsync_options.png)
+
 ## Requirements
 - Ruby: MRI 3.2+
 
