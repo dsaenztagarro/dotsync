@@ -71,7 +71,7 @@ module Dotsync
         Find.find(target_dir) do |path|
           next if path == target_dir
           abs_path = File.expand_path(path)
-          if @mapping.ignore?(abs_path)
+          if @mapping.skip?(abs_path)
             Find.prune if File.directory?(path)
             next
           end

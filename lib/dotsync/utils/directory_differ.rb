@@ -59,6 +59,8 @@ module Dotsync
 
             src_path = File.join(mapping_src, rel_path)
 
+            next if @mapping.skip?(src_path)
+
             if !File.exist?(src_path)
               removals << rel_path
             end

@@ -130,6 +130,10 @@ module Dotsync
       ignores.any? { |ignore| path.start_with?(ignore) }
     end
 
+    def skip?(path)
+      ignore?(path) || !include?(path)
+    end
+
     private
       def has_ignores?
         @original_ignores.any?
