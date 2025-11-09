@@ -9,13 +9,8 @@ module LoggerHelper
   end
 
   def expect_show_mappings_legend
-    expect(logger).to receive(:info).with("Legend:", icon: :legend).ordered
-    expect_logger_log_table([
-      [Dotsync::Icons.force, "The source will overwrite the destination"],
-      [Dotsync::Icons.only, "Paths designated explicitly as source only"],
-      [Dotsync::Icons.ignore, "Paths configured to be ignored in the destination"],
-      [Dotsync::Icons.invalid, "Invalid paths detected in the source or destination"]
-    ])
+    expect(logger).to receive(:info).with("Mappings Legend:", icon: :legend).ordered
+    expect_logger_log_table(Dotsync::MappingsTransfer::MAPPINGS_LEGEND)
     expect(logger).to receive(:log).with("").ordered
   end
 
@@ -25,12 +20,18 @@ module LoggerHelper
     expect(logger).to receive(:log).with("").ordered
   end
 
+  def expect_show_differences_legend
+    expect(logger).to receive(:info).with("Differences Legend:", icon: :legend).ordered
+    expect_logger_log_table(Dotsync::MappingsTransfer::DIFFERENCES_LEGEND)
+    expect(logger).to receive(:log).with("").ordered
+  end
+
   private
     def expect_logger_log_table(expected_rows)
       expect(logger).to receive(:log) do |table|
         expect(table).to be_a(Terminal::Table)
         rows_cells = table.rows.map { |row| row.cells.map(&:value) }
         expect(rows_cells).to eq(expected_rows)
-      end
+      end.ordered
     end
 end

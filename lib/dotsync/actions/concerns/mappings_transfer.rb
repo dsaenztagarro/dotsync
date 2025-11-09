@@ -4,11 +4,17 @@ module Dotsync
   module MappingsTransfer
     include Dotsync::PathUtils
 
-    LEGEND = [
-      [Dotsync::Icons.force, "The source will overwrite the destination"],
-      [Dotsync::Icons.only, "Paths designated explicitly as source only"],
-      [Dotsync::Icons.ignore, "Paths configured to be ignored in the destination"],
-      [Dotsync::Icons.invalid, "Invalid paths detected in the source or destination"]
+    MAPPINGS_LEGEND = [
+      [Icons.force, "The source will overwrite the destination"],
+      [Icons.only, "Paths designated explicitly as source only"],
+      [Icons.ignore, "Paths configured to be ignored in the destination"],
+      [Icons.invalid, "Invalid paths detected in the source or destination"]
+    ]
+
+    DIFFERENCES_LEGEND = [
+      [Icons.diff_created, "Created/added file"],
+      [Icons.diff_updated, "Updated/modified file"],
+      [Icons.diff_removed, "Removed/deleted file"]
     ]
 
     extend Forwardable # def_delegator
@@ -28,8 +34,8 @@ module Dotsync
     end
 
     def show_mappings_legend
-      info("Legend:", icon: :legend)
-      table = Terminal::Table.new(rows: LEGEND)
+      info("Mappings Legend:", icon: :legend)
+      table = Terminal::Table.new(rows: MAPPINGS_LEGEND)
       logger.log(table)
       logger.log("")
     end
@@ -49,6 +55,13 @@ module Dotsync
       logger.log("")
     end
 
+    def show_differences_legend
+      info("Differences Legend:", icon: :legend)
+      table = Terminal::Table.new(rows: DIFFERENCES_LEGEND)
+      logger.log(table)
+      logger.log("")
+    end
+
     def show_differences
       diffs = valid_mappings.map do |mapping|
         Dotsync::DirectoryDiffer.new(mapping).diff
@@ -56,18 +69,19 @@ module Dotsync
       has_diff = false
       info("Differences:", icon: :diff)
       diffs.flat_map(&:additions).sort.each do |path|
-        logger.log("  #{path}", color: Dotsync::Colors.diff_additions)
+        logger.log("#{Icons.diff_created}#{path}", color: Colors.diff_additions)
         has_diff = true
       end
       diffs.flat_map(&:modifications).sort.each do |path|
-        logger.log("  #{path}", color: Dotsync::Colors.diff_modifications)
+        logger.log("#{Icons.diff_updated}#{path}", color: Colors.diff_modifications)
         has_diff = true
       end
       diffs.flat_map(&:removals).sort.each do |path|
-        logger.log("  #{path}", color: Dotsync::Colors.diff_removals)
+        logger.log("#{Icons.diff_removed}#{path}", color: Colors.diff_removals)
         has_diff = true
       end
       logger.log("  No differences") unless has_diff
+      logger.log("")
     end
 
     def transfer_mappings

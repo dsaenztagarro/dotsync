@@ -61,6 +61,7 @@ RSpec.describe Dotsync::PullAction do
     let(:color_modifications) { Dotsync::Colors.diff_modifications }
     let(:icon_force) { Dotsync::Icons.force }
     let(:icon_invalid) { Dotsync::Icons.invalid }
+    let(:icon_diff_updated) { Dotsync::Icons.diff_updated }
 
     before do
       allow(Dotsync::FileTransfer).to receive(:new).with(mappings[0]).and_return(file_transfer1)
@@ -69,22 +70,18 @@ RSpec.describe Dotsync::PullAction do
       allow(file_transfer2).to receive(:transfer)
     end
 
-    it "shows config" do
+    it "shows command log" do
       expect_show_options
       expect_show_mappings_legend
       expect_show_mappings([
         [icon_force, "/tmp/dotsync/src/folder_src", "/tmp/dotsync/dest/folder_dest"],
         ["", "/tmp/dotsync/src/file2", "/tmp/dotsync/dest/file2"]
       ])
+      expect_show_differences_legend
+      expect(logger).to receive(:info).with("Differences:", icon: :diff).ordered
+      expect(logger).to receive(:log).with("#{icon_diff_updated}/tmp/dotsync/dest/file2", color: color_modifications).ordered
 
       action.execute
-    end
-
-    it "shows diff" do
-      action.execute
-
-      expect(logger).to have_received(:info).with("Differences:", icon: :diff).ordered.once
-      expect(logger).to have_received(:log).with("  /tmp/dotsync/dest/file2", color: color_modifications).ordered.once
     end
 
     context "without diff" do

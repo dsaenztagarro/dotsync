@@ -13,11 +13,16 @@ module Dotsync
     CONFIG = " "
     DIFF = " "
 
-    # Default Mapping Flags icons
+    # Default Mappings Legend icons
     DEFAULT_FORCE = "󰁪 "
     DEFAULT_ONLY = " "
     DEFAULT_IGNORE = "󰈉 "
     DEFAULT_INVALID = "󱏏 "
+
+    # Default Mappings Differences icons
+    DEFAULT_DIFF_CREATED = " "
+    DEFAULT_DIFF_UPDATED = " "
+    DEFAULT_DIFF_REMOVED = " "
 
     # Action icons
     PULL = " "
@@ -39,12 +44,19 @@ module Dotsync
 
     def self.load_custom_icons(config)
       @custom_icons = {
+        # Mappings Legend
         force: config.dig("icons", "force") || DEFAULT_FORCE,
         only: config.dig("icons", "only") || DEFAULT_ONLY,
         ignore: config.dig("icons", "ignore") || DEFAULT_IGNORE,
-        invalid: config.dig("icons", "invalid") || DEFAULT_INVALID
+        invalid: config.dig("icons", "invalid") || DEFAULT_INVALID,
+        # Differences Legend
+        diff_created: config.dig("icons", "diff_created") || DEFAULT_DIFF_CREATED,
+        diff_updated: config.dig("icons", "diff_updated") || DEFAULT_DIFF_UPDATED,
+        diff_removed: config.dig("icons", "diff_removed") || DEFAULT_DIFF_REMOVED,
       }
     end
+
+    # Mappings Legend methods
 
     def self.force
       @custom_icons[:force] || DEFAULT_FORCE
@@ -60,6 +72,20 @@ module Dotsync
 
     def self.invalid
       @custom_icons[:invalid] || DEFAULT_INVALID
+    end
+
+    # Differences Legend methods
+
+    def self.diff_created
+      @custom_icons[:diff_created] || DEFAULT_DIFF_CREATED
+    end
+
+    def self.diff_updated
+      @custom_icons[:diff_updated] || DEFAULT_DIFF_UPDATED
+    end
+
+    def self.diff_removed
+      @custom_icons[:diff_removed] || DEFAULT_DIFF_REMOVED
     end
 
     # https://www.nerdfonts.com

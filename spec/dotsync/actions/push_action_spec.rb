@@ -64,13 +64,14 @@ RSpec.describe Dotsync::PushAction do
       allow(file_transfer2).to receive(:transfer)
     end
 
-    it "shows config" do
+    it "shows command log" do
       expect_show_options
       expect_show_mappings_legend
       expect_show_mappings([
         [icon_force, "/tmp/dotsync/src1", "/tmp/dotsync/dest1"],
         ["", "/tmp/dotsync/src2", "/tmp/dotsync/dest2"]
       ])
+      expect_show_differences_legend
 
       action.execute
     end
