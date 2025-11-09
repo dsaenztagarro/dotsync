@@ -41,7 +41,7 @@ RSpec.describe Dotsync::FileTransfer do
         expect(File.exist?(File.join(dest, "testfile"))).to be true
       end
 
-      context "when transfered file exist in destination" do
+      context "when file exist in destination" do
         before do
           File.write(File.join(src, "testfile"), "source content")
           File.write(File.join(dest, "testfile"), "destination content")
@@ -56,7 +56,7 @@ RSpec.describe Dotsync::FileTransfer do
         end
       end
 
-      context "when transfered folder exist in destination" do
+      context "when folder exist in destination" do
         before do
           FileUtils.mkdir_p(File.join(src, "folder/subfolder1"))
           FileUtils.mkdir_p(File.join(dest, "folder/subfolder2"))
@@ -85,22 +85,7 @@ RSpec.describe Dotsync::FileTransfer do
         end
 
         before do
-          FileUtils.mkdir_p(File.join(src, "folder1"))
-          FileUtils.mkdir_p(File.join(src, "folder2"))
-          FileUtils.mkdir_p(File.join(src, "folder3", "subfolder1"))
-          FileUtils.mkdir_p(File.join(src, "folder3", "subfolder2"))
-          FileUtils.mkdir_p(File.join(src, "folder3", "subfolder3", "sub2folder1"))
-          FileUtils.mkdir_p(File.join(src, "folder3", "subfolder3", "sub2folder2"))
-
-          File.write(File.join(src, "folder1", "file1.txt"), "content")
-          File.write(File.join(src, "folder2", "file2.txt"), "content")
-          File.write(File.join(src, "folder3", "subfolder1", "file3.txt"), "content")
-          File.write(File.join(src, "folder3", "subfolder2", "file4.txt"), "content")
-          File.write(File.join(src, "folder3", "subfolder3", "sub2folder1", "file5.txt"), "src content")
-          File.write(File.join(src, "folder3", "subfolder3", "sub2folder2", "file6.txt"), "src content")
-          File.write(File.join(src, "file7.txt"), "content")
-          File.write(File.join(src, "file8.txt"), "content")
-
+          build_file_structure(src)
           FileUtils.mkdir_p(dest)
         end
 
@@ -157,22 +142,7 @@ RSpec.describe Dotsync::FileTransfer do
           before do
             FileUtils.rm_rf(src)
             FileUtils.mkdir_p(src)
-
-            FileUtils.mkdir_p(File.join(dest, "folder1"))
-            FileUtils.mkdir_p(File.join(dest, "folder2"))
-            FileUtils.mkdir_p(File.join(dest, "folder3", "subfolder1"))
-            FileUtils.mkdir_p(File.join(dest, "folder3", "subfolder2"))
-            FileUtils.mkdir_p(File.join(dest, "folder3", "subfolder3", "sub2folder1"))
-            FileUtils.mkdir_p(File.join(dest, "folder3", "subfolder3", "sub2folder2"))
-
-            File.write(File.join(dest, "folder1", "file1.txt"), "content")
-            File.write(File.join(dest, "folder2", "file2.txt"), "content")
-            File.write(File.join(dest, "folder3", "subfolder1", "file3.txt"), "content")
-            File.write(File.join(dest, "folder3", "subfolder2", "file4.txt"), "content")
-            File.write(File.join(dest, "folder3", "subfolder3", "sub2folder1", "file5.txt"), "dest content")
-            File.write(File.join(dest, "folder3", "subfolder3", "sub2folder2", "file6.txt"), "dest content")
-            File.write(File.join(dest, "file7.txt"), "content")
-            File.write(File.join(dest, "file8.txt"), "content")
+            build_file_structure(dest)
           end
 
           it "ignores files on destination" do
@@ -204,22 +174,7 @@ RSpec.describe Dotsync::FileTransfer do
         end
 
         before do
-          FileUtils.mkdir_p(File.join(src, "folder1"))
-          FileUtils.mkdir_p(File.join(src, "folder2"))
-          FileUtils.mkdir_p(File.join(src, "folder3", "subfolder1"))
-          FileUtils.mkdir_p(File.join(src, "folder3", "subfolder2"))
-          FileUtils.mkdir_p(File.join(src, "folder3", "subfolder3", "sub2folder1"))
-          FileUtils.mkdir_p(File.join(src, "folder3", "subfolder3", "sub2folder2"))
-
-          File.write(File.join(src, "folder1", "file1.txt"), "content")
-          File.write(File.join(src, "folder2", "file2.txt"), "content")
-          File.write(File.join(src, "folder3", "subfolder1", "file3.txt"), "content")
-          File.write(File.join(src, "folder3", "subfolder2", "file4.txt"), "content")
-          File.write(File.join(src, "folder3", "subfolder3", "sub2folder1", "file5.txt"), "src content")
-          File.write(File.join(src, "folder3", "subfolder3", "sub2folder2", "file6.txt"), "src content")
-          File.write(File.join(src, "file7.txt"), "content")
-          File.write(File.join(src, "file8.txt"), "content")
-
+          build_file_structure(src)
           FileUtils.mkdir_p(dest)
         end
 
@@ -259,7 +214,7 @@ RSpec.describe Dotsync::FileTransfer do
           end
         end
 
-        context "with force option" do
+        context "with ignore and force options" do
           let(:force) { true }
           let(:ignore) do
             [
@@ -271,40 +226,29 @@ RSpec.describe Dotsync::FileTransfer do
           end
 
           before do
-            FileUtils.rm_rf(src)
-            FileUtils.mkdir_p(src)
-
-            FileUtils.mkdir_p(File.join(dest, "folder1"))
-            FileUtils.mkdir_p(File.join(dest, "folder2"))
-            FileUtils.mkdir_p(File.join(dest, "folder3", "subfolder1"))
-            FileUtils.mkdir_p(File.join(dest, "folder3", "subfolder2"))
-            FileUtils.mkdir_p(File.join(dest, "folder3", "subfolder3", "sub2folder1"))
-            FileUtils.mkdir_p(File.join(dest, "folder3", "subfolder3", "sub2folder2"))
-
-            File.write(File.join(dest, "folder1", "file1.txt"), "content")
-            File.write(File.join(dest, "folder2", "file2.txt"), "content")
-            File.write(File.join(dest, "folder3", "subfolder1", "file3.txt"), "content")
-            File.write(File.join(dest, "folder3", "subfolder2", "file4.txt"), "content")
-            File.write(File.join(dest, "folder3", "subfolder3", "sub2folder1", "file5.txt"), "dest content")
-            File.write(File.join(dest, "folder3", "subfolder3", "sub2folder2", "file6.txt"), "dest content")
-            File.write(File.join(dest, "file7.txt"), "content")
-            File.write(File.join(dest, "file8.txt"), "content")
+            build_file_structure(dest)
           end
 
           it "ignores files on destination" do
             subject.transfer
 
-            # Ignored files
-            expect(File.exist?(File.join(dest, "folder2", "file2.txt"))).to be true
-            expect(File.exist?(File.join(dest, "folder3", "subfolder2", "file4.txt"))).to be true
-            expect(File.exist?(File.join(dest, "folder3", "subfolder3", "sub2folder1", "file5.txt"))).to be true
-            expect(File.exist?(File.join(dest, "file7.txt"))).to be true
+            # Path included both in "only" and "ignore" options
+            # "ignore" option takes precedence
+            expect(File.read(File.join(dest, "folder3", "subfolder3", "sub2folder1", "file5.txt"))).to eq("dest content")
 
-            # Files removed because they don't exist anymore on source
-            expect(File.exist?(File.join(dest, "folder1", "file1.txt"))).to be false
-            expect(File.exist?(File.join(dest, "folder3", "subfolder1", "file3.txt"))).to be false
+            # Paths included in "ignore" option
+            expect(File.read(File.join(dest, "folder2", "file2.txt"))).to eq("dest content")
+            expect(File.read(File.join(dest, "folder3", "subfolder2", "file4.txt"))).to eq("dest content")
+            expect(File.read(File.join(dest, "file7.txt"))).to eq("dest content")
+
+            # Paths not included in "only" option
+            # expect(File.read(File.join(dest, "folder3", "subfolder3", "sub2folder2", "file6.txt"))).to eq("dest content")
             expect(File.exist?(File.join(dest, "folder3", "subfolder3", "sub2folder2", "file6.txt"))).to be false
-            expect(File.exist?(File.join(dest, "file8.txt"))).to be false
+
+            # Paths included in "only" option
+            expect(File.read(File.join(dest, "folder1", "file1.txt"))).to eq("src content")
+            expect(File.read(File.join(dest, "folder3", "subfolder1", "file3.txt"))).to eq("src content")
+            expect(File.read(File.join(dest, "file8.txt"))).to eq("src content")
           end
         end
       end
@@ -355,7 +299,7 @@ RSpec.describe Dotsync::FileTransfer do
       end
 
       context "and the file does not exist" do
-        it "creates the destination file with the source file" do
+        it "creates the destination file from the source file" do
           subject.transfer
 
           expect(File.exist?(dest)).to be true
@@ -364,4 +308,25 @@ RSpec.describe Dotsync::FileTransfer do
       end
     end
   end
+
+  private
+    def build_file_structure(origin)
+      origin_basename = File.basename(origin)
+
+      FileUtils.mkdir_p(File.join(origin, "folder1"))
+      FileUtils.mkdir_p(File.join(origin, "folder2"))
+      FileUtils.mkdir_p(File.join(origin, "folder3", "subfolder1"))
+      FileUtils.mkdir_p(File.join(origin, "folder3", "subfolder2"))
+      FileUtils.mkdir_p(File.join(origin, "folder3", "subfolder3", "sub2folder1"))
+      FileUtils.mkdir_p(File.join(origin, "folder3", "subfolder3", "sub2folder2"))
+
+      File.write(File.join(origin, "folder1", "file1.txt"), "#{origin_basename} content")
+      File.write(File.join(origin, "folder2", "file2.txt"), "#{origin_basename} content")
+      File.write(File.join(origin, "folder3", "subfolder1", "file3.txt"), "#{origin_basename} content")
+      File.write(File.join(origin, "folder3", "subfolder2", "file4.txt"), "#{origin_basename} content")
+      File.write(File.join(origin, "folder3", "subfolder3", "sub2folder1", "file5.txt"), "#{origin_basename} content")
+      File.write(File.join(origin, "folder3", "subfolder3", "sub2folder2", "file6.txt"), "#{origin_basename} content")
+      File.write(File.join(origin, "file7.txt"), "#{origin_basename} content")
+      File.write(File.join(origin, "file8.txt"), "#{origin_basename} content")
+    end
 end

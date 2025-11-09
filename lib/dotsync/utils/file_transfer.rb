@@ -46,6 +46,9 @@ module Dotsync
           next if [".", ".."].include?(File.basename(path))
 
           full_path = File.expand_path(path)
+          # puts full_path
+          # require 'debug'; binding.b if full_path.include?("file6.txt")
+          # require 'debug'; binding.b if full_path.include?("sub2folder2")
           next unless mapping.bidirectional_include?(full_path)
           next if mapping.ignore?(full_path)
 
@@ -71,7 +74,7 @@ module Dotsync
         Find.find(target_dir) do |path|
           next if path == target_dir
           abs_path = File.expand_path(path)
-          if @mapping.skip?(abs_path)
+          if @mapping.ignore?(abs_path)
             Find.prune if File.directory?(path)
             next
           end

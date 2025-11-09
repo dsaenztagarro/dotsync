@@ -149,8 +149,8 @@ module Dotsync
         sanitized_ignores = raw_ignores.flat_map do |path|
           [File.join(sanitized_src, path), File.join(sanitized_dest, path)]
         end
-        sanitized_only = raw_only.map do |path|
-          File.join(sanitized_src, path)
+        sanitized_only = raw_only.flat_map do |path|
+          [File.join(sanitized_src, path), File.join(sanitized_dest, path)]
         end
         [sanitized_src, sanitized_dest, sanitized_ignores, sanitized_only]
       end
