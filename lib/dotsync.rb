@@ -38,6 +38,7 @@ require_relative "dotsync/config/watch_action_config"
 
 # Actions Concerns
 require_relative "dotsync/actions/concerns/mappings_transfer"
+require_relative "dotsync/actions/concerns/output_sections"
 
 # Actions
 require_relative "dotsync/actions/base_action"
