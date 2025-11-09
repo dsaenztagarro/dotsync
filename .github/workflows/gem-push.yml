@@ -44,3 +44,8 @@ jobs:
           gem push *.gem
         env:
           GEM_HOST_API_KEY: "${{secrets.RUBYGEMS_AUTH_TOKEN}}"
+
+      - name: Generate release tag
+        if: matrix.ruby == '3.2' && github.ref_name == 'master'
+        run: |
+          bundle exec rake release:tag
