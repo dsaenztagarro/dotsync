@@ -4,6 +4,7 @@
 - MappingsTransfer: fixes "Differences" label text for clarity
 - Add Difference Legend
 - Show Difference Legend only if there are any difference
+- OutputSections: added new options to hide output
 
 # 0.1.15
 
