@@ -1,3 +1,32 @@
+# 0.1.22
+
+**Testing & Quality:**
+- Increase test coverage from 89.03% to 96.13% line coverage (+7.1%)
+- Increase branch coverage from 75.0% to 81.14% (+6.1%)
+- Add comprehensive tests for Runner, Colors, OutputSections, XDGBaseDirectory
+- Add error handling and confirmation prompt tests for PullAction and PushAction
+- Suppress print output during tests for clean terminal output
+- Update SimpleCov thresholds to 95% line / 80% branch
+
+**Bug Fixes:**
+- Fix XDGBaseDirectory path expansion to use ~ instead of $HOME literal
+- Fix Colors accessor methods using wrong hash keys
+- Fix OutputSections to hide differences_legend when only_mappings option is true
+- Add nil config protection in Colors.load_custom_colors
+
+**CI/CD:**
+- Add SimpleCov coverage reporting to GitHub Actions workflow
+- Display coverage summary in CI logs (line and branch percentages)
+- Upload coverage HTML reports as artifacts with 30-day retention
+
+**New Test Files:**
+- spec/dotsync/runner_spec.rb (24 examples)
+- spec/dotsync/colors_spec.rb (14 examples)
+- spec/dotsync/actions/concerns/output_sections_spec.rb (11 examples)
+- spec/dotsync/config/concerns/xdg_base_directory_spec.rb (8 examples)
+
+Total: 323 examples, 0 failures, 2 pending
+
 # 0.1.21
 
 **New Features & Commands:**
