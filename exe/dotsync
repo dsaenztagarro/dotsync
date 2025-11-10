@@ -17,19 +17,20 @@ opt_parser = OptionParser.new do |opts|
       watch  Continuously monitor and sync changes
       setup  Initialize a default configuration file
 
-    Options:
-      -a, --apply           Apply changes (push or pull)
-      -q, --quiet           Hide all non-essential output (only errors or final status)
-      --no-legend           Hide all legends for config, mappings, and differences
-      --no-config           Hide the config section in the output
-      --no-mappings         Hide the mappings and their legend
-      --no-diff-legend      Hide the differences legend only
-      --no-diff             Hide the differences section itself
-      --only-diff           Show only the differences section
-      --only-config         Show only the config section
-      --only-mappings       Show only the mappings section
-      -v, --verbose         Force showing all available information
-      -h, --help            Show this help message
+Options:
+  -a, --apply           Apply changes (push or pull)
+  -q, --quiet           Hide all non-essential output (only errors or final status)
+  --no-legend           Hide all legends for config, mappings, and differences
+  --no-config           Hide the config section in the output
+  --no-mappings         Hide the mappings and their legend
+  --no-diff-legend      Hide the differences legend only
+  --no-diff             Hide the differences section itself
+  --only-diff           Show only the differences section
+  --only-config         Show only the config section
+  --only-mappings       Show only the mappings section
+  -v, --verbose         Force showing all available information
+  --version             Show version number
+  -h, --help            Show this help message
   BANNER
 
   opts.on("-a", "--apply", "Apply changes") do
@@ -74,6 +75,11 @@ opt_parser = OptionParser.new do |opts|
 
   opts.on("-v", "--verbose", "Force showing all available information") do
     options[:verbose] = true
+  end
+
+  opts.on("--version", "Show version number") do
+    puts "dotsync #{Dotsync::VERSION}"
+    exit
   end
 
   opts.on("-h", "--help", "Show this help message") do
