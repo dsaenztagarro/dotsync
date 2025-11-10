@@ -47,4 +47,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rubocop-md", "~> 2.0.3"
   spec.add_development_dependency "timecop", "~> 0.9.10"
   spec.add_development_dependency "ruby-lsp", "~> 0.26.1"
+  spec.add_development_dependency "simplecov", "~> 0.22.0"
+  spec.add_development_dependency "bundler-audit", "~> 0.9.0"
 end

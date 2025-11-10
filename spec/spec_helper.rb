@@ -1,5 +1,17 @@
 # frozen_string_literal: true
 
+require "simplecov"
+SimpleCov.start do
+  add_filter "/spec/"
+  add_filter "/vendor/"
+
+  enable_coverage :branch
+
+  # Set thresholds based on current coverage (84.65% line, 70.61% branch)
+  # Increase these as coverage improves
+  minimum_coverage line: 84, branch: 70
+end
+
 require "dotsync"
 
 RSpec.configure do |config|

@@ -33,6 +33,10 @@ jobs:
         run: |
           bundle exec rubocop
 
+      - name: Run security audit
+        run: |
+          bundle exec bundle-audit check --update
+
       - name: Publish to RubyGems
         if: matrix.ruby == '3.2' && github.ref_name == 'master'
         run: |
