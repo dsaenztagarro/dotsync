@@ -12,6 +12,14 @@ module Dotsync
     # @param [String] path The file path to the configuration file.
     def initialize(path = Dotsync.config_path)
       absolute_path = File.expand_path(path)
+
+      unless File.exist?(absolute_path)
+        raise Dotsync::ConfigError,
+          "Config file not found: #{absolute_path}\n\n" \
+          "To create a default configuration file, run:\n" \
+          "  dotsync setup"
+      end
+
       @config = TomlRB.load_file(absolute_path)
       validate!
     end
