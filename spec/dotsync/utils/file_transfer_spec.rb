@@ -309,7 +309,6 @@ RSpec.describe Dotsync::FileTransfer do
     end
   end
 
-  # MEDIUM PRIORITY: Error handling tests
   describe "error handling" do
     let(:root) { File.join("/tmp", "dotsync") }
     let(:src) { File.join(root, "src", "test.txt") }
@@ -351,7 +350,6 @@ RSpec.describe Dotsync::FileTransfer do
     end
   end
 
-  # MEDIUM PRIORITY: Symlink handling tests
   describe "symlink handling" do
     let(:root) { File.join("/tmp", "dotsync") }
     let(:src) { File.join(root, "src") }
@@ -431,7 +429,6 @@ RSpec.describe Dotsync::FileTransfer do
     end
   end
 
-  # LOW PRIORITY: Additional edge case tests
   describe "unicode filename handling" do
     let(:root) { File.join("/tmp", "dotsync") }
     let(:src) { File.join(root, "src") }

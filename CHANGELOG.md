@@ -1,3 +1,26 @@
+# 0.1.20
+
+**Robustness & Error Handling:**
+- Add specific error classes for better error handling (`PermissionError`, `DiskFullError`, `SymlinkError`, `TypeConflictError`)
+- Add symlink support with proper preservation of link targets (regular, broken, and relative symlinks)
+- Add type conflict detection to prevent overwriting directories with files or vice versa
+- Enhance FileTransfer error handling for permission issues and disk space errors
+
+**Testing & Quality:**
+- Add 16 new test cases covering edge cases and error scenarios
+- Add comprehensive symlink handling tests (regular, broken, relative)
+- Add path traversal security validation tests
+- Add Unicode filename compatibility tests (Russian, Japanese, Chinese, emoji)
+- Add empty directory transfer tests
+- Add Mapping#apply_to tests for path handling and force flag preservation
+- Improve content comparison tests to verify actual file changes
+- Improve path validation tests with more edge cases
+- Total test count increased from 136 to 152 examples
+
+**Developer Experience:**
+- All tests passing (152 examples, 0 failures)
+- RuboCop compliant with no offenses
+
 # 0.1.19
 
 **Documentation & Testing:**
