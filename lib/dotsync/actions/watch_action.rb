@@ -12,14 +12,14 @@ module Dotsync
       setup_signal_trap
     end
 
-    def execute
-      show_mappings_legend
-      show_mappings
+    def execute(options = {})
+      show_mappings_legend unless options[:quiet] || options[:no_legend] || options[:no_mappings]
+      show_mappings unless options[:quiet] || options[:no_mappings]
 
       @listeners.each(&:start)
 
-      logger.action("Listening for changes...")
-      logger.action("Press Ctrl+C to exit.")
+      logger.action("Listening for changes...") unless options[:quiet]
+      logger.action("Press Ctrl+C to exit.") unless options[:quiet]
       sleep
     end
 

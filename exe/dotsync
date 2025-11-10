@@ -98,7 +98,7 @@ when "push"
 when "pull"
   Dotsync::Runner.new.run(:pull, options)
 when "watch"
-  Dotsync::Runner.new.run(:watch)
+  Dotsync::Runner.new.run(:watch, options)
 when "setup"
   Dotsync::Runner.new.run(:setup)
 else
