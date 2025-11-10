@@ -29,6 +29,7 @@ Dotsync is a powerful Ruby gem for managing and synchronizing your dotfiles acro
 - [Usage](#usage)
   - [Executable Commands](#executable-commands)
   - [Configuration](#configuration)
+  - [Safety Features](#safety-features)
   - [Customizing Icons](#customizing-icons)
   - [Automatic Update Checks](#automatic-update-checks)
   - [Pro Tips](#pro-tips)
@@ -102,39 +103,21 @@ Dotsync provides the following commands to manage your dotfiles:
 > [!IMPORTANT]
 > By default, both `push` and `pull` commands run in **preview mode** (dry-run). They will show you what changes would be made without actually modifying any files. To apply changes, you **must** use the `--apply` flag.
 
+#### Core Commands
+
 - **Push**: Transfer dotfiles from your local machine to the destination repository.
   ```shell
-  dotsync push --apply [OPTION]
+  dotsync push [OPTIONS]
+  dotsync push --apply [OPTIONS]  # Apply changes
   ```
-  Options:
-    - `-q, --quiet`: Hide all non-essential output (only errors or final status).
-    - `--no-legend`: Hide all legends for config, mappings, and differences.
-    - `--no-config`: Hide the config section in the output.
-    - `--no-mappings`: Hide the mappings and their legend.
-    - `--no-diff-legend`: Hide the differences legend only.
-    - `--no-diff`: Hide the differences section itself.
-    - `--only-diff`: Show only the differences section.
-    - `--only-config`: Show only the config section.
-    - `--only-mappings`: Show only the mappings section.
-    - `-v, --verbose`: Force showing all available information.
 
   ![dotsync push](docs/images/dotsync_push.png)
 
 - **Pull**: Synchronize dotfiles from the repository to your local machine.
   ```shell
-  dotsync pull --apply [OPTION]
+  dotsync pull [OPTIONS]
+  dotsync pull --apply [OPTIONS]  # Apply changes
   ```
-  Options:
-    - `-q, --quiet`: Hide all non-essential output (only errors or final status).
-    - `--no-legend`: Hide all legends for config, mappings, and differences.
-    - `--no-config`: Hide the config section in the output.
-    - `--no-mappings`: Hide the mappings and their legend.
-    - `--no-diff-legend`: Hide the differences legend only.
-    - `--no-diff`: Hide the differences section itself.
-    - `--only-diff`: Show only the differences section.
-    - `--only-config`: Show only the config section.
-    - `--only-mappings`: Show only the mappings section.
-    - `-v, --verbose`: Force showing all available information.
 
   During the `pull` operation, `Dotsync::PullAction` creates a backup of the existing files on the destination. These backups are stored in a directory under the XDG path, with each backup organized by a timestamp. To prevent excessive storage usage, only the 10 most recent backups are retained. Older backups are automatically purged, ensuring efficient storage management.
 
@@ -142,13 +125,90 @@ Dotsync provides the following commands to manage your dotfiles:
 
 - **Watch**: Continuously monitor and sync changes between your local machine and the repository.
   ```shell
-  dotsync watch
+  dotsync watch [OPTIONS]
   ```
+  
+  The watch command supports the same output control options as push and pull (e.g., `--quiet`, `--no-legend`, `--no-mappings`).
 
-- **Setup**: Generate a default configuration file at `~/.config/dotsync.toml` with example mappings for `pull`, `push`, and `watch`.
+- **Setup** (alias: **init**): Generate a default configuration file at `~/.config/dotsync.toml` with example mappings for `pull`, `push`, and `watch`.
   ```shell
   dotsync setup
+  dotsync init     # Alias for setup
   ```
+
+#### Utility Commands
+
+- **Status**: Display current configuration and mappings without executing any actions.
+  ```shell
+  dotsync status
+  ```
+  This is useful for inspecting your configuration and verifying mappings are correct.
+
+- **Diff**: Show differences that would be made (alias for `push` in preview mode).
+  ```shell
+  dotsync diff
+  ```
+  Convenient shorthand for previewing changes without typing `--dry-run`.
+
+#### Command Options
+
+All push and pull commands support the following options:
+
+**Action Control:**
+- `-a, --apply`: Apply changes (without this, commands run in preview mode)
+- `--dry-run`: Explicitly run in preview mode without applying changes (default behavior)
+- `-y, --yes`: Skip confirmation prompt and auto-confirm changes
+- `-c, --config PATH`: Specify a custom config file path (enables multiple config workflows)
+
+**Output Control:**
+- `-q, --quiet`: Hide all non-essential output (only errors or final status)
+- `--no-legend`: Hide all legends for config, mappings, and differences
+- `--no-config`: Hide the config section in the output
+- `--no-mappings`: Hide the mappings and their legend
+- `--no-diff-legend`: Hide the differences legend only
+- `--no-diff`: Hide the differences section itself
+- `--only-diff`: Show only the differences section
+- `--only-config`: Show only the config section
+- `--only-mappings`: Show only the mappings section
+- `-v, --verbose`: Force showing all available information
+
+**General:**
+- `--version`: Display version number
+- `-h, --help`: Show help message
+
+#### Examples
+
+```shell
+# Setup and configuration
+dotsync setup                      # Create initial config file
+dotsync init                       # Same as setup (alias)
+dotsync status                     # View current configuration
+
+# Preview changes (dry-run mode)
+dotsync push                       # Preview push changes
+dotsync pull                       # Preview pull changes
+dotsync diff                       # Quick preview (alias for push)
+dotsync push --dry-run             # Explicit dry-run flag
+
+# Apply changes
+dotsync push --apply               # Apply changes with confirmation
+dotsync pull --apply               # Apply changes with confirmation
+dotsync push -ay                   # Apply without confirmation (--apply + --yes)
+dotsync pull --apply --yes         # Apply without confirmation
+
+# Custom configuration files
+dotsync -c ~/work-dotfiles.toml push      # Use work config
+dotsync --config ~/.config/personal.toml pull  # Use personal config
+
+# Output control
+dotsync pull --quiet               # Minimal output
+dotsync push --only-diff           # Show only differences
+dotsync pull --apply --yes -q      # Silent apply for scripts
+
+# Monitoring
+dotsync watch                      # Watch with default output
+dotsync watch --quiet              # Watch with minimal output
+```
 
 ### Configuration
 
@@ -216,6 +276,98 @@ Each mapping entry supports the following options:
 - **`ignore`**: An array of patterns or file names to exclude during the transfer. This allows you to specify files or folders that should not be copied from the source to the destination.
 
 These options apply when the source is a directory and are relevant for both `push` and `pull` operations.
+
+### Safety Features
+
+Dotsync includes several safety mechanisms to prevent accidental data loss:
+
+#### Confirmation Prompts
+
+Before applying any changes with the `--apply` flag, Dotsync will:
+1. Show you all differences that will be applied
+2. Display the total count of files to be modified
+3. Ask for explicit confirmation: `About to modify X file(s). Continue? [y/N]`
+4. Only proceed if you type `y` and press Enter
+
+**Example:**
+```shell
+$ dotsync push --apply
+
+# ... shows differences ...
+
+About to modify 15 file(s).
+Continue? [y/N] y
+```
+
+**Bypassing Confirmation:**
+- Use the `--yes` or `-y` flag to skip confirmation (useful for automation):
+  ```shell
+  dotsync push --apply --yes
+  dotsync pull -ay              # Short form
+  ```
+- Use the `--quiet` flag (automatically skips prompt and suppresses output)
+
+> [!NOTE]
+> No confirmation is shown if there are no differences to apply.
+
+#### Automatic Backups
+
+When using `pull --apply`, Dotsync automatically:
+- Creates timestamped backups of existing files before overwriting them
+- Stores backups in `~/.cache/dotsync/backups/YYYYMMDDHHMMSS/`
+- Retains only the 10 most recent backups (older ones are purged)
+- Creates backups only when there are actual differences
+
+To restore from a backup:
+```shell
+ls -la ~/.cache/dotsync/backups/
+cp -r ~/.cache/dotsync/backups/20250110143022/* ~/.config/
+```
+
+#### Preview Mode (Dry-Run)
+
+By default, all `push` and `pull` commands run in preview mode:
+- Shows exactly what would change without modifying files
+- Must explicitly use `--apply` flag to make changes
+- Use `--dry-run` flag for explicit clarity in scripts
+
+#### Enhanced Error Handling
+
+Dotsync provides clear, actionable error messages for common issues:
+
+- **Permission Errors**: 
+  ```
+  Permission denied: /path/to/file
+  Try: chmod +w <path> or check file permissions
+  ```
+
+- **Disk Full Errors**:
+  ```
+  Disk full: No space left on device
+  Free up disk space and try again
+  ```
+
+- **Symlink Errors**:
+  ```
+  Symlink error: Target does not exist
+  Check that symlink target exists and is accessible
+  ```
+
+- **Type Conflicts**:
+  ```
+  Type conflict: Cannot overwrite directory with file
+  Cannot overwrite directory with file or vice versa
+  ```
+
+Errors are reported per-mapping, allowing Dotsync to continue processing other mappings even if one fails.
+
+#### Symlink Support
+
+Dotsync properly handles symbolic links:
+- Preserves symlink targets (absolute and relative paths)
+- Handles broken symlinks gracefully
+- Detects type conflicts (e.g., file vs. directory vs. symlink)
+- Provides clear error messages for symlink-related issues
 
 ### Customizing Icons
 
@@ -294,7 +446,34 @@ The check runs after your command completes and uses a cached timestamp to avoid
 - **Preview Before Applying**: Always run commands without `--apply` first to preview changes:
   ```shell
   dotsync pull          # Preview changes
+  dotsync diff          # Quick preview (alias)
   dotsync pull --apply  # Apply after reviewing
+  ```
+
+- **Check Configuration**: Use the `status` command to inspect your configuration without executing any actions:
+  ```shell
+  dotsync status        # View config and mappings
+  ```
+
+- **Multiple Config Files**: Use the `-c` flag to maintain separate configurations for different workflows:
+  ```bash
+  # Work dotfiles
+  dotsync -c ~/work-dotfiles.toml push --apply
+  
+  # Personal dotfiles
+  dotsync -c ~/.config/personal.toml pull --apply
+  
+  # Server configs
+  dotsync --config ~/server.toml push --apply
+  ```
+
+- **Automation and Scripting**: Use `--yes` flag to skip confirmation prompts:
+  ```shell
+  # In a script or CI/CD pipeline
+  dotsync pull --apply --yes --quiet
+  
+  # Shorthand
+  dotsync push -ayq
   ```
 
 - **Using Environment Variables**: Simplify your configuration with mirror environment variables:
@@ -315,6 +494,11 @@ The check runs after your command completes and uses a cached timestamp to avoid
 - **Global Installation**: Install the gem using a globally available Ruby version to make the executable accessible anywhere:
   ```shell
   gem install dotsync
+  ```
+
+- **Check Version**: Quickly check which version you're running:
+  ```shell
+  dotsync --version
   ```
 
 - **Disable Update Checks**: If you prefer not to see update notifications:
@@ -398,7 +582,10 @@ ignore = ["nvim", "cache", "*.log"]
 **Solution**: Remember to use the `--apply` flag to apply changes. Without it, commands run in preview mode:
 ```shell
 dotsync pull --apply
+dotsync push --apply
 ```
+
+You can also use the explicit `--dry-run` flag to make preview mode clear in scripts.
 
 ### Permission Denied Errors
 
@@ -437,6 +624,48 @@ cp -r ~/.cache/dotsync/backups/YYYYMMDD_HHMMSS/* ~/.config/
 - Verify your watch mappings are configured correctly in `~/.config/dotsync.toml`
 - Ensure the source directories exist and are accessible
 - Try stopping and restarting the watch command
+
+### Confirmation Prompt Appearing
+
+**Problem**: Being prompted to confirm changes when running in scripts or automation.
+
+**Solution**: Use the `--yes` or `-y` flag to skip confirmation prompts:
+```shell
+dotsync push --apply --yes
+dotsync pull -ay              # Shorthand
+```
+
+For completely silent operation in scripts:
+```shell
+dotsync push --apply --yes --quiet
+```
+
+### Using Multiple Config Files
+
+**Problem**: Need different dotfile configurations for work, personal, or different machines.
+
+**Solution**: Use the `--config` or `-c` flag to specify custom config files:
+```shell
+dotsync -c ~/work-dotfiles.toml push
+dotsync --config ~/.config/personal.toml pull
+```
+
+You can maintain separate config files for different environments and switch between them easily.
+
+### Config File Not Found
+
+**Problem**: Error message about missing config file.
+
+**Solution**: Create a config file using the setup command:
+```shell
+dotsync setup    # Creates ~/.config/dotsync.toml
+dotsync init     # Alias for setup
+```
+
+Or specify a custom config file path:
+```shell
+dotsync -c ~/my-config.toml setup
+```
 
 ## Development
 
