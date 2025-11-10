@@ -33,6 +33,8 @@ module Dotsync
           @logger.error("Error running '#{action_name}':")
           @logger.info(e.message)
           raise
+        ensure
+          check_for_updates
         end
       end
     end
@@ -75,6 +77,17 @@ module Dotsync
 
         File.write(config_path, TomlRB.dump(example_mappings))
         @logger.info("Configuration file created at #{config_path}")
+      end
+
+      # Check for available updates
+      def check_for_updates
+        return if ENV["DOTSYNC_NO_UPDATE_CHECK"]
+
+        checker = Dotsync::VersionChecker.new(Dotsync::VERSION, logger: @logger)
+        checker.check_for_updates if checker.should_check?
+      rescue => e
+        # Silently fail - never break the tool
+        @logger.log("Debug: Version check failed - #{e.message}") if ENV["DEBUG"]
       end
 
       # Utility to convert 'pull' to 'Pull', 'sync' to 'Sync', etc.

@@ -175,6 +175,15 @@ When running `push` or `pull` actions, the mappings are rendered in the console 
   ```
   The ❌ icon (`Dotsync::Icons::INVALID`) indicates that the mapping is invalid due to missing source or destination paths.
 
+### Automatic Update Checks
+
+Dotsync automatically checks for new versions once per day and notifies you if an update is available. This check is non-intrusive and will not interrupt your workflow.
+
+To disable automatic update checks:
+- Set environment variable: `export DOTSYNC_NO_UPDATE_CHECK=1`
+
+The check runs after your command completes and uses a cached timestamp to avoid excessive API calls. The cache is stored in `~/.cache/dotsync/last_version_check` following the XDG Base Directory specification.
+
 ### Pro Tips
 
 - **Using rbenv**: To ensure the gem uses the correct Ruby version managed by rbenv, you can run:

@@ -17,18 +17,19 @@ require_relative "dotsync/colors"
 require_relative "dotsync/runner"
 require_relative "dotsync/version"
 
+# Config Concerns (loaded early as they're used by other modules)
+require_relative "dotsync/config/concerns/xdg_base_directory"
+
 # Utils
 require_relative "dotsync/utils/path_utils"
 require_relative "dotsync/utils/logger"
 require_relative "dotsync/utils/file_transfer"
 require_relative "dotsync/utils/directory_differ"
+require_relative "dotsync/utils/version_checker"
 
 # Models
 require_relative "dotsync/models/mapping"
 require_relative "dotsync/models/diff"
-
-# Config Concerns
-require_relative "dotsync/config/concerns/xdg_base_directory"
 
 # Config
 require_relative "dotsync/config/base_config"

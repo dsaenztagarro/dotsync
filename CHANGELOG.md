@@ -1,3 +1,10 @@
+# 0.1.18
+
+- Add automatic version checking with non-intrusive upgrade prompts
+- Version check runs once per 24 hours using cached timestamp
+- Can be disabled with `DOTSYNC_NO_UPDATE_CHECK` environment variable
+- Cache stored in XDG-compliant location (`~/.cache/dotsync/last_version_check`)
+
 # 0.1.17
 
 - Fixes skipped files
