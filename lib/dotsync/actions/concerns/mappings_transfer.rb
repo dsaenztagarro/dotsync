@@ -80,6 +80,20 @@ module Dotsync
     def transfer_mappings
       valid_mappings.each do |mapping|
         Dotsync::FileTransfer.new(mapping).transfer
+      rescue Dotsync::PermissionError => e
+        logger.error("Permission denied: #{e.message}")
+        logger.info("Try: chmod +w <path> or check file permissions")
+      rescue Dotsync::DiskFullError => e
+        logger.error("Disk full: #{e.message}")
+        logger.info("Free up disk space and try again")
+      rescue Dotsync::SymlinkError => e
+        logger.error("Symlink error: #{e.message}")
+        logger.info("Check that symlink target exists and is accessible")
+      rescue Dotsync::TypeConflictError => e
+        logger.error("Type conflict: #{e.message}")
+        logger.info("Cannot overwrite directory with file or vice versa")
+      rescue Dotsync::FileTransferError => e
+        logger.error("File transfer failed: #{e.message}")
       end
     end
 
