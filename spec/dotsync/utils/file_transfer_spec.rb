@@ -309,6 +309,128 @@ RSpec.describe Dotsync::FileTransfer do
     end
   end
 
+  # MEDIUM PRIORITY: Error handling tests
+  describe "error handling" do
+    let(:root) { File.join("/tmp", "dotsync") }
+    let(:src) { File.join(root, "src", "test.txt") }
+    let(:dest) { File.join(root, "dest", "test.txt") }
+
+    before do
+      FileUtils.mkdir_p(File.dirname(src))
+      FileUtils.mkdir_p(File.dirname(dest))
+      File.write(src, "test content")
+    end
+
+    after { FileUtils.rm_rf(root) }
+
+    context "when permission is denied" do
+      it "raises PermissionError" do
+        # Make destination directory read-only
+        FileUtils.chmod(0444, File.dirname(dest))
+
+        expect { subject.transfer }.to raise_error(Dotsync::PermissionError, /Permission denied/)
+
+        # Clean up: restore permissions
+        FileUtils.chmod(0755, File.dirname(dest))
+      end
+    end
+
+    context "when trying to overwrite directory with file" do
+      let(:src) { File.join(root, "src", "test.txt") }
+      let(:dest) { File.join(root, "dest", "test.txt") }
+
+      before do
+        File.write(src, "test content")
+        # Create a directory where we want to write a file
+        FileUtils.mkdir_p(dest)
+      end
+
+      it "raises TypeConflictError" do
+        expect { subject.transfer }.to raise_error(Dotsync::TypeConflictError, /Cannot overwrite directory/)
+      end
+    end
+  end
+
+  # MEDIUM PRIORITY: Symlink handling tests
+  describe "symlink handling" do
+    let(:root) { File.join("/tmp", "dotsync") }
+    let(:src) { File.join(root, "src") }
+    let(:dest) { File.join(root, "dest") }
+
+    before do
+      FileUtils.mkdir_p(src)
+      FileUtils.mkdir_p(dest)
+    end
+
+    after { FileUtils.rm_rf(root) }
+
+    context "when source contains regular symlinks" do
+      before do
+        # Create a real file
+        real_file = File.join(src, "real_file.txt")
+        File.write(real_file, "real content")
+
+        # Create a symlink to it
+        symlink = File.join(src, "link_to_file")
+        File.symlink(real_file, symlink)
+      end
+
+      it "copies the symlink preserving the link target" do
+        subject.transfer
+
+        dest_symlink = File.join(dest, "link_to_file")
+        expect(File.symlink?(dest_symlink)).to be true
+        expect(File.readlink(dest_symlink)).to eq(File.join(src, "real_file.txt"))
+      end
+    end
+
+    context "when source contains broken symlinks" do
+      before do
+        # Create a symlink to a non-existent file
+        symlink = File.join(src, "broken_link")
+        File.symlink("/non/existent/path", symlink)
+      end
+
+      it "copies the broken symlink" do
+        subject.transfer
+
+        dest_symlink = File.join(dest, "broken_link")
+        expect(File.symlink?(dest_symlink)).to be true
+        expect(File.readlink(dest_symlink)).to eq("/non/existent/path")
+      end
+    end
+
+    context "when source contains relative symlinks" do
+      before do
+        # Create a file and a relative symlink to it
+        File.write(File.join(src, "target.txt"), "target content")
+        File.symlink("target.txt", File.join(src, "relative_link"))
+      end
+
+      it "preserves relative symlink paths" do
+        subject.transfer
+
+        dest_symlink = File.join(dest, "relative_link")
+        expect(File.symlink?(dest_symlink)).to be true
+        expect(File.readlink(dest_symlink)).to eq("target.txt")
+      end
+    end
+
+    context "when trying to overwrite directory with symlink" do
+      before do
+        # Create a symlink in source
+        File.symlink("/some/target", File.join(src, "my_link"))
+
+        # Create a directory with the same name in dest
+        FileUtils.mkdir_p(File.join(dest, "my_link"))
+      end
+
+      it "raises TypeConflictError" do
+        expect { subject.transfer }.to raise_error(Dotsync::TypeConflictError, /Cannot overwrite directory/)
+      end
+    end
+  end
+
   private
     def build_file_structure(origin)
       origin_basename = File.basename(origin)
