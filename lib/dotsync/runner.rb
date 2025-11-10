@@ -2,8 +2,9 @@
 
 module Dotsync
   class Runner
-    def initialize(logger: nil)
+    def initialize(logger: nil, config_path: nil)
       @logger = logger || Dotsync::Logger.new
+      @config_path = config_path
     end
 
     # action_name should be a symbol, e.g., :pull, :watch, :sync
@@ -44,7 +45,7 @@ module Dotsync
         require "toml-rb"
         require "fileutils"
 
-        config_path = File.expand_path(Dotsync.config_path)
+        config_path = File.expand_path(@config_path || Dotsync.config_path)
         FileUtils.mkdir_p(File.dirname(config_path))
 
         example_mappings = {

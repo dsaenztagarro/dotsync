@@ -4,7 +4,7 @@
 require_relative "../lib/dotsync"
 require "optparse"
 
-options = { apply: false }
+options = { apply: false, config_path: nil }
 
 opt_parser = OptionParser.new do |opts|
   opts.banner = <<~BANNER
@@ -21,6 +21,7 @@ Options:
   -a, --apply           Apply changes (push or pull)
   --dry-run             Preview changes without applying (default behavior)
   -y, --yes             Skip confirmation prompt (auto-confirm)
+  -c, --config PATH     Specify custom config file path
   -q, --quiet           Hide all non-essential output (only errors or final status)
   --no-legend           Hide all legends for config, mappings, and differences
   --no-config           Hide the config section in the output
@@ -45,6 +46,10 @@ Options:
 
   opts.on("-y", "--yes", "Skip confirmation prompt (auto-confirm)") do
     options[:yes] = true
+  end
+
+  opts.on("-c", "--config PATH", "Specify custom config file path") do |path|
+    options[:config_path] = path
   end
 
   opts.on("-q", "--quiet", "Hide all non-essential output (only errors or final status)") do
@@ -104,13 +109,13 @@ command = ARGV.shift
 
 case command
 when "push"
-  Dotsync::Runner.new.run(:push, options)
+  Dotsync::Runner.new(config_path: options[:config_path]).run(:push, options)
 when "pull"
-  Dotsync::Runner.new.run(:pull, options)
+  Dotsync::Runner.new(config_path: options[:config_path]).run(:pull, options)
 when "watch"
-  Dotsync::Runner.new.run(:watch, options)
+  Dotsync::Runner.new(config_path: options[:config_path]).run(:watch, options)
 when "setup"
-  Dotsync::Runner.new.run(:setup)
+  Dotsync::Runner.new(config_path: options[:config_path]).run(:setup)
 else
   if command
     puts "dotsync: no such command '#{command}'"
