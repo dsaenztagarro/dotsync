@@ -29,6 +29,24 @@ jobs:
         run: |
           bundle exec rake
 
+      - name: Display coverage summary
+        if: always()
+        run: |
+          echo "📊 SimpleCov Coverage Report:"
+          if [ -f coverage/.last_run.json ]; then
+            ruby -rjson -e "data=JSON.parse(File.read('coverage/.last_run.json')); puts \"  Line Coverage: #{data['result']['line']}%\"; puts \"  Branch Coverage: #{data['result']['branch']}%\""
+          else
+            echo "  ⚠️  Coverage report not found"
+          fi
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report-ruby-${{ matrix.ruby }}
+          path: coverage/
+          retention-days: 30
+
       - name: Run RuboCop
         run: |
           bundle exec rubocop
