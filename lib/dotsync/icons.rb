@@ -43,6 +43,7 @@ module Dotsync
     @custom_icons = {}
 
     def self.load_custom_icons(config)
+      config ||= {}
       @custom_icons = {
         # Mappings Legend
         force: config.dig("icons", "force") || DEFAULT_FORCE,

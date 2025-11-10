@@ -150,30 +150,68 @@ Each mapping entry supports the following options:
 
 These options apply when the source is a directory and are relevant for both `push` and `pull` operations.
 
-### Rendering Mappings with Icons
+### Customizing Icons
 
-When running `push` or `pull` actions, the mappings are rendered in the console with relevant icons to provide visual feedback on the status of each mapping. To correctly view these icons, ensure you are using a terminal that supports a patched [Nerd Font](https://www.nerdfonts.com). Below are some examples of how the mappings are displayed:
+Dotsync allows you to customize the icons displayed in the console output by adding an `[icons]` section to your configuration file (`~/.config/dotsync.toml`). This is useful if you prefer different icons or need compatibility with terminals that don't support Nerd Fonts.
 
-- **Force Icon**:
-  ```
-  Mappings:
-    $DOTFILES_DIR/config/ → $XDG_CONFIG_HOME ⚡
-  ```
-  The ⚡ icon (`Dotsync::Icons::FORCE`) indicates that the `force` option is enabled and the destination folder will be cleared before the transfer.
+#### Available Icon Options
 
-- **Ignore Icon**:
-  ```
-  Mappings:
-    $DOTFILES_DIR/home/.zshenv → $HOME 🚫
-  ```
-  The 🚫 icon (`Dotsync::Icons::IGNORE`) indicates that certain files or patterns are being ignored during the transfer.
+You can customize the following icons in your configuration:
 
-- **Invalid Icon**:
-  ```
-  Mappings:
-    $DOTFILES_DIR/home/.vimrc → $HOME ❌
-  ```
-  The ❌ icon (`Dotsync::Icons::INVALID`) indicates that the mapping is invalid due to missing source or destination paths.
+**Mapping Status Icons** (shown next to each mapping):
+- `force` - Indicates force deletion is enabled (clears destination before transfer)
+- `only` - Indicates only specific files will be transferred
+- `ignore` - Indicates files are being ignored during transfer
+- `invalid` - Indicates the mapping is invalid (missing source/destination)
+
+**Difference Status Icons** (shown in diff output):
+- `diff_created` - Shows newly created/added files
+- `diff_updated` - Shows updated/modified files
+- `diff_removed` - Shows removed/deleted files
+
+#### Example Configuration
+
+Here's a complete example showing all customizable icons using UTF-8 emojis (works without Nerd Fonts):
+
+```toml
+[icons]
+# Mapping status icons
+force = "⚡"           # Force deletion enabled
+only = "📋"            # Only specific files transferred
+ignore = "🚫"          # Files ignored during transfer
+invalid = "❌"         # Invalid mapping
+
+# Diff status icons
+diff_created = "✨"    # New files created
+diff_updated = "📝"    # Files modified
+diff_removed = "🗑️ "    # Files deleted
+
+# Example mappings section
+[[pull.mappings]]
+src = "$XDG_CONFIG_HOME_MIRROR"
+dest = "$XDG_CONFIG_HOME"
+ignore = ["cache"]
+```
+
+#### Default Icons
+
+If you don't specify custom icons, Dotsync uses [Nerd Font](https://www.nerdfonts.com) icons by default. These icons will only display correctly if you're using a terminal with a patched Nerd Font installed.
+
+| Icon | Default (Nerd Font) | Nerd Font Code | Purpose |
+|------|---------------------|----------------|---------|
+| `force` | `󰁪 ` | `nf-md-lightning_bolt` | Force deletion enabled |
+| `only` | ` ` | `nf-md-filter` | Only mode active |
+| `ignore` | `󰈉 ` | `nf-md-cancel` | Ignoring files |
+| `invalid` | `󱏏 ` | `nf-md-alert_octagram` | Invalid mapping |
+| `diff_created` | ` ` | `nf-md-plus` | File created |
+| `diff_updated` | ` ` | `nf-md-pencil` | File updated |
+| `diff_removed` | ` ` | `nf-md-minus` | File removed |
+
+> [!NOTE]
+> The icons in the "Default (Nerd Font)" column may not be visible unless you're viewing this with a Nerd Font. You can find these icons at [nerdfonts.com](https://www.nerdfonts.com/cheat-sheet) by searching for the Nerd Font Code.
+
+> [!TIP]
+> You can set any icon to an empty string (`""`) to hide it completely, or use any UTF-8 character or emoji. The `dotsync setup` command generates a configuration file with some example custom icons to get you started.
 
 ### Automatic Update Checks
 
