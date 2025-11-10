@@ -20,7 +20,13 @@ module Dotsync
 
     def transfer
       if File.file?(@src)
-        transfer_file(@src, @dest)
+        # If dest is a directory, compute the target file path
+        target_dest = if File.directory?(@dest)
+          File.join(@dest, File.basename(@src))
+        else
+          @dest
+        end
+        transfer_file(@src, target_dest)
       else
         cleanup_folder(@dest) if @force
         transfer_folder(@src, @dest)
@@ -32,7 +38,17 @@ module Dotsync
 
       def transfer_file(file_src, file_dest)
         FileUtils.mkdir_p(File.dirname(file_dest))
-        FileUtils.cp(file_src, file_dest)
+
+        # Use atomic write: copy to temp file, then rename
+        # This prevents corruption if copy is interrupted
+        temp_file = "#{file_dest}.tmp.#{Process.pid}"
+        begin
+          FileUtils.cp(file_src, temp_file)
+          FileUtils.mv(temp_file, file_dest, force: true)
+        rescue StandardError => e
+          FileUtils.rm_f(temp_file) if File.exist?(temp_file)
+          raise e
+        end
       end
 
       def transfer_folder(folder_src, folder_dest)
@@ -54,7 +70,7 @@ module Dotsync
 
           target = File.join(folder_dest, File.basename(path))
           if File.file?(full_path)
-            FileUtils.cp(full_path, target)
+            transfer_file(full_path, target)
           else
             transfer_folder(full_path, target)
           end

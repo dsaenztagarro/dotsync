@@ -68,7 +68,9 @@ RSpec.describe Dotsync::WatchAction do
       end
 
       expect(FileUtils).to receive(:mkdir_p).with(File.dirname(sanitized_dest)).ordered
-      expect(FileUtils).to receive(:cp).with(sanitized_src, sanitized_dest).ordered
+      # Atomic write: expect temp file copy then rename
+      expect(FileUtils).to receive(:cp).with(sanitized_src, /#{Regexp.escape(sanitized_dest)}\.tmp\.\d+/).ordered
+      expect(FileUtils).to receive(:mv).with(/#{Regexp.escape(sanitized_dest)}\.tmp\.\d+/, sanitized_dest, force: true).ordered
 
       expect(logger).to receive(:info).with("Copied file: /tmp/dotsync/src/testfile → /tmp/dotsync/dest/testfile", icon: :copy)
 

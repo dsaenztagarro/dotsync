@@ -46,7 +46,7 @@ module Dotsync
           if !File.exist?(dest_path)
             additions << rel_path
           elsif File.file?(src_path) && File.file?(dest_path)
-            if File.size(src_path) != File.size(dest_path)
+            if files_differ?(src_path, dest_path)
               modifications << rel_path
             end
           end
@@ -91,6 +91,14 @@ module Dotsync
             path == ignore || path.start_with?("#{ignore}/")
           end
         end
+      end
+
+      def files_differ?(src_path, dest_path)
+        # First check size for quick comparison
+        return true if File.size(src_path) != File.size(dest_path)
+
+        # If sizes match, compare content
+        FileUtils.compare_file(src_path, dest_path) == false
       end
   end
 end

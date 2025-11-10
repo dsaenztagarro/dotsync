@@ -58,11 +58,17 @@ module Dotsync
     end
 
     def valid?
+      return false unless paths_are_distinct?
+      return false unless paths_not_nested?
       directories? || files? || file_present_in_src_only?
     end
 
     def file_changed?
-      files_present? && (File.size(src) != File.size(dest))
+      return false unless files_present?
+      # Check size first for quick comparison
+      return true if File.size(src) != File.size(dest)
+      # If sizes match, compare content
+      FileUtils.compare_file(src, dest) == false
     end
 
     def backup_possible?
@@ -153,6 +159,17 @@ module Dotsync
           [File.join(sanitized_src, path), File.join(sanitized_dest, path)]
         end
         [sanitized_src, sanitized_dest, sanitized_ignores, sanitized_only]
+      end
+
+      def paths_are_distinct?
+        src != dest
+      end
+
+      def paths_not_nested?
+        # Check if dest is inside src or vice versa
+        return false if dest.start_with?("#{src}/")
+        return false if src.start_with?("#{dest}/")
+        true
       end
   end
 end

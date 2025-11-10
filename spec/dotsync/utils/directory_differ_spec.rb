@@ -158,6 +158,34 @@ RSpec.describe Dotsync::DirectoryDiffer do
           expect(diff.modifications).to include(File.join(dest, "file.txt"))
           expect(diff.removals).to be_empty
         end
+
+        context "when files have same size but different content" do
+          before do
+            File.write(File.join(src, "file.txt"), "12345")
+            File.write(File.join(dest, "file.txt"), "abcde")
+          end
+
+          it "detects modification based on content" do
+            diff = differ.diff
+
+            expect(diff).to be_a(Dotsync::Diff)
+            expect(diff.modifications).to include(File.join(dest, "file.txt"))
+          end
+        end
+
+        context "when files have same size and same content" do
+          before do
+            File.write(File.join(src, "file.txt"), "same content")
+            File.write(File.join(dest, "file.txt"), "same content")
+          end
+
+          it "does not detect modification" do
+            diff = differ.diff
+
+            expect(diff).to be_a(Dotsync::Diff)
+            expect(diff.modifications).to be_empty
+          end
+        end
       end
     end
   end

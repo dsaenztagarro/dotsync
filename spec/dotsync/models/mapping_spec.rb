@@ -133,6 +133,44 @@ RSpec.describe Dotsync::Mapping do
         expect(mapping_entry.valid?).to be false
       end
     end
+
+    context "when src and dest are the same path" do
+      let(:dest) { src }
+
+      before do
+        FileUtils.mkdir_p(src)
+      end
+
+      it "returns false" do
+        expect(mapping_entry.valid?).to be false
+      end
+    end
+
+    context "when dest is inside src" do
+      let(:dest) { File.join(src, "subdir") }
+
+      before do
+        FileUtils.mkdir_p(src)
+        FileUtils.mkdir_p(dest)
+      end
+
+      it "returns false" do
+        expect(mapping_entry.valid?).to be false
+      end
+    end
+
+    context "when src is inside dest" do
+      let(:src) { File.join(dest, "subdir") }
+
+      before do
+        FileUtils.mkdir_p(dest)
+        FileUtils.mkdir_p(src)
+      end
+
+      it "returns false" do
+        expect(mapping_entry.valid?).to be false
+      end
+    end
   end
 
   describe "#decorated_src" do
