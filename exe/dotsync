@@ -12,10 +12,13 @@ opt_parser = OptionParser.new do |opts|
     Usage: dotsync [command] [options]
 
     Commands:
-      push   Upload local changes to the remote
-      pull   Download remote changes to the local
-      watch  Continuously monitor and sync changes
-      setup  Initialize a default configuration file
+      push     Upload local changes to the remote
+      pull     Download remote changes to the local
+      watch    Continuously monitor and sync changes
+      setup    Initialize a default configuration file
+      init     Alias for 'setup'
+      status   Show current configuration and mappings
+      diff     Show differences (alias for 'push' without --apply)
 
 Options:
   -a, --apply           Apply changes (push or pull)
@@ -114,8 +117,22 @@ when "pull"
   Dotsync::Runner.new(config_path: options[:config_path]).run(:pull, options)
 when "watch"
   Dotsync::Runner.new(config_path: options[:config_path]).run(:watch, options)
-when "setup"
+when "setup", "init"
   Dotsync::Runner.new(config_path: options[:config_path]).run(:setup)
+when "status"
+  # Show config and mappings without executing any action
+  # Use push action with only-config and only-mappings to display info
+  status_options = options.merge(
+    only_config: true,
+    only_mappings: true,
+    no_diff: true,
+    apply: false
+  )
+  Dotsync::Runner.new(config_path: options[:config_path]).run(:push, status_options)
+when "diff"
+  # Alias for push in preview mode (default behavior)
+  diff_options = options.merge(apply: false)
+  Dotsync::Runner.new(config_path: options[:config_path]).run(:push, diff_options)
 else
   if command
     puts "dotsync: no such command '#{command}'"
