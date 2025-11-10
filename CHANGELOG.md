@@ -1,3 +1,35 @@
+# 0.1.21
+
+**New Features & Commands:**
+- Add `status` command to show current configuration and mappings without executing actions
+- Add `diff` command as convenient alias for preview mode (push without --apply)
+- Add `init` command as alias for `setup` command
+- Add `--version` flag to display version number
+- Add `--dry-run` flag as explicit alias for preview mode (industry-standard terminology)
+- Add `-y, --yes` flag to skip confirmation prompts for automation and scripting
+- Add `-c, --config PATH` flag to specify custom config file path (enables multiple config workflows)
+
+**Safety & User Experience:**
+- Add confirmation prompt before applying changes showing file count and requiring explicit consent
+- Confirmation can be bypassed with `--yes` flag or skipped in `--quiet` mode
+- Improve error messages with actionable guidance for common issues (permissions, disk space, symlinks, type conflicts)
+- Errors are now handled per-mapping, allowing processing to continue for other mappings
+- Watch command now accepts and respects CLI options (--quiet, --no-legend, --no-mappings)
+
+**Documentation:**
+- Complete README overhaul documenting all CLI flags and command aliases
+- Add comprehensive "Safety Features" section covering confirmation prompts, backups, and error handling
+- Add "Command Options" section with all flags organized by category
+- Add "Examples" section with 20+ practical usage patterns
+- Enhance "Pro Tips" with guidance on multiple configs, automation, and command aliases
+- Expand "Troubleshooting" section with solutions for confirmation prompts and config file management
+- Update Table of Contents to include Safety Features section
+
+**Developer Experience:**
+- Add practical examples to CLI help text showing common usage patterns
+- Improve help text organization with clearer command descriptions
+- Better error handling for missing config file with actionable suggestions
+
 # 0.1.20
 
 **Robustness & Error Handling:**
