@@ -19,6 +19,7 @@ opt_parser = OptionParser.new do |opts|
 
 Options:
   -a, --apply           Apply changes (push or pull)
+  -y, --yes             Skip confirmation prompt (auto-confirm)
   -q, --quiet           Hide all non-essential output (only errors or final status)
   --no-legend           Hide all legends for config, mappings, and differences
   --no-config           Hide the config section in the output
@@ -35,6 +36,10 @@ Options:
 
   opts.on("-a", "--apply", "Apply changes") do
     options[:apply] = true
+  end
+
+  opts.on("-y", "--yes", "Skip confirmation prompt (auto-confirm)") do
+    options[:yes] = true
   end
 
   opts.on("-q", "--quiet", "Hide all non-essential output (only errors or final status)") do

@@ -103,7 +103,7 @@ RSpec.describe Dotsync::PushAction do
     end
 
     context "with apply option" do
-      let(:subject) { action.execute(apply: true) }
+      let(:subject) { action.execute(apply: true, yes: true) }
 
       it "transfers mappings correctly" do
         subject

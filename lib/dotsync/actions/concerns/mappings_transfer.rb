@@ -94,6 +94,15 @@ module Dotsync
         differs.any? { |differ| differ.any? }
       end
 
+      def confirm_action
+        total_changes = differs.sum { |diff| diff.additions.size + diff.modifications.size + diff.removals.size }
+        logger.log("")
+        logger.info("About to modify #{total_changes} file(s).", icon: :warning)
+        print "Continue? [y/N] "
+        response = $stdin.gets
+        response && response.strip.downcase == "y"
+      end
+
       def mappings_env_vars
         paths = mappings.flat_map do |mapping|
           [mapping.original_src, mapping.original_dest]

@@ -17,6 +17,11 @@ module Dotsync
 
       return unless options[:apply]
 
+      # Confirmation prompt unless --yes flag is provided or no differences
+      if has_differences? && !options[:yes] && !options[:quiet]
+        return unless confirm_action
+      end
+
       transfer_mappings
       action("Mappings pushed", icon: :done)
     end
