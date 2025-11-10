@@ -7,9 +7,9 @@ SimpleCov.start do
 
   enable_coverage :branch
 
-  # Set thresholds based on current coverage (84.65% line, 70.61% branch)
-  # Increase these as coverage improves
-  minimum_coverage line: 84, branch: 70
+  # Coverage thresholds - keep these high to maintain code quality
+  # Current: 89.03% line, 75.0% branch
+  minimum_coverage line: 88, branch: 74
 end
 
 require "dotsync"
