@@ -302,4 +302,67 @@ RSpec.describe Dotsync::Mapping do
       end
     end
   end
+
+  # LOW PRIORITY: Additional edge case tests
+  describe "path traversal security" do
+    context "when paths contain .. components" do
+      let(:src) { File.join(root, "src/../other/path") }
+      let(:dest) { File.join(root, "dest") }
+
+      before do
+        FileUtils.mkdir_p(File.join(root, "other/path"))
+        FileUtils.mkdir_p(dest)
+      end
+
+      it "normalizes paths and removes .. components" do
+        expect(mapping_entry.src).to eq(sanitize_path(File.join(root, "other/path")))
+        expect(mapping_entry.src).not_to include("..")
+      end
+    end
+
+    context "when paths try to escape using multiple .." do
+      let(:src) { File.join(root, "src/../../etc/passwd") }
+      let(:dest) { File.join(root, "dest") }
+
+      it "normalizes paths securely" do
+        # The path should be normalized to an absolute path without ..
+        expect(mapping_entry.src).not_to include("..")
+        expect(mapping_entry.src).to be_start_with("/")
+      end
+    end
+  end
+
+  describe "#apply_to" do
+    before do
+      FileUtils.mkdir_p(src)
+      FileUtils.mkdir_p(dest)
+    end
+
+    context "with absolute path" do
+      let(:subpath) { File.join(mapping_entry.src, "subdir/file.txt") }
+
+      it "creates a new mapping for the relative subpath" do
+        new_mapping = mapping_entry.apply_to(subpath)
+        expect(new_mapping.src).to eq(sanitize_path(File.join(src, "subdir/file.txt")))
+        expect(new_mapping.dest).to eq(sanitize_path(File.join(dest, "subdir/file.txt")))
+      end
+
+      it "preserves force flag" do
+        mapping_with_force = described_class.new(attributes.merge("force" => true))
+        subpath_force = File.join(mapping_with_force.src, "subdir/file.txt")
+        new_mapping = mapping_with_force.apply_to(subpath_force)
+        expect(new_mapping.force?).to be true
+      end
+    end
+
+    context "with relative path" do
+      let(:relative_path) { "subdir/file.txt" }
+
+      it "creates a new mapping for the relative path" do
+        new_mapping = mapping_entry.apply_to(relative_path)
+        expect(new_mapping.src).to eq(sanitize_path(File.join(src, relative_path)))
+        expect(new_mapping.dest).to eq(sanitize_path(File.join(dest, relative_path)))
+      end
+    end
+  end
 end

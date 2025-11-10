@@ -431,6 +431,92 @@ RSpec.describe Dotsync::FileTransfer do
     end
   end
 
+  # LOW PRIORITY: Additional edge case tests
+  describe "unicode filename handling" do
+    let(:root) { File.join("/tmp", "dotsync") }
+    let(:src) { File.join(root, "src") }
+    let(:dest) { File.join(root, "dest") }
+
+    before do
+      FileUtils.mkdir_p(src)
+      FileUtils.mkdir_p(dest)
+    end
+
+    after { FileUtils.rm_rf(root) }
+
+    context "with unicode characters in filenames" do
+      it "transfers files with unicode names correctly" do
+        unicode_file = "файл.txt"  # Russian characters
+        File.write(File.join(src, unicode_file), "unicode content")
+
+        subject.transfer
+
+        dest_file = File.join(dest, unicode_file)
+        expect(File.exist?(dest_file)).to be true
+        expect(File.read(dest_file)).to eq("unicode content")
+      end
+
+      it "transfers files with emoji in names correctly" do
+        emoji_file = "test_😀_file.txt"
+        File.write(File.join(src, emoji_file), "emoji content")
+
+        subject.transfer
+
+        dest_file = File.join(dest, emoji_file)
+        expect(File.exist?(dest_file)).to be true
+        expect(File.read(dest_file)).to eq("emoji content")
+      end
+
+      it "transfers files with mixed unicode characters correctly" do
+        mixed_file = "テスト_test_测试.txt"  # Japanese, English, Chinese
+        File.write(File.join(src, mixed_file), "mixed content")
+
+        subject.transfer
+
+        dest_file = File.join(dest, mixed_file)
+        expect(File.exist?(dest_file)).to be true
+        expect(File.read(dest_file)).to eq("mixed content")
+      end
+    end
+  end
+
+  describe "empty directory handling" do
+    let(:root) { File.join("/tmp", "dotsync") }
+    let(:src) { File.join(root, "src") }
+    let(:dest) { File.join(root, "dest") }
+
+    before do
+      FileUtils.mkdir_p(src)
+      FileUtils.mkdir_p(dest)
+    end
+
+    after { FileUtils.rm_rf(root) }
+
+    context "when source contains empty directories" do
+      it "creates empty directories in destination" do
+        empty_dir = File.join(src, "empty_folder")
+        FileUtils.mkdir_p(empty_dir)
+
+        subject.transfer
+
+        dest_dir = File.join(dest, "empty_folder")
+        expect(Dir.exist?(dest_dir)).to be true
+        expect(Dir.empty?(dest_dir)).to be true
+      end
+
+      it "creates nested empty directories" do
+        nested_empty = File.join(src, "parent/child/grandchild")
+        FileUtils.mkdir_p(nested_empty)
+
+        subject.transfer
+
+        dest_nested = File.join(dest, "parent/child/grandchild")
+        expect(Dir.exist?(dest_nested)).to be true
+        expect(Dir.empty?(dest_nested)).to be true
+      end
+    end
+  end
+
   private
     def build_file_structure(origin)
       origin_basename = File.basename(origin)
