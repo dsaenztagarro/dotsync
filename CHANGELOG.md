@@ -1,3 +1,26 @@
+# 0.1.19
+
+**Documentation & Testing:**
+- Add comprehensive icons test suite with 40 test cases covering all icon functionality
+- Add icons customization documentation section to README with complete examples
+- Add "What is Dotsync?" overview section highlighting 7 key features
+- Add Table of Contents for improved README navigation
+- Add Quick Start guide with 5-step setup process
+- Add Common Use Cases section with practical configuration examples (Neovim, Alacritty, shell configs)
+- Add comprehensive Troubleshooting section covering 6 common issues and solutions
+- Enhance Pro Tips section with 7 useful tips including environment variables and backup locations
+- Add License and Ruby version badges to README
+- Add IMPORTANT callout about --apply flag and preview mode behavior
+
+**Bug Fixes:**
+- Fix duplicate `src` typo in push/watch mapping examples (corrected to `dest`)
+- Fix section title: "force and ignore" → "force, only, and ignore"
+- Add defensive nil handling in `Icons.load_custom_icons` method
+
+**Developer Experience:**
+- Add AGENTS.md with AI agent guidelines for project development
+- Improve user onboarding with clearer documentation and examples
+
 # 0.1.18
 
 - Add automatic version checking with non-intrusive upgrade prompts
