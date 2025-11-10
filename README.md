@@ -2,11 +2,42 @@
 
 [![Gem Version](https://badge.fury.io/rb/dotsync.svg)](https://rubygems.org/gems/dotsync)
 [![Ruby Gem Test Status](https://github.com/dsaenztagarro/dotsync/actions/workflows/gem-push.yml/badge.svg)](https://github.com/dsaenztagarro/dotsync/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Ruby Version](https://img.shields.io/badge/ruby-%3E%3D%203.2-blue)](https://www.ruby-lang.org/)
 
 > [!WARNING]
 > This gem is under active development. You can expect new changes that may not be backward-compatible.
 
-Welcome to Dotsync! This gem helps you manage and synchronize your dotfiles effortlessly. Below you'll find information on installation, usage, and some tips for getting started.
+## What is Dotsync?
+
+Dotsync is a powerful Ruby gem for managing and synchronizing your dotfiles across machines. Whether you're setting up a new development environment or keeping configurations in sync, Dotsync makes it effortless.
+
+**Key Features:**
+- **Bidirectional Sync**: Push local dotfiles to your repository or pull from repository to local machine
+- **Preview Mode**: See what changes would be made before applying them (dry-run by default)
+- **Smart Filtering**: Use `force`, `only`, and `ignore` options to precisely control what gets synced
+- **Automatic Backups**: Pull operations create timestamped backups for easy recovery
+- **Live Watching**: Continuously monitor and sync changes in real-time with `watch` command
+- **Customizable Output**: Control verbosity and customize icons to match your preferences
+- **Auto-Updates**: Get notified when new versions are available
+
+## Table of Contents
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+  - [Executable Commands](#executable-commands)
+  - [Configuration](#configuration)
+  - [Customizing Icons](#customizing-icons)
+  - [Automatic Update Checks](#automatic-update-checks)
+  - [Pro Tips](#pro-tips)
+- [Common Use Cases](#common-use-cases)
+- [Troubleshooting](#troubleshooting)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
+- [Code of Conduct](#code-of-conduct)
 
   ![dotsync options](docs/images/dotsync_options.png)
 
@@ -29,11 +60,47 @@ Or install it yourself as:
 
     $ gem install dotsync
 
+## Quick Start
+
+Get started with Dotsync in just a few steps:
+
+1. **Install the gem**:
+   ```shell
+   gem install dotsync
+   ```
+
+2. **Generate a default configuration**:
+   ```shell
+   dotsync setup
+   ```
+   This creates `~/.config/dotsync.toml` with example mappings.
+
+3. **Edit the configuration** (`~/.config/dotsync.toml`) to define your dotfile mappings:
+   ```toml
+   [[pull.mappings]]
+   src = "$HOME/dotfiles/config"
+   dest = "$HOME/.config"
+   ```
+
+4. **Preview your changes** (dry-run mode):
+   ```shell
+   dotsync pull
+   ```
+   This shows what would be changed without modifying any files.
+
+5. **Apply changes** when you're ready:
+   ```shell
+   dotsync pull --apply
+   ```
+
 ## Usage
 
 ### Executable Commands
 
 Dotsync provides the following commands to manage your dotfiles:
+
+> [!IMPORTANT]
+> By default, both `push` and `pull` commands run in **preview mode** (dry-run). They will show you what changes would be made without actually modifying any files. To apply changes, you **must** use the `--apply` flag.
 
 - **Push**: Transfer dotfiles from your local machine to the destination repository.
   ```shell
@@ -108,7 +175,7 @@ dest = "$HOME"
 
 [[push.mappings]]
 src = "$HOME/.zshenv"
-src = "$HOME_MIRROR/.zshenv"
+dest = "$HOME_MIRROR/.zshenv"
 
 [[push.mappings]]
 src = "$XDG_CONFIG_HOME/alacritty"
@@ -119,7 +186,7 @@ only = ["alacritty.toml", "rose-pine.toml"]
 
 [[watch.mappings]]
 src = "$HOME/.zshenv"
-src = "$HOME_MIRROR/.zshenv"
+dest = "$HOME_MIRROR/.zshenv"
 
 [[watch.mappings]]
 src = "$XDG_CONFIG_HOME/alacritty"
@@ -133,7 +200,7 @@ dest = "$DOTFILES_DIR/config/alacritty"
 >  export XDG_CONFIG_HOME_MIRROR="$HOME/Code/dotfiles/xdg_config_home"
 >  ```
 
-#### `force` and `ignore` Options in Mappings
+#### `force`, `only`, and `ignore` Options in Mappings
 
 Each mapping entry supports the following options:
 
@@ -224,7 +291,23 @@ The check runs after your command completes and uses a cached timestamp to avoid
 
 ### Pro Tips
 
-- **Using rbenv**: To ensure the gem uses the correct Ruby version managed by rbenv, you can run:
+- **Preview Before Applying**: Always run commands without `--apply` first to preview changes:
+  ```shell
+  dotsync pull          # Preview changes
+  dotsync pull --apply  # Apply after reviewing
+  ```
+
+- **Using Environment Variables**: Simplify your configuration with mirror environment variables:
+  ```bash
+  # Add to your ~/.zshrc or ~/.bashrc
+  export DOTFILES_DIR="$HOME/dotfiles"
+  export XDG_CONFIG_HOME_MIRROR="$DOTFILES_DIR/config"
+  export HOME_MIRROR="$DOTFILES_DIR/home"
+  ```
+
+- **Backup Location**: Pull operations automatically backup files to `~/.cache/dotsync/backups/` with timestamps. Only the 10 most recent backups are kept.
+
+- **Using rbenv**: To ensure the gem uses the correct Ruby version managed by rbenv:
   ```shell
   RBENV_VERSION=3.2.0 dotsync push
   ```
@@ -233,6 +316,127 @@ The check runs after your command completes and uses a cached timestamp to avoid
   ```shell
   gem install dotsync
   ```
+
+- **Disable Update Checks**: If you prefer not to see update notifications:
+  ```shell
+  export DOTSYNC_NO_UPDATE_CHECK=1
+  ```
+
+- **Quiet Mode**: For use in scripts or when you only want to see errors:
+  ```shell
+  dotsync pull --apply --quiet
+  ```
+
+## Common Use Cases
+
+Here are some practical examples of how to use Dotsync for popular configuration files:
+
+### Syncing Neovim Configuration
+
+```toml
+[[pull.mappings]]
+src = "$HOME/dotfiles/config/nvim"
+dest = "$HOME/.config/nvim"
+force = true
+ignore = ["lazy-lock.json", ".luarc.json"]
+```
+
+### Syncing Terminal Emulator (Alacritty)
+
+```toml
+[[push.mappings]]
+src = "$HOME/.config/alacritty"
+dest = "$HOME/dotfiles/config/alacritty"
+only = ["alacritty.toml", "themes"]
+```
+
+### Syncing Shell Configuration
+
+```toml
+[[pull.mappings]]
+src = "$HOME/dotfiles/shell/.zshrc"
+dest = "$HOME"
+
+[[pull.mappings]]
+src = "$HOME/dotfiles/shell/.zshenv"
+dest = "$HOME"
+```
+
+### Syncing Multiple Config Directories
+
+```toml
+[[pull.mappings]]
+src = "$HOME/dotfiles/config"
+dest = "$HOME/.config"
+ignore = ["nvim", "cache", "*.log"]
+```
+
+## Troubleshooting
+
+### Icons Not Displaying Correctly
+
+**Problem**: Icons appear as boxes, question marks, or strange characters.
+
+**Solution**: 
+- Install a [Nerd Font](https://www.nerdfonts.com/) and configure your terminal to use it
+- Or customize icons in `~/.config/dotsync.toml` using UTF-8 emojis or regular characters:
+  ```toml
+  [icons]
+  force = "!"
+  only = "*"
+  ignore = "x"
+  invalid = "?"
+  diff_created = "+"
+  diff_updated = "~"
+  diff_removed = "-"
+  ```
+
+### Changes Not Being Applied
+
+**Problem**: Running `dotsync push` or `dotsync pull` doesn't modify files.
+
+**Solution**: Remember to use the `--apply` flag to apply changes. Without it, commands run in preview mode:
+```shell
+dotsync pull --apply
+```
+
+### Permission Denied Errors
+
+**Problem**: Getting permission errors when syncing files.
+
+**Solution**:
+- Ensure you have write permissions for destination directories
+- Check file ownership: `ls -la ~/.config`
+- For system directories, you may need to adjust your mappings to use user-writable locations
+
+### Source or Destination Not Found
+
+**Problem**: Error messages about missing source or destination paths.
+
+**Solution**:
+- Verify environment variables are set correctly (e.g., `echo $XDG_CONFIG_HOME`)
+- Use absolute paths in your configuration if environment variables aren't available
+- Create destination directories before running pull: `mkdir -p ~/.config`
+
+### Restoring from Backups
+
+**Problem**: Need to restore files after a pull operation.
+
+**Solution**: Pull operations create automatic backups in `~/.cache/dotsync/backups/`:
+```shell
+ls -la ~/.cache/dotsync/backups/
+# Copy files from the timestamped backup directory
+cp -r ~/.cache/dotsync/backups/YYYYMMDD_HHMMSS/* ~/.config/
+```
+
+### Watch Command Not Detecting Changes
+
+**Problem**: `dotsync watch` doesn't sync changes automatically.
+
+**Solution**:
+- Verify your watch mappings are configured correctly in `~/.config/dotsync.toml`
+- Ensure the source directories exist and are accessible
+- Try stopping and restarting the watch command
 
 ## Development
 
