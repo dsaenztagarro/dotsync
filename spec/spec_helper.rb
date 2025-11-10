@@ -8,8 +8,8 @@ SimpleCov.start do
   enable_coverage :branch
 
   # Coverage thresholds - keep these high to maintain code quality
-  # Current: 89.03% line, 75.0% branch
-  minimum_coverage line: 88, branch: 74
+  # Current: 96.13% line, 81.14% branch
+  minimum_coverage line: 95, branch: 80
 end
 
 require "dotsync"
@@ -27,5 +27,10 @@ RSpec.configure do |config|
 
   config.before(:suite) do
     ENV["TEST_ENV"] = "true"
+  end
+
+  # Suppress print output during tests to keep terminal clean
+  config.before(:each) do
+    allow_any_instance_of(Kernel).to receive(:print)
   end
 end

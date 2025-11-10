@@ -109,6 +109,66 @@ RSpec.describe Dotsync::PullAction do
         expect(file_transfer2).to have_received(:transfer)
       end
 
+      context "with user confirmation" do
+        context "when user accepts" do
+          before do
+            allow($stdin).to receive(:gets).and_return("y\n")
+          end
+
+          it "transfers mappings after confirmation" do
+            action.execute(apply: true)
+
+            expect(file_transfer1).to have_received(:transfer)
+            expect(file_transfer2).to have_received(:transfer)
+          end
+
+          it "displays confirmation prompt" do
+            expect(logger).to receive(:info).with("About to modify 1 file(s).", icon: :warning)
+
+            action.execute(apply: true)
+          end
+        end
+
+        context "when user declines" do
+          before do
+            allow($stdin).to receive(:gets).and_return("n\n")
+          end
+
+          it "does not transfer mappings" do
+            action.execute(apply: true)
+
+            expect(file_transfer1).not_to have_received(:transfer)
+            expect(file_transfer2).not_to have_received(:transfer)
+          end
+        end
+
+        context "when user provides empty response" do
+          before do
+            allow($stdin).to receive(:gets).and_return("\n")
+          end
+
+          it "does not transfer mappings" do
+            action.execute(apply: true)
+
+            expect(file_transfer1).not_to have_received(:transfer)
+            expect(file_transfer2).not_to have_received(:transfer)
+          end
+        end
+
+        context "when user provides uppercase Y" do
+          before do
+            allow($stdin).to receive(:gets).and_return("Y\n")
+          end
+
+          it "transfers mappings" do
+            action.execute(apply: true)
+
+            expect(file_transfer1).to have_received(:transfer)
+            expect(file_transfer2).to have_received(:transfer)
+          end
+        end
+      end
+
       context "with invalid mapping" do
         before do
           FileUtils.rm(mapping2.src)
@@ -199,6 +259,88 @@ RSpec.describe Dotsync::PullAction do
                 expect(logger).to have_received(:log).with("  #{backup_path}")
               end
             end
+          end
+        end
+      end
+
+      context "error handling during transfer" do
+        context "when PermissionError occurs" do
+          before do
+            allow(file_transfer1).to receive(:transfer).and_raise(
+              Dotsync::PermissionError, "Permission denied for /tmp/dotsync/dest/folder_dest"
+            )
+          end
+
+          it "logs error and helpful message" do
+            expect(logger).to receive(:error).with("Permission denied: Permission denied for /tmp/dotsync/dest/folder_dest")
+            expect(logger).to receive(:info).with("Try: chmod +w <path> or check file permissions")
+
+            subject
+          end
+
+          it "continues with other mappings" do
+            expect(file_transfer2).to receive(:transfer)
+
+            subject
+          end
+        end
+
+        context "when DiskFullError occurs" do
+          before do
+            allow(file_transfer1).to receive(:transfer).and_raise(
+              Dotsync::DiskFullError, "No space left on device"
+            )
+          end
+
+          it "logs error and helpful message" do
+            expect(logger).to receive(:error).with("Disk full: No space left on device")
+            expect(logger).to receive(:info).with("Free up disk space and try again")
+
+            subject
+          end
+        end
+
+        context "when SymlinkError occurs" do
+          before do
+            allow(file_transfer1).to receive(:transfer).and_raise(
+              Dotsync::SymlinkError, "Broken symlink detected"
+            )
+          end
+
+          it "logs error and helpful message" do
+            expect(logger).to receive(:error).with("Symlink error: Broken symlink detected")
+            expect(logger).to receive(:info).with("Check that symlink target exists and is accessible")
+
+            subject
+          end
+        end
+
+        context "when TypeConflictError occurs" do
+          before do
+            allow(file_transfer1).to receive(:transfer).and_raise(
+              Dotsync::TypeConflictError, "Cannot overwrite directory with file"
+            )
+          end
+
+          it "logs error and helpful message" do
+            expect(logger).to receive(:error).with("Type conflict: Cannot overwrite directory with file")
+            expect(logger).to receive(:info).with("Cannot overwrite directory with file or vice versa")
+
+            subject
+          end
+        end
+
+        context "when generic FileTransferError occurs" do
+          before do
+            allow(file_transfer1).to receive(:transfer).and_raise(
+              Dotsync::FileTransferError, "Unknown transfer error"
+            )
+          end
+
+          it "logs error message" do
+            expect(logger).to receive(:error).with("File transfer failed: Unknown transfer error")
+
+            subject
           end
         end
       end

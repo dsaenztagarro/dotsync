@@ -11,7 +11,7 @@ module Dotsync
         env_vars: !(quiet || options[:only_diff] || options[:only_mappings]),
         mappings_legend: !(quiet || options[:no_legend] || options[:no_mappings] || options[:only_diff]),
         mappings: !(quiet || options[:no_mappings] || options[:only_diff]),
-        differences_legend: !(quiet || options[:no_legend] || options[:no_diff_legend] || options[:no_diff] || options[:only_config]),
+        differences_legend: !(quiet || options[:no_legend] || options[:no_diff_legend] || options[:no_diff] || options[:only_config] || options[:only_mappings]),
         differences: !(quiet || options[:no_diff] || options[:only_mappings] || options[:only_config])
       }
 

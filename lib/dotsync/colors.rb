@@ -9,6 +9,7 @@ module Dotsync
     @custom_colors = {}
 
     def self.load_custom_colors(config)
+      config ||= {}
       @custom_colors = {
         diff_additions: config.dig("colors", "diff_additions") || DEFAULT_DIFF_ADDITIONS,
         diff_modifications: config.dig("colors", "diff_modifications") || DEFAULT_DIFF_MODIFICATIONS,
@@ -17,15 +18,15 @@ module Dotsync
     end
 
     def self.diff_additions
-      @custom_colors[:additions] || DEFAULT_DIFF_ADDITIONS
+      @custom_colors[:diff_additions] || DEFAULT_DIFF_ADDITIONS
     end
 
     def self.diff_modifications
-      @custom_colors[:modifications] || DEFAULT_DIFF_MODIFICATIONS
+      @custom_colors[:diff_modifications] || DEFAULT_DIFF_MODIFICATIONS
     end
 
     def self.diff_removals
-      @custom_colors[:removals] || DEFAULT_DIFF_REMOVALS
+      @custom_colors[:diff_removals] || DEFAULT_DIFF_REMOVALS
     end
 
     MAPPINGS = {
