@@ -20,7 +20,18 @@ opt_parser = OptionParser.new do |opts|
       status   Show current configuration and mappings
       diff     Show differences (alias for 'push' without --apply)
 
-Options:
+    Examples:
+      dotsync setup                      # Create initial config file
+      dotsync push                       # Preview changes (dry-run)
+      dotsync push --apply               # Apply changes to remote
+      dotsync push -ay                   # Apply without confirmation
+      dotsync pull --quiet               # Pull with minimal output
+      dotsync status                     # Show current setup
+      dotsync diff                       # Show what would change
+      dotsync watch                      # Monitor and sync continuously
+      dotsync -c ~/custom.toml push      # Use custom config file
+
+    Options:
   -a, --apply           Apply changes (push or pull)
   --dry-run             Preview changes without applying (default behavior)
   -y, --yes             Skip confirmation prompt (auto-confirm)
