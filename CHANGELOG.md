@@ -1,3 +1,19 @@
+# 0.1.23
+
+**Critical Bug Fix:**
+- Fix cleanup_folder to respect 'only' filter and prevent unintended deletions
+  - When force=true was used with an 'only' filter, cleanup_folder was deleting all files in the destination that weren't explicitly ignored, including unrelated folders not being managed by the mapping
+  - This caused data loss for folders like cabal/ and ghc/ that weren't in the only list
+  - The fix ensures only paths matching the inclusion filter are cleaned up, leaving unmanaged content intact
+
+**Test Coverage:**
+- Add comprehensive test coverage for the cleanup_folder bug fix
+- Test preserving unrelated folders when using force + only
+- Test only cleaning managed paths specified in only list
+- Test edge case with empty source and unmanaged dest content
+- Update existing test to reflect correct behavior
+- Total: 326 examples, 0 failures, 2 pending with 96.41% line coverage
+
 # 0.1.22
 
 **Testing & Quality:**
