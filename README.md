@@ -1,7 +1,7 @@
 # Dotsync
 
 [![Gem Version](https://badge.fury.io/rb/dotsync.svg)](https://rubygems.org/gems/dotsync)
-[![Ruby Gem Test Status](https://github.com/dsaenztagarro/dotsync/actions/workflows/gem-push.yml/badge.svg)](https://github.com/dsaenztagarro/dotsync/actions)
+[![CI](https://github.com/dsaenztagarro/dotsync/actions/workflows/gem-push.yml/badge.svg)](https://github.com/dsaenztagarro/dotsync/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ruby Version](https://img.shields.io/badge/ruby-%3E%3D%203.2-blue)](https://www.ruby-lang.org/)
 
