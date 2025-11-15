@@ -144,10 +144,20 @@ module Dotsync
         Find.find(target_dir) do |path|
           next if path == target_dir
           abs_path = File.expand_path(path)
+
+          # Skip if ignored
           if @mapping.ignore?(abs_path)
             Find.prune if File.directory?(path)
             next
           end
+
+          # When inclusions (only) are specified, only clean up paths that match the inclusion filter
+          # This ensures we don't delete unrelated files/folders that aren't being managed
+          unless @mapping.include?(abs_path)
+            Find.prune if File.directory?(path)
+            next
+          end
+
           if File.file?(path)
             FileUtils.rm(path)
           elsif File.directory?(path) && Dir.empty?(path)
