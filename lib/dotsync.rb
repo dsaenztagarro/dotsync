@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Full library load for backward compatibility
+# For optimized loading, use specific loaders in lib/dotsync/loaders/
+
 # Libs dependencies
 require "fileutils"
 require "listen"

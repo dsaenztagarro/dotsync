@@ -121,19 +121,22 @@ opt_parser.parse!
 
 command = ARGV.shift
 
-# Load full library only when executing commands (not for --version/--help)
-require_relative "../lib/dotsync" if command
-
+# Load only the dependencies needed for the specific command
 case command
 when "push"
+  require_relative "../lib/dotsync/loaders/push_loader"
   Dotsync::Runner.new(config_path: options[:config_path]).run(:push, options)
 when "pull"
+  require_relative "../lib/dotsync/loaders/pull_loader"
   Dotsync::Runner.new(config_path: options[:config_path]).run(:pull, options)
 when "watch"
+  require_relative "../lib/dotsync/loaders/watch_loader"
   Dotsync::Runner.new(config_path: options[:config_path]).run(:watch, options)
 when "setup", "init"
+  require_relative "../lib/dotsync/loaders/setup_loader"
   Dotsync::Runner.new(config_path: options[:config_path]).run(:setup)
 when "status"
+  require_relative "../lib/dotsync/loaders/push_loader"
   # Show config and mappings without executing any action
   # Use push action with only-config and only-mappings to display info
   status_options = options.merge(
@@ -144,6 +147,7 @@ when "status"
   )
   Dotsync::Runner.new(config_path: options[:config_path]).run(:push, status_options)
 when "diff"
+  require_relative "../lib/dotsync/loaders/push_loader"
   # Alias for push in preview mode (default behavior)
   diff_options = options.merge(apply: false)
   Dotsync::Runner.new(config_path: options[:config_path]).run(:push, diff_options)
