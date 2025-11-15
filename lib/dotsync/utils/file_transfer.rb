@@ -22,7 +22,7 @@ module Dotsync
       if File.file?(@src)
         transfer_file(@src, @dest)
       else
-        cleanup_folder(@dest, @ignores) if @force
+        cleanup_folder(@dest, @ignores, @inclusions) if @force
         transfer_folder(@src, @dest)
       end
     end
@@ -58,7 +58,7 @@ module Dotsync
         end
       end
 
-      def cleanup_folder(target_dir, exclusions = [])
+      def cleanup_folder(target_dir, exclusions = [], inclusions = [])
         exclusions = exclusions.map { |ex| File.expand_path(ex) }
         target_dir = File.expand_path(target_dir)
 
@@ -72,10 +72,26 @@ module Dotsync
         Find.find(target_dir) do |path|
           next if path == target_dir
           abs_path = File.expand_path(path)
+
+          # Skip if excluded
           if exclusions.any? { |ex| abs_path.start_with?(ex) }
             Find.prune if File.directory?(path)
             next
           end
+
+          # When inclusions are specified, only clean up paths that match the inclusion filter
+          # This ensures we don't delete unrelated files/folders that aren't being managed
+          if inclusions.any?
+            # Convert destination path to source path to check against inclusions
+            relative_path = abs_path.delete_prefix(File.join(target_dir, "/"))
+            src_path = File.join(@src, relative_path)
+
+            unless inclusions.any? { |inc| src_path.start_with?(inc) || inc.start_with?(src_path) }
+              Find.prune if File.directory?(path)
+              next
+            end
+          end
+
           if File.file?(path)
             FileUtils.rm(path)
           elsif File.directory?(path) && Dir.empty?(path)
