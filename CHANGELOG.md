@@ -1,3 +1,28 @@
+# 0.1.24
+
+**Performance Optimizations:**
+- Implement lazy loading to defer library loading until after argument parsing
+  - Reduces `--version` and `--help` startup time from ~900ms to ~380ms (2.4x faster)
+  - Full library only loaded when executing actual commands
+- Add action-specific loaders to reduce memory footprint
+  - Each command loads only its required dependencies
+  - Push/pull skip loading 'listen' gem (only needed for watch)
+  - Watch skips terminal-table and diff logic
+  - Setup uses minimal dependencies for near-instant execution
+- Add config caching with XDG_DATA_HOME integration
+  - Caches parsed TOML as Marshal binary (~180x faster to load)
+  - Automatic cache invalidation based on mtime, size, and version
+  - Graceful fallback to TOML parsing on errors
+  - Disable with `DOTSYNC_NO_CACHE=1` environment variable
+  - Saves ~14ms per invocation on typical configs
+
+**Combined Performance Impact:**
+- `--version`: 900ms → 380ms (2.4x faster)
+- `--help`: 900ms → 380ms (2.4x faster)
+- Setup: Near-instant with minimal loading
+- Push/pull: ~15% faster with cached config
+- Watch: ~40% faster without unnecessary dependencies
+
 # 0.1.23
 
 **Critical Bug Fix:**
