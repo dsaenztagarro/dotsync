@@ -291,7 +291,7 @@ RSpec.describe Dotsync::FileTransfer do
             File.write(File.join(dest, "file8.txt"), "content")
           end
 
-          it "ignores files on destination" do
+          it "ignores files on destination and only cleans files in the only list" do
             subject.transfer
 
             # Ignored files
@@ -300,11 +300,90 @@ RSpec.describe Dotsync::FileTransfer do
             expect(File.exist?(File.join(dest, "folder3", "subfolder3", "sub2folder1", "file5.txt"))).to be true
             expect(File.exist?(File.join(dest, "file7.txt"))).to be true
 
-            # Files removed because they don't exist anymore on source
+            # Files in only list removed because they don't exist anymore on source
             expect(File.exist?(File.join(dest, "folder1", "file1.txt"))).to be false
             expect(File.exist?(File.join(dest, "folder3", "subfolder1", "file3.txt"))).to be false
-            expect(File.exist?(File.join(dest, "folder3", "subfolder3", "sub2folder2", "file6.txt"))).to be false
+            expect(File.exist?(File.join(dest, "folder3", "subfolder3", "sub2folder1", "file5.txt"))).to be true # ignored
             expect(File.exist?(File.join(dest, "file8.txt"))).to be false
+
+            # Files NOT in only list should be preserved (not cleaned up)
+            expect(File.exist?(File.join(dest, "folder2", "file2.txt"))).to be true
+            expect(File.exist?(File.join(dest, "folder3", "subfolder2", "file4.txt"))).to be true
+            expect(File.exist?(File.join(dest, "folder3", "subfolder3", "sub2folder2", "file6.txt"))).to be true
+          end
+
+          context "when only specific paths are included" do
+            let(:only) do
+              [
+                "folder1",
+                "file8.txt"
+              ]
+            end
+
+            before do
+              # Add source files that match the 'only' filter
+              FileUtils.mkdir_p(File.join(src, "folder1"))
+              File.write(File.join(src, "folder1", "file1.txt"), "new src content")
+              File.write(File.join(src, "file8.txt"), "new src content")
+
+              # Create unrelated folders in destination that should NOT be deleted
+              FileUtils.mkdir_p(File.join(dest, "cabal"))
+              File.write(File.join(dest, "cabal", "config"), "cabal config content")
+
+              FileUtils.mkdir_p(File.join(dest, "ghc"))
+              File.write(File.join(dest, "ghc", "ghci.conf"), "ghc config content")
+
+              # Create additional files in managed folders that should be cleaned up
+              File.write(File.join(dest, "folder1", "old_file.txt"), "old content to remove")
+            end
+
+            it "does not delete unrelated folders that are not in the only list" do
+              subject.transfer
+
+              # Unrelated folders should be preserved
+              expect(File.exist?(File.join(dest, "cabal", "config"))).to be true
+              expect(File.exist?(File.join(dest, "ghc", "ghci.conf"))).to be true
+
+              # Managed folders should be cleaned and synced
+              expect(File.exist?(File.join(dest, "folder1", "file1.txt"))).to be true
+              expect(File.read(File.join(dest, "folder1", "file1.txt"))).to eq("new src content")
+              expect(File.exist?(File.join(dest, "folder1", "old_file.txt"))).to be false
+
+              # Only included files should be transferred
+              expect(File.exist?(File.join(dest, "file8.txt"))).to be true
+              expect(File.read(File.join(dest, "file8.txt"))).to eq("new src content")
+
+              # Ignored files should still be preserved
+              expect(File.exist?(File.join(dest, "folder2", "file2.txt"))).to be true
+              expect(File.exist?(File.join(dest, "file7.txt"))).to be true
+            end
+
+            it "only cleans up files within the managed paths specified in only list" do
+              subject.transfer
+
+              # Files not in the only list should be untouched
+              expect(File.exist?(File.join(dest, "folder2", "file2.txt"))).to be true
+              expect(File.exist?(File.join(dest, "folder3", "subfolder1", "file3.txt"))).to be true
+              expect(File.exist?(File.join(dest, "folder3", "subfolder2", "file4.txt"))).to be true
+            end
+          end
+
+          context "when only includes a file that doesn't exist in source" do
+            let(:only) { ["folder1"] }
+
+            before do
+              # Create dest with files that shouldn't be touched since nothing is in src
+              FileUtils.mkdir_p(File.join(dest, "unmanaged_folder"))
+              File.write(File.join(dest, "unmanaged_folder", "important_file.txt"), "important content")
+            end
+
+            it "does not delete unmanaged folders when source is empty" do
+              subject.transfer
+
+              # Unmanaged folders should be preserved
+              expect(File.exist?(File.join(dest, "unmanaged_folder", "important_file.txt"))).to be true
+              expect(File.read(File.join(dest, "unmanaged_folder", "important_file.txt"))).to eq("important content")
+            end
           end
         end
       end

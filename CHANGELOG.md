@@ -1,3 +1,7 @@
+# 0.1.16
+
+- Fix cleanup_folder to respect 'only' filter and prevent unintended deletions
+
 # 0.1.15
 
 - Readme: update screenshots in docs
