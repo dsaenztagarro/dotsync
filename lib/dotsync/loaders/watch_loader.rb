@@ -9,6 +9,7 @@ require "toml-rb"
 
 # Utils needed for watch
 require_relative "../utils/file_transfer"
+require_relative "../utils/config_cache"
 
 # Models
 require_relative "../models/mapping"

@@ -8,6 +8,7 @@ module Dotsync
 
     # Initialize the BaseConfig with the provided path.
     # Loads the TOML configuration file and validates it.
+    # Uses ConfigCache for improved performance.
     #
     # @param [String] path The file path to the configuration file.
     def initialize(path = Dotsync.config_path)
@@ -20,7 +21,7 @@ module Dotsync
           "  dotsync setup"
       end
 
-      @config = TomlRB.load_file(absolute_path)
+      @config = load_config(absolute_path)
       validate!
     end
 
@@ -29,6 +30,15 @@ module Dotsync
     end
 
     private
+      # Loads configuration from file, using cache when possible
+      #
+      # @param [String] path The file path to the configuration file.
+      # @return [Hash] The parsed configuration
+      def load_config(path)
+        require_relative "../utils/config_cache"
+        ConfigCache.new(path).load
+      end
+
       # Validates the configuration file.
       #
       # @raise [NotImplementedError] if not implemented by a subclass.

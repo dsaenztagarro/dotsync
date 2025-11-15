@@ -10,6 +10,7 @@ require "terminal-table"
 # Utils needed for push
 require_relative "../utils/file_transfer"
 require_relative "../utils/directory_differ"
+require_relative "../utils/config_cache"
 
 # Models
 require_relative "../models/mapping"
