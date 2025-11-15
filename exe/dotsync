@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "../lib/dotsync"
 require "optparse"
+require_relative "../lib/dotsync/version"
 
 options = { apply: false, config_path: nil }
 
@@ -120,6 +120,9 @@ end
 opt_parser.parse!
 
 command = ARGV.shift
+
+# Load full library only when executing commands (not for --version/--help)
+require_relative "../lib/dotsync" if command
 
 case command
 when "push"
