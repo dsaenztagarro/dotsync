@@ -214,6 +214,123 @@ RSpec.describe Dotsync::FileTransfer do
           end
         end
 
+        context "with only paths pointing to specific files inside folders" do
+          let(:only) { ["bundle/config", "ghc/ghci.conf"] }
+
+          before do
+            FileUtils.rm_rf(src)
+            FileUtils.mkdir_p(src)
+
+            # Create the files we want to include
+            FileUtils.mkdir_p(File.join(src, "bundle"))
+            File.write(File.join(src, "bundle/config"), "bundle config content")
+
+            FileUtils.mkdir_p(File.join(src, "ghc"))
+            File.write(File.join(src, "ghc/ghci.conf"), "ghc config content")
+
+            # Create other files that should not be included
+            FileUtils.mkdir_p(File.join(src, "cabal"))
+            File.write(File.join(src, "cabal/config"), "cabal config content")
+
+            File.write(File.join(src, "bundle/other_file.txt"), "other file in bundle")
+            File.write(File.join(src, "root_file.txt"), "root file content")
+          end
+
+          it "includes only the specified files and their parent folders" do
+            subject.transfer
+
+            # Should include the specified files
+            expect(File.exist?(File.join(dest, "bundle/config"))).to be true
+            expect(File.read(File.join(dest, "bundle/config"))).to eq("bundle config content")
+
+            expect(File.exist?(File.join(dest, "ghc/ghci.conf"))).to be true
+            expect(File.read(File.join(dest, "ghc/ghci.conf"))).to eq("ghc config content")
+
+            # Should NOT include other files in the same directories
+            expect(File.exist?(File.join(dest, "bundle/other_file.txt"))).to be false
+
+            # Should NOT include unrelated directories
+            expect(File.exist?(File.join(dest, "cabal"))).to be false
+            expect(File.exist?(File.join(dest, "cabal/config"))).to be false
+
+            # Should NOT include root level files
+            expect(File.exist?(File.join(dest, "root_file.txt"))).to be false
+          end
+
+          context "with force option enabled" do
+            let(:force) { true }
+
+            before do
+              # Create existing files in destination that should be cleaned up
+              FileUtils.mkdir_p(File.join(dest, "bundle"))
+              File.write(File.join(dest, "bundle/config"), "old bundle config")
+              File.write(File.join(dest, "bundle/obsolete.txt"), "obsolete file")
+
+              FileUtils.mkdir_p(File.join(dest, "ghc"))
+              File.write(File.join(dest, "ghc/ghci.conf"), "old ghc config")
+
+              # Create unrelated files that should NOT be touched
+              FileUtils.mkdir_p(File.join(dest, "cabal"))
+              File.write(File.join(dest, "cabal/config"), "existing cabal config")
+            end
+
+            it "updates specified files and preserves sibling files in the same directories" do
+              subject.transfer
+
+              # Should update the specified files
+              expect(File.exist?(File.join(dest, "bundle/config"))).to be true
+              expect(File.read(File.join(dest, "bundle/config"))).to eq("bundle config content")
+
+              expect(File.exist?(File.join(dest, "ghc/ghci.conf"))).to be true
+              expect(File.read(File.join(dest, "ghc/ghci.conf"))).to eq("ghc config content")
+
+              # Should preserve sibling files in managed directories
+              # (only = ["bundle/config"] means manage only that file, not the whole bundle/ directory)
+              expect(File.exist?(File.join(dest, "bundle/obsolete.txt"))).to be true
+              expect(File.read(File.join(dest, "bundle/obsolete.txt"))).to eq("obsolete file")
+
+              # Should preserve unrelated files/folders
+              expect(File.exist?(File.join(dest, "cabal/config"))).to be true
+              expect(File.read(File.join(dest, "cabal/config"))).to eq("existing cabal config")
+            end
+          end
+        end
+
+        context "with nested file paths in only option" do
+          let(:only) { ["deep/nested/path/config.yml"] }
+
+          before do
+            FileUtils.rm_rf(src)
+            FileUtils.mkdir_p(src)
+
+            # Create deeply nested file
+            FileUtils.mkdir_p(File.join(src, "deep/nested/path"))
+            File.write(File.join(src, "deep/nested/path/config.yml"), "nested config content")
+
+            # Create sibling file that should not be included
+            File.write(File.join(src, "deep/nested/path/other.yml"), "other nested content")
+
+            # Create parent level files
+            File.write(File.join(src, "deep/nested/parent_file.txt"), "parent level file")
+            File.write(File.join(src, "deep/top_level.txt"), "top level file")
+          end
+
+          it "includes only the deeply nested file" do
+            subject.transfer
+
+            # Should include the specified nested file
+            expect(File.exist?(File.join(dest, "deep/nested/path/config.yml"))).to be true
+            expect(File.read(File.join(dest, "deep/nested/path/config.yml"))).to eq("nested config content")
+
+            # Should NOT include sibling files at the same level
+            expect(File.exist?(File.join(dest, "deep/nested/path/other.yml"))).to be false
+
+            # Should NOT include parent level files
+            expect(File.exist?(File.join(dest, "deep/nested/parent_file.txt"))).to be false
+            expect(File.exist?(File.join(dest, "deep/top_level.txt"))).to be false
+          end
+        end
+
         context "with ignore and force options" do
           let(:force) { true }
           let(:ignore) do

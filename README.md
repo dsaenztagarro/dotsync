@@ -264,16 +264,107 @@ dest = "$DOTFILES_DIR/config/alacritty"
 
 Each mapping entry supports the following options:
 
-- **`force`**: A boolean (true/false) value. When set to `true`, it forces deletion of the destination folder before transferring files from the source. This is particularly useful when you need to ensure that the destination is clean before a transfer.
-- **`only`**: An array of files or folders. This option ensures that only the specified files or folders from the `src` directory are transferred to the `dest` directory. Example:
-  ```toml
-  [[push.mappings]]
-  src = "$XDG_CONFIG_HOME"
-  dest = "$DOTFILES_DIR/config"
-  only = ["config.yml", "themes"]
+##### `force` Option
 
-  ```
-- **`ignore`**: An array of patterns or file names to exclude during the transfer. This allows you to specify files or folders that should not be copied from the source to the destination.
+A boolean (true/false) value. When set to `true`, it forces deletion of files in the destination directory that don't exist in the source. This is particularly useful when you need to ensure the destination stays synchronized with the source.
+
+**Example:**
+```toml
+[[pull.mappings]]
+src = "$XDG_CONFIG_HOME_MIRROR/nvim"
+dest = "$XDG_CONFIG_HOME/nvim"
+force = true
+ignore = ["lazy-lock.json"]
+```
+
+> [!WARNING]
+> When using `force = true` with the `only` option, only files matching the `only` filter will be managed. Other files in the destination remain untouched.
+
+##### `only` Option
+
+An array of relative paths (files or directories) to selectively transfer from the source. This option provides precise control over which files get synchronized.
+
+**How it works:**
+- Paths are relative to the `src` directory
+- You can specify entire directories or individual files
+- Parent directories are automatically created as needed
+- Other files in the source are ignored
+- With `force = true`, only files matching the `only` filter are cleaned up in the destination
+
+**Example 1: Selecting specific directories**
+```toml
+[[push.mappings]]
+src = "$XDG_CONFIG_HOME"
+dest = "$DOTFILES_DIR/config"
+only = ["nvim", "alacritty", "zsh"]
+```
+This transfers only the `nvim/`, `alacritty/`, and `zsh/` directories.
+
+**Example 2: Selecting specific files**
+```toml
+[[push.mappings]]
+src = "$XDG_CONFIG_HOME/alacritty"
+dest = "$DOTFILES_DIR/config/alacritty"
+only = ["alacritty.toml", "rose-pine.toml"]
+```
+This transfers only two specific TOML files from the alacritty config directory.
+
+**Example 3: Selecting files inside nested directories**
+```toml
+[[push.mappings]]
+src = "$HOME/.config"
+dest = "$DOTFILES_DIR/config"
+only = ["bundle/config", "ghc/ghci.conf", "cabal/config"]
+```
+This transfers only specific configuration files from different subdirectories:
+- `bundle/config` file from the `bundle/` directory
+- `ghc/ghci.conf` file from the `ghc/` directory  
+- `cabal/config` file from the `cabal/` directory
+
+The parent directories (`bundle/`, `ghc/`, `cabal/`) are created automatically in the destination, but other files in those directories are not transferred.
+
+**Example 4: Deeply nested paths**
+```toml
+[[push.mappings]]
+src = "$XDG_CONFIG_HOME"
+dest = "$DOTFILES_DIR/config"
+only = ["nvim/lua/plugins/init.lua", "nvim/lua/config/settings.lua"]
+```
+This transfers only specific Lua files from deeply nested paths within the nvim configuration.
+
+**Important behaviors:**
+- **File-specific paths**: When specifying individual files (e.g., `"bundle/config"`), only that file is managed. Sibling files in the same directory are not affected, even with `force = true`.
+- **Directory paths**: When specifying directories (e.g., `"nvim"`), all contents of that directory are managed, including subdirectories.
+- **Combining with `force`**: With `force = true` and directory paths, files in the destination directory that don't exist in the source are removed. With file-specific paths, only that specific file is managed.
+
+##### `ignore` Option
+
+An array of relative paths or patterns to exclude during transfer. This allows you to skip certain files or folders.
+
+**Example:**
+```toml
+[[pull.mappings]]
+src = "$XDG_CONFIG_HOME_MIRROR/nvim"
+dest = "$XDG_CONFIG_HOME/nvim"
+ignore = ["lazy-lock.json", "plugin/packer_compiled.lua"]
+```
+
+**Combining options:**
+```toml
+[[push.mappings]]
+src = "$XDG_CONFIG_HOME/nvim"
+dest = "$DOTFILES_DIR/config/nvim"
+only = ["lua", "init.lua"]
+ignore = ["lua/plugin/packer_compiled.lua"]
+force = true
+```
+This configuration:
+1. Transfers only the `lua/` directory and `init.lua` file (`only`)
+2. Excludes `lua/plugin/packer_compiled.lua` even though it's in the `lua/` directory (`ignore`)
+3. Removes files in the destination that don't exist in the source (`force`)
+
+> [!NOTE]
+> When `ignore` and `only` both match a path, `ignore` takes precedence.
 
 These options apply when the source is a directory and are relevant for both `push` and `pull` operations.
 

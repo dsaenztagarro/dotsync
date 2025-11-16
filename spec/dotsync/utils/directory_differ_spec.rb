@@ -94,6 +94,107 @@ RSpec.describe Dotsync::DirectoryDiffer do
               expect(diff.additions).to_not include(File.join(dest, "fold2", "file4.txt"))
             end
           end
+
+          context "including specific files inside folders" do
+            let(:only) { ["bundle/config", "ghc/ghci.conf"] }
+
+            before do
+              FileUtils.rm_rf(src)
+              FileUtils.rm_rf(dest)
+              FileUtils.mkdir_p(src)
+              FileUtils.mkdir_p(dest)
+
+              # Create files we want to include
+              FileUtils.mkdir_p(File.join(src, "bundle"))
+              File.write(File.join(src, "bundle/config"), "new bundle config")
+
+              FileUtils.mkdir_p(File.join(src, "ghc"))
+              File.write(File.join(src, "ghc/ghci.conf"), "new ghc config")
+
+              # Create other files that should not be included
+              File.write(File.join(src, "bundle/other.txt"), "other file")
+              FileUtils.mkdir_p(File.join(src, "cabal"))
+              File.write(File.join(src, "cabal/config"), "cabal config")
+
+              # Create existing dest files
+              FileUtils.mkdir_p(File.join(dest, "bundle"))
+              File.write(File.join(dest, "bundle/config"), "old bundle config")
+              File.write(File.join(dest, "bundle/obsolete.txt"), "obsolete file")
+
+              FileUtils.mkdir_p(File.join(dest, "cabal"))
+              File.write(File.join(dest, "cabal/config"), "old cabal config")
+            end
+
+            it "detects additions only for specified files" do
+              diff = differ.diff
+
+              expect(diff).to be_a(Dotsync::Diff)
+
+              # Should detect the new ghc config file
+              expect(diff.additions).to include(File.join(dest, "ghc/ghci.conf"))
+
+              # Should NOT detect other files as additions
+              expect(diff.additions).to_not include(File.join(dest, "bundle/other.txt"))
+              expect(diff.additions).to_not include(File.join(dest, "cabal/config"))
+            end
+
+            it "detects modifications only for specified files" do
+              diff = differ.diff
+
+              expect(diff).to be_a(Dotsync::Diff)
+
+              # Should detect modification of bundle/config
+              expect(diff.modifications).to include(File.join(dest, "bundle/config"))
+
+              # Should NOT detect modifications for unrelated files
+              expect(diff.modifications).to_not include(File.join(dest, "cabal/config"))
+            end
+
+            it "does not detect removals of sibling files in the same directory" do
+              diff = differ.diff
+
+              expect(diff).to be_a(Dotsync::Diff)
+
+              # Should NOT detect removal of sibling files
+              # (only = ["bundle/config"] means manage only that file, not the whole bundle/ directory)
+              expect(diff.removals).to_not include(File.join(dest, "bundle/obsolete.txt"))
+
+              # Should NOT detect removal of cabal/config (unrelated path)
+              expect(diff.removals).to_not include(File.join(dest, "cabal/config"))
+            end
+          end
+
+          context "including deeply nested file paths" do
+            let(:only) { ["deep/nested/path/config.yml"] }
+
+            before do
+              FileUtils.rm_rf(src)
+              FileUtils.rm_rf(dest)
+              FileUtils.mkdir_p(src)
+              FileUtils.mkdir_p(dest)
+
+              # Create deeply nested file
+              FileUtils.mkdir_p(File.join(src, "deep/nested/path"))
+              File.write(File.join(src, "deep/nested/path/config.yml"), "nested config")
+
+              # Create sibling files
+              File.write(File.join(src, "deep/nested/path/other.yml"), "other config")
+              File.write(File.join(src, "deep/nested/sibling.txt"), "sibling file")
+            end
+
+            it "detects changes only for the specified nested file" do
+              diff = differ.diff
+
+              expect(diff).to be_a(Dotsync::Diff)
+
+              # Should detect addition of the specified nested file
+              expect(diff.additions).to include(File.join(dest, "deep/nested/path/config.yml"))
+
+              # Should NOT detect sibling files
+              expect(diff.additions).to_not include(File.join(dest, "deep/nested/path/other.yml"))
+              expect(diff.additions).to_not include(File.join(dest, "deep/nested/sibling.txt"))
+            end
+          end
         end
 
         context "with ignore option" do
