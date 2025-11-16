@@ -6,6 +6,10 @@ require_relative "../lib/dotsync/version"
 
 options = { apply: false, config_path: nil }
 
+# Initialize logger early for consistent error handling
+require_relative "../lib/dotsync/core"
+logger = Dotsync::Logger.new
+
 opt_parser = OptionParser.new do |opts|
   opts.banner = <<~BANNER
     dotsync #{Dotsync::VERSION}
@@ -30,6 +34,7 @@ opt_parser = OptionParser.new do |opts|
       dotsync diff                       # Show what would change
       dotsync watch                      # Monitor and sync continuously
       dotsync -c ~/custom.toml push      # Use custom config file
+      dotsync push --trace               # Show full error backtraces
 
     Options:
       -a, --apply           Apply changes (push or pull)
@@ -46,6 +51,7 @@ opt_parser = OptionParser.new do |opts|
       --only-config         Show only the config section
       --only-mappings       Show only the mappings section
       -v, --verbose         Force showing all available information
+      --trace               Show full error backtraces (for debugging)
       --version             Show version number
       -h, --help            Show this help message
   BANNER
@@ -106,6 +112,10 @@ opt_parser = OptionParser.new do |opts|
     options[:verbose] = true
   end
 
+  opts.on("--trace", "Show full error backtraces (for debugging)") do
+    options[:trace] = true
+  end
+
   opts.on("--version", "Show version number") do
     puts "dotsync #{Dotsync::VERSION}"
     exit
@@ -117,12 +127,29 @@ opt_parser = OptionParser.new do |opts|
   end
 end
 
-opt_parser.parse!
+begin
+  opt_parser.parse!
+rescue OptionParser::InvalidOption, OptionParser::InvalidArgument => e
+  # Extract just the problematic option from the error message
+  option_match = e.message.match(/invalid (?:option|argument): (.+)/)
+  problem = option_match ? option_match[1] : e.message
+
+  logger.error("Invalid option: #{problem}")
+  logger.info("See 'dotsync --help' for available options")
+
+  if options[:trace]
+    logger.log("\nFull backtrace:", color: 240)
+    e.backtrace.each { |line| logger.log("  #{line}", color: 240) }
+  end
+
+  exit 1
+end
 
 command = ARGV.shift
 
 # Load only the dependencies needed for the specific command
-case command
+begin
+  case command
 when "push"
   require_relative "../lib/dotsync/loaders/push_loader"
   Dotsync::Runner.new(config_path: options[:config_path]).run(:push, options)
@@ -153,9 +180,22 @@ when "diff"
   Dotsync::Runner.new(config_path: options[:config_path]).run(:push, diff_options)
 else
   if command
-    puts "dotsync: no such command '#{command}'"
+    logger.error("Unknown command: '#{command}'")
+    logger.info("See 'dotsync --help' for available commands")
   else
     puts opt_parser.banner
   end
+  exit 1
+  end
+rescue => e
+  logger.error("Unexpected error: #{e.message}")
+
+  if options[:trace]
+    logger.log("\nFull backtrace:", color: 240)
+    e.backtrace.each { |line| logger.log("  #{line}", color: 240) }
+  else
+    logger.info("Run with --trace to see full error details")
+  end
+
   exit 1
 end
