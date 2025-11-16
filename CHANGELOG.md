@@ -1,3 +1,26 @@
+# 0.1.25
+
+**Features:**
+- Add support for file-specific paths in 'only' configuration option
+  - Enable specifying individual files within directories: `only = ["bundle/config", "ghc/ghci.conf"]`
+  - Parent directories are automatically created as needed
+  - Sibling files in the same directory remain unaffected
+  - Works with deeply nested paths: `only = ["nvim/lua/plugins/init.lua"]`
+  - Fix DirectoryDiffer to use bidirectional_include? for proper file traversal
+
+**Documentation:**
+- Completely rewrite 'force', 'only', and 'ignore' options section in README
+- Add 4 detailed examples showing different use cases
+- Add warnings and notes about combining options
+- Document important behaviors and edge cases
+
+**Testing:**
+- Add comprehensive test coverage for file-specific paths in 'only' option
+- Add tests for FileTransfer with nested file paths
+- Add tests for DirectoryDiffer with file-specific only paths
+- Add tests with force mode enabled
+- All 396 tests pass with 96.61% line coverage
+
 # 0.1.24
 
 **Performance Optimizations:**
