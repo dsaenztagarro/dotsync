@@ -1,93 +1,27 @@
-# Agents
+# Coding Agent Guidelines
 
-This document describes AI agents and automation helpers that can assist with developing and maintaining the Dotsync project.
+## Commands
+- Run all tests: `rake spec` or `bundle exec rspec`
+- Run single test: `bundle exec rspec spec/path/to/file_spec.rb` or `bundle exec rspec spec/path/to/file_spec.rb:42`
+- Lint: `bundle exec rubocop` (auto-fix: `bundle exec rubocop -a`)
+- Build gem: `rake build`
 
-## Development Agents
+## Code Style
+- **Ruby version**: >= 3.2.0
+- **Frozen string literal**: Always include `# frozen_string_literal: true` at top of files
+- **Indentation**: 2 spaces, no tabs
+- **Strings**: Double quotes (`"string"`)
+- **Hash syntax**: Modern style (`{ a: 1 }`)
+- **Method definitions**: Always use parentheses for methods with parameters
+- **Spacing**: Space after colons, commas, around operators; `foo { bar }` not `foo {bar}`
 
-### Code Review Agent
+## Project Structure
+- Actions: `lib/dotsync/actions/` - Core operations (PullAction, PushAction, WatchAction)
+- Config: `lib/dotsync/config/` - Configuration management with XDG support
+- Models: `lib/dotsync/models/` - Domain models (Mapping, Diff)
+- Utils: `lib/dotsync/utils/` - Helpers (FileTransfer, DirectoryDiffer, Logger, PathUtils)
+- Tests: `spec/` - RSpec tests mirroring lib structure
 
-**Purpose**: Review code changes for quality, consistency, and adherence to Ruby best practices.
-
-**When to use**:
-- Before submitting pull requests
-- After implementing new features
-- When refactoring existing code
-
-**What it checks**:
-- Ruby style guide compliance (follows .rubocop.yml)
-- Test coverage for new functionality
-- Proper error handling
-- Documentation completeness
-- Performance considerations
-
-### Test Generation Agent
-
-**Purpose**: Generate and enhance RSpec tests for Dotsync functionality.
-
-**When to use**:
-- When adding new actions or utilities
-- When test coverage is insufficient
-- When refactoring existing code
-
-**Focus areas**:
-- Unit tests for models (Mapping, Diff)
-- Integration tests for actions (PullAction, PushAction, WatchAction)
-- Edge cases and error scenarios
-- File system operations
-
-### Documentation Agent
-
-**Purpose**: Maintain and improve project documentation.
-
-**When to use**:
-- After adding new features
-- When configuration options change
-- When updating usage examples
-
-**Responsibilities**:
-- Keep README.md synchronized with code
-- Update inline code documentation
-- Maintain CHANGELOG.md
-- Generate usage examples
-
-## Maintenance Agents
-
-### Dependency Update Agent
-
-**Purpose**: Monitor and suggest updates for gem dependencies.
-
-**What it monitors**:
-- Security vulnerabilities in dependencies
-- New versions of runtime and development dependencies
-- Ruby version compatibility
-
-### Release Agent
-
-**Purpose**: Assist with the release process following RELEASING.md guidelines.
-
-**Checklist**:
-- Version number updated in version.rb
-- CHANGELOG.md updated with changes
-- Tests passing
-- RuboCop compliance
-- Tag creation and push
-- Gem publication to rubygems.org
-
-## Usage
-
-To work with these agents effectively:
-
-1. **Be specific**: Provide clear context about what you're working on
-2. **Reference files**: Point to specific files or line numbers when discussing issues
-3. **Run tests**: Always run `rake spec` after changes
-4. **Follow conventions**: Adhere to existing code patterns and Ruby style guide
-
-## Contributing
-
-When working with agents on this project:
-
-- Review generated code carefully before committing
-- Ensure all tests pass (`rake spec`)
-- Run RuboCop (`bundle exec rubocop`)
-- Update documentation as needed
-- Follow the project's [Code of Conduct](CODE_OF_CONDUCT.md)
+## Error Handling
+- Use custom errors from `lib/dotsync/errors.rb`: `ConfigError`, `FileTransferError`, `PermissionError`, `DiskFullError`, `SymlinkError`, `TypeConflictError`
+- Always use `raise ErrorClass, "message"` for explicit error handling
