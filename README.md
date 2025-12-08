@@ -254,11 +254,81 @@ dest = "$DOTFILES_DIR/config/alacritty"
 ```
 
 > [!TIP]
-> I use mirror environment variables to cleaner configuration
+> I use mirror environment variables for cleaner configuration
 >
 >  ```bash
 >  export XDG_CONFIG_HOME_MIRROR="$HOME/Code/dotfiles/xdg_config_home"
 >  ```
+
+#### Bidirectional Sync Mappings
+
+For paths that need to be synchronized in both directions (push and pull), you can use the `[[sync]]` section instead of defining separate `[[push.mappings]]` and `[[pull.mappings]]` entries. This reduces configuration duplication significantly.
+
+```toml
+# Instead of defining separate push and pull mappings:
+[[sync]]
+local  = "$XDG_CONFIG_HOME/nvim"
+remote = "$XDG_CONFIG_HOME_MIRROR/nvim"
+force  = true
+ignore = ["lazy-lock.json"]
+
+[[sync]]
+local  = "$HOME/.zshenv"
+remote = "$HOME_MIRROR/.zshenv"
+```
+
+**How it works:**
+- `local` is your local machine path (e.g., `~/.config/nvim`)
+- `remote` is your dotfiles repository path (e.g., `~/dotfiles/config/nvim`)
+- For **push** operations: `local` → `remote` (local is src, remote is dest)
+- For **pull** operations: `remote` → `local` (remote is src, local is dest)
+- All standard options (`force`, `ignore`, `only`) are supported
+
+This is especially useful when most of your mappings are symmetric mirrors of each other.
+
+#### XDG Shorthand Mappings
+
+For common XDG directory mappings, you can use shorthand syntax that automatically expands to the full environment variable paths:
+
+```toml
+# Instead of:
+#   local = "$XDG_CONFIG_HOME/nvim"
+#   remote = "$XDG_CONFIG_HOME_MIRROR/nvim"
+# Use:
+[[sync.xdg_config]]
+path = "nvim"
+force = true
+ignore = ["lazy-lock.json"]
+
+[[sync.xdg_data]]
+path = "git"
+force = true
+
+[[sync.home]]
+path = ".zshenv"
+```
+
+**Supported shorthands:**
+
+| Shorthand | Local | Remote |
+|-----------|-------|--------|
+| `sync.xdg_config` | `$XDG_CONFIG_HOME` | `$XDG_CONFIG_HOME_MIRROR` |
+| `sync.xdg_data` | `$XDG_DATA_HOME` | `$XDG_DATA_HOME_MIRROR` |
+| `sync.xdg_cache` | `$XDG_CACHE_HOME` | `$XDG_CACHE_HOME_MIRROR` |
+| `sync.home` | `$HOME` | `$HOME_MIRROR` |
+
+**Options:**
+- `path` (optional): Relative path within the XDG directory. If omitted, syncs the entire directory.
+- `force`, `ignore`, `only`: All standard mapping options are supported.
+
+**Example: Sync entire XDG config directory**
+```toml
+[[sync.xdg_config]]
+only = ["nvim", "alacritty", "zsh"]
+```
+
+> [!NOTE]
+> You can mix and match `[[sync]]`, XDG shorthands, and traditional `[[push.mappings]]`/`[[pull.mappings]]` in the same configuration file. Use whatever style is most appropriate for each mapping.
 
 #### `force`, `only`, and `ignore` Options in Mappings
 
