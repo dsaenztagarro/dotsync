@@ -1,3 +1,23 @@
+# 0.1.26
+
+**New Features:**
+- Add bidirectional `[[sync]]` mappings DSL for two-way synchronization
+  - Simplified syntax: `[[sync]]` with `path` replaces separate push/pull mappings
+  - Automatic expansion to bidirectional mappings (local ↔ remote)
+  - Supports all existing options: `force`, `only`, `ignore`
+- Add XDG shorthand DSL for sync mappings
+  - Use `xdg = "config"` or `xdg = "data"` instead of explicit paths
+  - Automatically expands to `$XDG_CONFIG_HOME` or `$XDG_DATA_HOME`
+  - Reduces boilerplate for common dotfile locations
+
+**Documentation:**
+- Document bidirectional sync mappings with examples
+- Document XDG shorthand DSL with usage examples
+- Update README with new configuration options
+
+**Infrastructure:**
+- Rename GitHub workflow to ci.yml
+
 # 0.1.25
 
 **Features:**
