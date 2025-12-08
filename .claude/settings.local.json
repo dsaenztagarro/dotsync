@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bundle exec rake test:*)",
+      "Bash(bundle exec rake:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd bidirectional [[sync]] mappings DSL\n\nIntroduces a new `[[sync]]` section that allows defining symmetric\npush/pull mappings using `local` and `remote` keys. This reduces\nconfiguration duplication when the same paths need to be synced\nin both directions.\n\nFor push operations: local → remote\nFor pull operations: remote → local\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(bundle install:*)",
+      "Bash(git rebase:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -22,6 +22,7 @@ require_relative "dotsync/version"
 
 # Config Concerns (loaded early as they're used by other modules)
 require_relative "dotsync/config/concerns/xdg_base_directory"
+require_relative "dotsync/config/concerns/sync_mappings"
 
 # Utils
 require_relative "dotsync/utils/path_utils"

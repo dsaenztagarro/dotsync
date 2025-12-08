@@ -47,7 +47,7 @@ RSpec.describe Dotsync::PushActionConfig do
       it "raises ConfigError" do
         expect { described_class.new(config_path) }.to raise_error(
           Dotsync::ConfigError,
-          /No \[push\] section found in config file/
+          /No \[push\] mappings or \[\[sync\]\] mappings found in config file/
         )
       end
     end
@@ -63,7 +63,7 @@ RSpec.describe Dotsync::PushActionConfig do
       it "raises ConfigError" do
         expect { described_class.new(config_path) }.to raise_error(
           Dotsync::ConfigError,
-          /does not include key 'mappings'/
+          /No \[push\] mappings or \[\[sync\]\] mappings found in config file/
         )
       end
     end
@@ -79,7 +79,7 @@ RSpec.describe Dotsync::PushActionConfig do
 
       it "raises configuration error" do
         expect { described_class.new(config_path) }.to raise_error(
-          /Configuration error in mapping #1.*'src' and 'dest' keys/
+          /Configuration error in push mapping #1.*'src' and 'dest' keys/
         )
       end
     end
@@ -95,7 +95,7 @@ RSpec.describe Dotsync::PushActionConfig do
 
       it "raises configuration error" do
         expect { described_class.new(config_path) }.to raise_error(
-          /Configuration error in mapping #1.*'src' and 'dest' keys/
+          /Configuration error in push mapping #1.*'src' and 'dest' keys/
         )
       end
     end
@@ -110,7 +110,7 @@ RSpec.describe Dotsync::PushActionConfig do
 
       it "raises configuration error" do
         expect { described_class.new(config_path) }.to raise_error(
-          /Configuration error in mapping #1/
+          /Configuration error in push mapping #1/
         )
       end
     end

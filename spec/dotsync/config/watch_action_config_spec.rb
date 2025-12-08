@@ -53,7 +53,7 @@ RSpec.describe Dotsync::WatchActionConfig do
       it "raises ConfigError" do
         expect { described_class.new(config_path) }.to raise_error(
           Dotsync::ConfigError,
-          /No \[watch\] section found in config file/
+          /No \[watch\] mappings or \[\[sync\]\] mappings found in config file/
         )
       end
     end
