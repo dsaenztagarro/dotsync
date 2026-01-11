@@ -138,7 +138,7 @@ Dotsync provides the following commands to manage your dotfiles:
   ```shell
   dotsync watch [OPTIONS]
   ```
-  
+
   The watch command supports the same output control options as push and pull (e.g., `--quiet`, `--no-legend`, `--no-mappings`).
 
 - **Setup** (alias: **init**): Generate a default configuration file at `~/.config/dotsync.toml` with example mappings for `pull`, `push`, and `watch`.
@@ -536,7 +536,7 @@ By default, all `push` and `pull` commands run in preview mode:
 
 Dotsync provides clear, actionable error messages for common issues:
 
-- **Permission Errors**: 
+- **Permission Errors**:
   ```
   Permission denied: /path/to/file
   Try: chmod +w <path> or check file permissions
@@ -658,10 +658,10 @@ The check runs after your command completes and uses a cached timestamp to avoid
   ```bash
   # Work dotfiles
   dotsync -c ~/work-dotfiles.toml push --apply
-  
+
   # Personal dotfiles
   dotsync -c ~/.config/personal.toml pull --apply
-  
+
   # Server configs
   dotsync --config ~/server.toml push --apply
   ```
@@ -670,7 +670,7 @@ The check runs after your command completes and uses a cached timestamp to avoid
   ```shell
   # In a script or CI/CD pipeline
   dotsync pull --apply --yes --quiet
-  
+
   # Shorthand
   dotsync push -ayq
   ```
@@ -777,7 +777,7 @@ dotsync -c ~/.config/dotsync/dotsync.macbook.toml push --apply
 
 **Problem**: Icons appear as boxes, question marks, or strange characters.
 
-**Solution**: 
+**Solution**:
 - Install a [Nerd Font](https://www.nerdfonts.com/) and configure your terminal to use it
 - Or customize icons in `~/.config/dotsync.toml` using UTF-8 emojis or regular characters:
   ```toml

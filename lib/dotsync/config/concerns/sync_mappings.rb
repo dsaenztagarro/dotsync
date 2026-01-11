@@ -57,136 +57,135 @@ module Dotsync
     end
 
     private
-
-    def all_sync_mappings(direction)
-      convert_explicit_mappings(direction: direction) + convert_shorthand_mappings(direction: direction)
-    end
-
-    def sync_section
-      @config[SYNC_SECTION]
-    end
-
-    # Explicit [[sync.mappings]] with local/remote keys
-    def explicit_mappings_raw
-      return [] unless sync_section.is_a?(Hash)
-      return [] unless sync_section.key?(MAPPINGS_KEY)
-
-      Array(sync_section[MAPPINGS_KEY])
-    end
-
-    def convert_explicit_mappings(direction:)
-      explicit_mappings_raw.map do |mapping|
-        converted = convert_explicit_mapping(mapping, direction)
-        Dotsync::Mapping.new(converted)
+      def all_sync_mappings(direction)
+        convert_explicit_mappings(direction: direction) + convert_shorthand_mappings(direction: direction)
       end
-    end
 
-    def convert_explicit_mapping(mapping, direction)
-      local = mapping["local"]
-      remote = mapping["remote"]
+      def sync_section
+        @config[SYNC_SECTION]
+      end
 
-      base = case direction
-             when :push
-               { "src" => local, "dest" => remote }
-             when :pull
-               { "src" => remote, "dest" => local }
-             end
+      # Explicit [[sync.mappings]] with local/remote keys
+      def explicit_mappings_raw
+        return [] unless sync_section.is_a?(Hash)
+        return [] unless sync_section.key?(MAPPINGS_KEY)
 
-      # Preserve other options
-      base["force"] = mapping["force"] if mapping.key?("force")
-      base["ignore"] = mapping["ignore"] if mapping.key?("ignore")
-      base["only"] = mapping["only"] if mapping.key?("only")
+        Array(sync_section[MAPPINGS_KEY])
+      end
 
-      base
-    end
-
-    # Shorthand mappings: [[sync.home]], [[sync.xdg_config]], etc.
-    def shorthand_mappings_raw
-      return [] unless sync_section.is_a?(Hash)
-
-      mappings = []
-      SHORTHANDS.each_key do |shorthand_type|
-        next unless sync_section.key?(shorthand_type)
-        Array(sync_section[shorthand_type]).each do |mapping|
-          mappings << { type: shorthand_type, mapping: mapping }
+      def convert_explicit_mappings(direction:)
+        explicit_mappings_raw.map do |mapping|
+          converted = convert_explicit_mapping(mapping, direction)
+          Dotsync::Mapping.new(converted)
         end
       end
-      mappings
-    end
 
-    def convert_shorthand_mappings(direction:)
-      shorthand_mappings_raw.map do |entry|
-        converted = convert_shorthand_mapping(entry[:type], entry[:mapping], direction)
-        Dotsync::Mapping.new(converted)
-      end
-    end
+      def convert_explicit_mapping(mapping, direction)
+        local = mapping["local"]
+        remote = mapping["remote"]
 
-    def convert_shorthand_mapping(shorthand_type, mapping, direction)
-      shorthand_def = SHORTHANDS[shorthand_type]
+        base = case direction
+               when :push
+                 { "src" => local, "dest" => remote }
+               when :pull
+                 { "src" => remote, "dest" => local }
+        end
 
-      # Support both 'path' for single paths and 'only' for multiple paths
-      path = mapping["path"]
-      only = mapping["only"]
+        # Preserve other options
+        base["force"] = mapping["force"] if mapping.key?("force")
+        base["ignore"] = mapping["ignore"] if mapping.key?("ignore")
+        base["only"] = mapping["only"] if mapping.key?("only")
 
-      local = build_path(shorthand_def[:local], path)
-      remote = build_path(shorthand_def[:remote], path)
-
-      base = case direction
-             when :push
-               { "src" => local, "dest" => remote }
-             when :pull
-               { "src" => remote, "dest" => local }
-             end
-
-      # Preserve other options
-      base["force"] = mapping["force"] if mapping.key?("force")
-      base["ignore"] = mapping["ignore"] if mapping.key?("ignore")
-      base["only"] = only if only
-
-      base
-    end
-
-    def build_path(base, path)
-      path ? File.join(base, path) : base
-    end
-
-    def validate_sync_mappings!
-      return unless sync_section
-
-      unless sync_section.is_a?(Hash)
-        raise Dotsync::ConfigError,
-          "Configuration error: [sync] must be a table, not an array. " \
-          "Use [[sync.mappings]] for explicit mappings."
+        base
       end
 
-      validate_explicit_mappings!
-      validate_shorthand_mappings!
-    end
+      # Shorthand mappings: [[sync.home]], [[sync.xdg_config]], etc.
+      def shorthand_mappings_raw
+        return [] unless sync_section.is_a?(Hash)
 
-    def validate_explicit_mappings!
-      return unless sync_section.key?(MAPPINGS_KEY)
+        mappings = []
+        SHORTHANDS.each_key do |shorthand_type|
+          next unless sync_section.key?(shorthand_type)
+          Array(sync_section[shorthand_type]).each do |mapping|
+            mappings << { type: shorthand_type, mapping: mapping }
+          end
+        end
+        mappings
+      end
 
-      explicit_mappings_raw.each_with_index do |mapping, index|
-        unless mapping.is_a?(Hash) && mapping.key?("local") && mapping.key?("remote")
+      def convert_shorthand_mappings(direction:)
+        shorthand_mappings_raw.map do |entry|
+          converted = convert_shorthand_mapping(entry[:type], entry[:mapping], direction)
+          Dotsync::Mapping.new(converted)
+        end
+      end
+
+      def convert_shorthand_mapping(shorthand_type, mapping, direction)
+        shorthand_def = SHORTHANDS[shorthand_type]
+
+        # Support both 'path' for single paths and 'only' for multiple paths
+        path = mapping["path"]
+        only = mapping["only"]
+
+        local = build_path(shorthand_def[:local], path)
+        remote = build_path(shorthand_def[:remote], path)
+
+        base = case direction
+               when :push
+                 { "src" => local, "dest" => remote }
+               when :pull
+                 { "src" => remote, "dest" => local }
+        end
+
+        # Preserve other options
+        base["force"] = mapping["force"] if mapping.key?("force")
+        base["ignore"] = mapping["ignore"] if mapping.key?("ignore")
+        base["only"] = only if only
+
+        base
+      end
+
+      def build_path(base, path)
+        path ? File.join(base, path) : base
+      end
+
+      def validate_sync_mappings!
+        return unless sync_section
+
+        unless sync_section.is_a?(Hash)
           raise Dotsync::ConfigError,
-            "Configuration error in sync.mappings ##{index + 1}: " \
-            "Each mapping must have 'local' and 'remote' keys."
+            "Configuration error: [sync] must be a table, not an array. " \
+            "Use [[sync.mappings]] for explicit mappings."
         end
+
+        validate_explicit_mappings!
+        validate_shorthand_mappings!
       end
-    end
 
-    def validate_shorthand_mappings!
-      SHORTHANDS.each_key do |shorthand_type|
-        next unless sync_section.key?(shorthand_type)
+      def validate_explicit_mappings!
+        return unless sync_section.key?(MAPPINGS_KEY)
 
-        Array(sync_section[shorthand_type]).each_with_index do |mapping, index|
-          unless mapping.is_a?(Hash)
+        explicit_mappings_raw.each_with_index do |mapping, index|
+          unless mapping.is_a?(Hash) && mapping.key?("local") && mapping.key?("remote")
             raise Dotsync::ConfigError,
-              "Configuration error in sync.#{shorthand_type} ##{index + 1}: " \
-              "Each mapping must be a table."
+              "Configuration error in sync.mappings ##{index + 1}: " \
+              "Each mapping must have 'local' and 'remote' keys."
           end
         end
       end
-    end
+
+      def validate_shorthand_mappings!
+        SHORTHANDS.each_key do |shorthand_type|
+          next unless sync_section.key?(shorthand_type)
+
+          Array(sync_section[shorthand_type]).each_with_index do |mapping, index|
+            unless mapping.is_a?(Hash)
+              raise Dotsync::ConfigError,
+                "Configuration error in sync.#{shorthand_type} ##{index + 1}: " \
+                "Each mapping must be a table."
+            end
+          end
+        end
+      end
   end
 end

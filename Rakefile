@@ -28,10 +28,10 @@ namespace :release do
 
     latest_tag = `git describe --tags --abbrev=0 2>/dev/null`.strip
     commits = if latest_tag.empty?
-                `git log --oneline --no-decorate`.strip.split("\n")
-              else
-                `git log #{latest_tag}..HEAD --oneline --no-decorate`.strip.split("\n")
-              end
+      `git log --oneline --no-decorate`.strip.split("\n")
+    else
+      `git log #{latest_tag}..HEAD --oneline --no-decorate`.strip.split("\n")
+    end
 
     if commits.empty?
       abort "No commits since #{latest_tag}. Nothing to release."
@@ -72,10 +72,10 @@ namespace :release do
     link_entry = "[#{version}]: #{repo_url}/compare/#{previous_version}...v#{version}"
 
     new_changelog = if new_changelog.match?(/^\[[\d.]+\]:.*compare/m)
-                      new_changelog.sub(/^(\[[\d.]+\]:.*compare)/m, "#{link_entry}\n\\1")
-                    else
-                      new_changelog.rstrip + "\n\n#{link_entry}\n"
-                    end
+      new_changelog.sub(/^(\[[\d.]+\]:.*compare)/m, "#{link_entry}\n\\1")
+    else
+      new_changelog.rstrip + "\n\n#{link_entry}\n"
+    end
 
     File.write(changelog_path, new_changelog)
     puts "Updated CHANGELOG.md with version #{version}"
