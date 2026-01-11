@@ -16,6 +16,10 @@ require_relative "../utils/config_cache"
 require_relative "../models/mapping"
 require_relative "../models/diff"
 
+# Config Concerns
+require_relative "../config/concerns/xdg_base_directory"
+require_relative "../config/concerns/sync_mappings"
+
 # Config
 require_relative "../config/base_config"
 require_relative "../config/pull_action_config"

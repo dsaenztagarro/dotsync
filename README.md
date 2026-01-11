@@ -13,8 +13,8 @@
 Dotsync is a powerful Ruby gem for managing and synchronizing your dotfiles across machines. Whether you're setting up a new development environment or keeping configurations in sync, Dotsync makes it effortless.
 
 **Key Features:**
-- **Bidirectional Sync Mappings**: Define once, sync both ways — eliminates config duplication with `[[sync]]` syntax
-- **XDG Shorthand DSL**: Concise `[[sync.xdg_config]]`, `[[sync.home]]` syntax for common directory patterns
+- **Bidirectional Sync Mappings**: Define once, sync both ways — eliminates config duplication with `[[sync.mappings]]` syntax
+- **XDG Shorthand DSL**: Concise `[[sync.home]]`, `[[sync.xdg_config]]`, `[[sync.xdg_data]]`, `[[sync.xdg_bin]]` syntax for common directory patterns
 - **Preview Mode**: See what changes would be made before applying them (dry-run by default)
 - **Smart Filtering**: Use `force`, `only`, and `ignore` options to precisely control what gets synced
 - **Automatic Backups**: Pull operations create timestamped backups for easy recovery
@@ -269,10 +269,11 @@ force = true
 
 | Shorthand | Local | Remote |
 |-----------|-------|--------|
+| `sync.home` | `$HOME` | `$HOME_MIRROR` |
 | `sync.xdg_config` | `$XDG_CONFIG_HOME` | `$XDG_CONFIG_HOME_MIRROR` |
 | `sync.xdg_data` | `$XDG_DATA_HOME` | `$XDG_DATA_HOME_MIRROR` |
 | `sync.xdg_cache` | `$XDG_CACHE_HOME` | `$XDG_CACHE_HOME_MIRROR` |
-| `sync.home` | `$HOME` | `$HOME_MIRROR` |
+| `sync.xdg_bin` | `$XDG_BIN_HOME` | `$XDG_BIN_HOME_MIRROR` |
 
 **Options:**
 - `path` (optional): Relative path within the directory. If omitted, syncs the entire directory.
@@ -280,21 +281,21 @@ force = true
 
 ##### Explicit Sync Syntax
 
-For custom paths that don't follow XDG conventions, use explicit `[[sync]]` mappings:
+For custom paths that don't follow XDG conventions, use explicit `[[sync.mappings]]` entries:
 
 ```toml
-[[sync]]
+[[sync.mappings]]
 local  = "$XDG_CONFIG_HOME/nvim"
 remote = "$XDG_CONFIG_HOME_MIRROR/nvim"
 force  = true
 ignore = ["lazy-lock.json"]
 
-[[sync]]
+[[sync.mappings]]
 local  = "$HOME/.zshenv"
 remote = "$HOME_MIRROR/.zshenv"
 
 # Sync config file to a different location in repo
-[[sync]]
+[[sync.mappings]]
 local  = "$XDG_CONFIG_HOME/dotsync.toml"
 remote = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.macbook.toml"
 ```
@@ -347,7 +348,7 @@ path = "git"
 force = true
 
 # This config file itself
-[[sync]]
+[[sync.mappings]]
 local  = "$XDG_CONFIG_HOME/dotsync.toml"
 remote = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.macbook.toml"
 ```
@@ -377,7 +378,7 @@ dest = "$XDG_CONFIG_HOME_MIRROR/nvim"
 ```
 
 > [!NOTE]
-> You can mix `[[sync]]`, XDG shorthands, and `[[push.mappings]]`/`[[pull.mappings]]` in the same config file. Use bidirectional sync for symmetric mappings and unidirectional for special cases.
+> You can mix `[[sync.mappings]]`, XDG shorthands (`[[sync.home]]`, `[[sync.xdg_config]]`, etc.), and `[[push.mappings]]`/`[[pull.mappings]]` in the same config file. Use bidirectional sync for symmetric mappings and unidirectional for special cases.
 
 #### `force`, `only`, and `ignore` Options in Mappings
 
@@ -755,12 +756,12 @@ Use different config files for different machines:
 
 ```toml
 # In dotsync.macbook.toml
-[[sync]]
+[[sync.mappings]]
 local  = "$XDG_CONFIG_HOME/dotsync.toml"
 remote = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.macbook.toml"
 
 # In dotsync.work.toml
-[[sync]]
+[[sync.mappings]]
 local  = "$XDG_CONFIG_HOME/dotsync.toml"
 remote = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.work.toml"
 ```
