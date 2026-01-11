@@ -1,22 +1,34 @@
 # 0.1.26
 
+**Breaking Changes:**
+- The explicit sync mapping syntax has changed from `[[sync]]` to `[[sync.mappings]]`
+  - Old: `[[sync]]` with `local`/`remote` keys
+  - New: `[[sync.mappings]]` with `local`/`remote` keys
+  - This allows combining explicit mappings with XDG shorthands in the same config
+  - See README for migration examples
+
 **New Features:**
-- Add bidirectional `[[sync]]` mappings DSL for two-way synchronization
-  - Simplified syntax: `[[sync]]` with `path` replaces separate push/pull mappings
+- Add bidirectional `[[sync.mappings]]` DSL for two-way synchronization
+  - Simplified syntax replaces separate push/pull mappings
   - Automatic expansion to bidirectional mappings (local ↔ remote)
   - Supports all existing options: `force`, `only`, `ignore`
 - Add XDG shorthand DSL for sync mappings
-  - Use `xdg = "config"` or `xdg = "data"` instead of explicit paths
-  - Automatically expands to `$XDG_CONFIG_HOME` or `$XDG_DATA_HOME`
-  - Reduces boilerplate for common dotfile locations
+  - `[[sync.home]]` - syncs $HOME ↔ $HOME_MIRROR
+  - `[[sync.xdg_config]]` - syncs $XDG_CONFIG_HOME ↔ $XDG_CONFIG_HOME_MIRROR
+  - `[[sync.xdg_data]]` - syncs $XDG_DATA_HOME ↔ $XDG_DATA_HOME_MIRROR
+  - `[[sync.xdg_cache]]` - syncs $XDG_CACHE_HOME ↔ $XDG_CACHE_HOME_MIRROR
+  - `[[sync.xdg_bin]]` - syncs $XDG_BIN_HOME ↔ $XDG_BIN_HOME_MIRROR (new)
+  - Use `path` for specific subdirectories or `only` for multiple paths
+- Fix custom config path (`-c` flag) not being applied to Runner
 
 **Documentation:**
 - Document bidirectional sync mappings with examples
 - Document XDG shorthand DSL with usage examples
-- Update README with new configuration options
+- Update README with new configuration options and supported shorthands table
 
 **Infrastructure:**
 - Rename GitHub workflow to ci.yml
+- Add sync_mappings concern to push and pull loaders
 
 # 0.1.25
 

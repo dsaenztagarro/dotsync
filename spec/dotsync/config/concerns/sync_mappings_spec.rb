@@ -27,12 +27,14 @@ RSpec.describe Dotsync::SyncMappings do
   end
 
   describe "#sync_mappings_for_push" do
-    context "with sync mappings" do
+    context "with sync.mappings" do
       let(:config) do
         {
-          "sync" => [
-            { "local" => local_path, "remote" => remote_path, "force" => true, "ignore" => ["cache"] }
-          ]
+          "sync" => {
+            "mappings" => [
+              { "local" => local_path, "remote" => remote_path, "force" => true, "ignore" => ["cache"] }
+            ]
+          }
         }
       end
 
@@ -59,12 +61,14 @@ RSpec.describe Dotsync::SyncMappings do
   end
 
   describe "#sync_mappings_for_pull" do
-    context "with sync mappings" do
+    context "with sync.mappings" do
       let(:config) do
         {
-          "sync" => [
-            { "local" => local_path, "remote" => remote_path, "force" => true, "only" => ["config"] }
-          ]
+          "sync" => {
+            "mappings" => [
+              { "local" => local_path, "remote" => remote_path, "force" => true, "only" => ["config"] }
+            ]
+          }
         }
       end
 
@@ -82,12 +86,14 @@ RSpec.describe Dotsync::SyncMappings do
   end
 
   describe "#validate_sync_mappings!" do
-    context "with valid sync mappings" do
+    context "with valid sync.mappings" do
       let(:config) do
         {
-          "sync" => [
-            { "local" => local_path, "remote" => remote_path }
-          ]
+          "sync" => {
+            "mappings" => [
+              { "local" => local_path, "remote" => remote_path }
+            ]
+          }
         }
       end
 
@@ -97,12 +103,14 @@ RSpec.describe Dotsync::SyncMappings do
       end
     end
 
-    context "with invalid sync mappings missing local" do
+    context "with invalid sync.mappings missing local" do
       let(:config) do
         {
-          "sync" => [
-            { "remote" => remote_path }
-          ]
+          "sync" => {
+            "mappings" => [
+              { "remote" => remote_path }
+            ]
+          }
         }
       end
 
@@ -112,18 +120,38 @@ RSpec.describe Dotsync::SyncMappings do
       end
     end
 
-    context "with invalid sync mappings missing remote" do
+    context "with invalid sync.mappings missing remote" do
       let(:config) do
         {
-          "sync" => [
-            { "local" => local_path }
-          ]
+          "sync" => {
+            "mappings" => [
+              { "local" => local_path }
+            ]
+          }
         }
       end
 
       it "raises a ConfigError" do
         instance = test_class.new(config)
         expect { instance.send(:validate_sync_mappings!) }.to raise_error(Dotsync::ConfigError)
+      end
+    end
+
+    context "with sync as array (invalid format)" do
+      let(:config) do
+        {
+          "sync" => [
+            { "local" => local_path, "remote" => remote_path }
+          ]
+        }
+      end
+
+      it "raises a ConfigError" do
+        instance = test_class.new(config)
+        expect { instance.send(:validate_sync_mappings!) }.to raise_error(
+          Dotsync::ConfigError,
+          /\[sync\] must be a table, not an array/
+        )
       end
     end
   end
@@ -324,7 +352,7 @@ RSpec.describe Dotsync::SyncMappings do
           instance = test_class.new(config)
           expect { instance.send(:validate_sync_mappings!) }.to raise_error(
             Dotsync::ConfigError,
-            /Configuration error in sync.xdg_config mapping #1/
+            /Configuration error in sync.xdg_config #1/
           )
         end
       end

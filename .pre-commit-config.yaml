@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: rubocop
+        name: rubocop
+        entry: bundle exec rubocop --autocorrect --force-exclusion
+        language: system
+        types: [ruby]
+        pass_filenames: true

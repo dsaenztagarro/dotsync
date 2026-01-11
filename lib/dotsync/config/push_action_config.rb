@@ -28,10 +28,9 @@ module Dotsync
 
       def validate_push_or_sync_present!
         has_push = @config.key?(section_name) && section["mappings"]&.any?
-        has_sync = @config.key?(SyncMappings::SYNC_SECTION) && sync_mappings_raw.any?
 
-        unless has_push || has_sync
-          raise_error "No [#{section_name}] mappings or [[sync]] mappings found in config file"
+        unless has_push || has_sync_mappings?
+          raise_error "No [#{section_name}] mappings or [sync] mappings found in config file"
         end
       end
 
