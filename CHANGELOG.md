@@ -1,4 +1,4 @@
-# 0.1.26
+## [0.1.26] - 2025-01-11
 
 **Breaking Changes:**
 - The explicit sync mapping syntax has changed from `[[sync]]` to `[[sync.mappings]]`
@@ -30,7 +30,7 @@
 - Rename GitHub workflow to ci.yml
 - Add sync_mappings concern to push and pull loaders
 
-# 0.1.25
+## [0.1.25]
 
 **Features:**
 - Add support for file-specific paths in 'only' configuration option
