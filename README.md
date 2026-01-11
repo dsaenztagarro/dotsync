@@ -13,7 +13,8 @@
 Dotsync is a powerful Ruby gem for managing and synchronizing your dotfiles across machines. Whether you're setting up a new development environment or keeping configurations in sync, Dotsync makes it effortless.
 
 **Key Features:**
-- **Bidirectional Sync**: Push local dotfiles to your repository or pull from repository to local machine
+- **Bidirectional Sync Mappings**: Define once, sync both ways — eliminates config duplication with `[[sync]]` syntax
+- **XDG Shorthand DSL**: Concise `[[sync.xdg_config]]`, `[[sync.home]]` syntax for common directory patterns
 - **Preview Mode**: See what changes would be made before applying them (dry-run by default)
 - **Smart Filtering**: Use `force`, `only`, and `ignore` options to precisely control what gets synced
 - **Automatic Backups**: Pull operations create timestamped backups for easy recovery
@@ -29,6 +30,9 @@ Dotsync is a powerful Ruby gem for managing and synchronizing your dotfiles acro
 - [Usage](#usage)
   - [Executable Commands](#executable-commands)
   - [Configuration](#configuration)
+    - [Bidirectional Sync Mappings (Recommended)](#bidirectional-sync-mappings-recommended)
+    - [Alternative: Unidirectional Mappings](#alternative-unidirectional-mappings)
+    - [Mapping Options (force, only, ignore)](#force-only-and-ignore-options-in-mappings)
   - [Safety Features](#safety-features)
   - [Customizing Icons](#customizing-icons)
   - [Automatic Update Checks](#automatic-update-checks)
@@ -76,22 +80,29 @@ Get started with Dotsync in just a few steps:
    ```
    This creates `~/.config/dotsync.toml` with example mappings.
 
-3. **Edit the configuration** (`~/.config/dotsync.toml`) to define your dotfile mappings:
+3. **Edit the configuration** (`~/.config/dotsync.toml`) to define your dotfile mappings using bidirectional sync:
    ```toml
-   [[pull.mappings]]
-   src = "$HOME/dotfiles/config"
-   dest = "$HOME/.config"
+   # Sync your shell config
+   [[sync.home]]
+   path = ".zshenv"
+
+   # Sync XDG config directories
+   [[sync.xdg_config]]
+   only = ["nvim", "alacritty", "zsh", "git"]
+   force = true
    ```
 
 4. **Preview your changes** (dry-run mode):
    ```shell
-   dotsync pull
+   dotsync pull   # Preview pulling from repo to local
+   dotsync push   # Preview pushing from local to repo
    ```
    This shows what would be changed without modifying any files.
 
 5. **Apply changes** when you're ready:
    ```shell
-   dotsync pull --apply
+   dotsync pull --apply   # Apply repo → local
+   dotsync push --apply   # Apply local → repo
    ```
 
 ## Usage
@@ -212,100 +223,46 @@ dotsync watch --quiet              # Watch with minimal output
 
 ### Configuration
 
-The configuration file uses a `mappings` structure to define the source and destination of your dotfiles. Here is an example:
-
-```toml
-[[pull.mappings]]
-src = "$XDG_CONFIG_HOME_MIRROR"
-dest = "$XDG_CONFIG_HOME"
-ignore = ["nvim"]
-
-[[pull.mappings]]
-src  = "$XDG_CONFIG_HOME_MIRROR/nvim"
-dest = "$XDG_CONFIG_HOME/nvim"
-# FEATURE: forces the deletion of destination folder
-force = true
-# FEATURE: use relative paths to "dest" to ignore files and folders
-ignore = ["lazy-lock.json"]
-
-[[pull.mappings]]
-src = "$HOME_MIRROR/.zshenv"
-dest = "$HOME"
-
-
-[[push.mappings]]
-src = "$HOME/.zshenv"
-dest = "$HOME_MIRROR/.zshenv"
-
-[[push.mappings]]
-src = "$XDG_CONFIG_HOME/alacritty"
-dest = "$DOTFILES_DIR/config/alacritty"
-# FEATURE: transfer only relative paths of files and folders passed here
-only = ["alacritty.toml", "rose-pine.toml"]
-
-
-[[watch.mappings]]
-src = "$HOME/.zshenv"
-dest = "$HOME_MIRROR/.zshenv"
-
-[[watch.mappings]]
-src = "$XDG_CONFIG_HOME/alacritty"
-dest = "$DOTFILES_DIR/config/alacritty"
-```
+Dotsync uses TOML configuration files to define mappings between your local machine and your dotfiles repository. The recommended approach is **bidirectional sync mappings**, which eliminate duplication and keep your config clean.
 
 > [!TIP]
-> I use mirror environment variables for cleaner configuration
->
->  ```bash
->  export XDG_CONFIG_HOME_MIRROR="$HOME/Code/dotfiles/xdg_config_home"
->  ```
+> Set up mirror environment variables for cleaner configuration:
+> ```bash
+> # Add to your ~/.zshrc or ~/.bashrc
+> export DOTFILES_DIR="$HOME/Code/dotfiles"
+> export XDG_CONFIG_HOME_MIRROR="$DOTFILES_DIR/xdg_config_home"
+> export XDG_DATA_HOME_MIRROR="$DOTFILES_DIR/xdg_data_home"
+> export HOME_MIRROR="$DOTFILES_DIR/home"
+> ```
 
-#### Bidirectional Sync Mappings
+#### Bidirectional Sync Mappings (Recommended)
 
-For paths that need to be synchronized in both directions (push and pull), you can use the `[[sync]]` section instead of defining separate `[[push.mappings]]` and `[[pull.mappings]]` entries. This reduces configuration duplication significantly.
+Use `[[sync]]` mappings to define paths that sync in both directions. This is the **preferred approach** as it eliminates duplication between push and pull configurations.
 
-```toml
-# Instead of defining separate push and pull mappings:
-[[sync]]
-local  = "$XDG_CONFIG_HOME/nvim"
-remote = "$XDG_CONFIG_HOME_MIRROR/nvim"
-force  = true
-ignore = ["lazy-lock.json"]
+##### XDG Shorthand Syntax
 
-[[sync]]
-local  = "$HOME/.zshenv"
-remote = "$HOME_MIRROR/.zshenv"
-```
-
-**How it works:**
-- `local` is your local machine path (e.g., `~/.config/nvim`)
-- `remote` is your dotfiles repository path (e.g., `~/dotfiles/config/nvim`)
-- For **push** operations: `local` → `remote` (local is src, remote is dest)
-- For **pull** operations: `remote` → `local` (remote is src, local is dest)
-- All standard options (`force`, `ignore`, `only`) are supported
-
-This is especially useful when most of your mappings are symmetric mirrors of each other.
-
-#### XDG Shorthand Mappings
-
-For common XDG directory mappings, you can use shorthand syntax that automatically expands to the full environment variable paths:
+The most concise way to define mappings for standard XDG directories:
 
 ```toml
-# Instead of:
-#   local = "$XDG_CONFIG_HOME/nvim"
-#   remote = "$XDG_CONFIG_HOME_MIRROR/nvim"
-# Use:
+# Sync home directory files
+[[sync.home]]
+path = ".zshenv"
+
+# Sync multiple configs from XDG_CONFIG_HOME
+[[sync.xdg_config]]
+only = ["alacritty", "git", "zsh", "starship.toml"]
+force = true
+
+# Sync specific config with custom options
 [[sync.xdg_config]]
 path = "nvim"
 force = true
 ignore = ["lazy-lock.json"]
 
+# Sync XDG data directories
 [[sync.xdg_data]]
 path = "git"
 force = true
-
-[[sync.home]]
-path = ".zshenv"
 ```
 
 **Supported shorthands:**
@@ -318,17 +275,109 @@ path = ".zshenv"
 | `sync.home` | `$HOME` | `$HOME_MIRROR` |
 
 **Options:**
-- `path` (optional): Relative path within the XDG directory. If omitted, syncs the entire directory.
+- `path` (optional): Relative path within the directory. If omitted, syncs the entire directory.
 - `force`, `ignore`, `only`: All standard mapping options are supported.
 
-**Example: Sync entire XDG config directory**
+##### Explicit Sync Syntax
+
+For custom paths that don't follow XDG conventions, use explicit `[[sync]]` mappings:
+
 ```toml
+[[sync]]
+local  = "$XDG_CONFIG_HOME/nvim"
+remote = "$XDG_CONFIG_HOME_MIRROR/nvim"
+force  = true
+ignore = ["lazy-lock.json"]
+
+[[sync]]
+local  = "$HOME/.zshenv"
+remote = "$HOME_MIRROR/.zshenv"
+
+# Sync config file to a different location in repo
+[[sync]]
+local  = "$XDG_CONFIG_HOME/dotsync.toml"
+remote = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.macbook.toml"
+```
+
+**How it works:**
+- `local` is your local machine path (e.g., `~/.config/nvim`)
+- `remote` is your dotfiles repository path (e.g., `~/dotfiles/config/nvim`)
+- For **push** operations: `local` → `remote`
+- For **pull** operations: `remote` → `local`
+- All standard options (`force`, `ignore`, `only`) are supported
+
+##### Complete Example
+
+Here's a real-world configuration using bidirectional sync:
+
+```toml
+## BIDIRECTIONAL SYNC CONFIGURATION
+
+# Home directory files
+[[sync.home]]
+path = ".zshenv"
+
+# Bulk sync multiple configs
 [[sync.xdg_config]]
-only = ["nvim", "alacritty", "zsh"]
+only = [
+  "alacritty",
+  "brewfile",
+  "git",
+  "lazygit",
+  "tmux",
+  "zellij",
+  "starship.toml"
+]
+force = true
+
+# Zsh with ignored files
+[[sync.xdg_config]]
+path = "zsh"
+ignore = [".zsh_sessions", ".zsh_history", ".zcompdump"]
+
+# Neovim with force sync
+[[sync.xdg_config]]
+path = "nvim"
+force = true
+ignore = ["lazy-lock.json"]
+
+# Git templates in data directory
+[[sync.xdg_data]]
+path = "git"
+force = true
+
+# This config file itself
+[[sync]]
+local  = "$XDG_CONFIG_HOME/dotsync.toml"
+remote = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.macbook.toml"
+```
+
+#### Alternative: Unidirectional Mappings
+
+For asymmetric sync scenarios where push and pull need different configurations, you can use separate `[[push.mappings]]` and `[[pull.mappings]]` sections:
+
+```toml
+# Pull from repo to local (repo → local)
+[[pull.mappings]]
+src  = "$XDG_CONFIG_HOME_MIRROR/nvim"
+dest = "$XDG_CONFIG_HOME/nvim"
+force = true
+ignore = ["lazy-lock.json"]
+
+# Push from local to repo (local → repo)
+[[push.mappings]]
+src  = "$XDG_CONFIG_HOME/alacritty"
+dest = "$XDG_CONFIG_HOME_MIRROR/alacritty"
+only = ["alacritty.toml", "themes"]
+
+# Watch for live syncing
+[[watch.mappings]]
+src = "$XDG_CONFIG_HOME/nvim"
+dest = "$XDG_CONFIG_HOME_MIRROR/nvim"
 ```
 
 > [!NOTE]
-> You can mix and match `[[sync]]`, XDG shorthands, and traditional `[[push.mappings]]`/`[[pull.mappings]]` in the same configuration file. Use whatever style is most appropriate for each mapping.
+> You can mix `[[sync]]`, XDG shorthands, and `[[push.mappings]]`/`[[pull.mappings]]` in the same config file. Use bidirectional sync for symmetric mappings and unidirectional for special cases.
 
 #### `force`, `only`, and `ignore` Options in Mappings
 
@@ -340,9 +389,8 @@ A boolean (true/false) value. When set to `true`, it forces deletion of files in
 
 **Example:**
 ```toml
-[[pull.mappings]]
-src = "$XDG_CONFIG_HOME_MIRROR/nvim"
-dest = "$XDG_CONFIG_HOME/nvim"
+[[sync.xdg_config]]
+path = "nvim"
 force = true
 ignore = ["lazy-lock.json"]
 ```
@@ -363,41 +411,34 @@ An array of relative paths (files or directories) to selectively transfer from t
 
 **Example 1: Selecting specific directories**
 ```toml
-[[push.mappings]]
-src = "$XDG_CONFIG_HOME"
-dest = "$DOTFILES_DIR/config"
+[[sync.xdg_config]]
 only = ["nvim", "alacritty", "zsh"]
 ```
 This transfers only the `nvim/`, `alacritty/`, and `zsh/` directories.
 
 **Example 2: Selecting specific files**
 ```toml
-[[push.mappings]]
-src = "$XDG_CONFIG_HOME/alacritty"
-dest = "$DOTFILES_DIR/config/alacritty"
+[[sync.xdg_config]]
+path = "alacritty"
 only = ["alacritty.toml", "rose-pine.toml"]
 ```
 This transfers only two specific TOML files from the alacritty config directory.
 
 **Example 3: Selecting files inside nested directories**
 ```toml
-[[push.mappings]]
-src = "$HOME/.config"
-dest = "$DOTFILES_DIR/config"
+[[sync.xdg_config]]
 only = ["bundle/config", "ghc/ghci.conf", "cabal/config"]
 ```
 This transfers only specific configuration files from different subdirectories:
 - `bundle/config` file from the `bundle/` directory
-- `ghc/ghci.conf` file from the `ghc/` directory  
+- `ghc/ghci.conf` file from the `ghc/` directory
 - `cabal/config` file from the `cabal/` directory
 
 The parent directories (`bundle/`, `ghc/`, `cabal/`) are created automatically in the destination, but other files in those directories are not transferred.
 
 **Example 4: Deeply nested paths**
 ```toml
-[[push.mappings]]
-src = "$XDG_CONFIG_HOME"
-dest = "$DOTFILES_DIR/config"
+[[sync.xdg_config]]
 only = ["nvim/lua/plugins/init.lua", "nvim/lua/config/settings.lua"]
 ```
 This transfers only specific Lua files from deeply nested paths within the nvim configuration.
@@ -413,17 +454,15 @@ An array of relative paths or patterns to exclude during transfer. This allows y
 
 **Example:**
 ```toml
-[[pull.mappings]]
-src = "$XDG_CONFIG_HOME_MIRROR/nvim"
-dest = "$XDG_CONFIG_HOME/nvim"
+[[sync.xdg_config]]
+path = "nvim"
 ignore = ["lazy-lock.json", "plugin/packer_compiled.lua"]
 ```
 
 **Combining options:**
 ```toml
-[[push.mappings]]
-src = "$XDG_CONFIG_HOME/nvim"
-dest = "$DOTFILES_DIR/config/nvim"
+[[sync.xdg_config]]
+path = "nvim"
 only = ["lua", "init.lua"]
 ignore = ["lua/plugin/packer_compiled.lua"]
 force = true
@@ -566,10 +605,8 @@ diff_created = "✨"    # New files created
 diff_updated = "📝"    # Files modified
 diff_removed = "🗑️ "    # Files deleted
 
-# Example mappings section
-[[pull.mappings]]
-src = "$XDG_CONFIG_HOME_MIRROR"
-dest = "$XDG_CONFIG_HOME"
+# Example sync mapping
+[[sync.xdg_config]]
 ignore = ["cache"]
 ```
 
@@ -674,14 +711,13 @@ The check runs after your command completes and uses a cached timestamp to avoid
 
 ## Common Use Cases
 
-Here are some practical examples of how to use Dotsync for popular configuration files:
+Here are practical examples using bidirectional sync for popular configuration files:
 
 ### Syncing Neovim Configuration
 
 ```toml
-[[pull.mappings]]
-src = "$HOME/dotfiles/config/nvim"
-dest = "$HOME/.config/nvim"
+[[sync.xdg_config]]
+path = "nvim"
 force = true
 ignore = ["lazy-lock.json", ".luarc.json"]
 ```
@@ -689,31 +725,49 @@ ignore = ["lazy-lock.json", ".luarc.json"]
 ### Syncing Terminal Emulator (Alacritty)
 
 ```toml
-[[push.mappings]]
-src = "$HOME/.config/alacritty"
-dest = "$HOME/dotfiles/config/alacritty"
+[[sync.xdg_config]]
+path = "alacritty"
 only = ["alacritty.toml", "themes"]
 ```
 
 ### Syncing Shell Configuration
 
 ```toml
-[[pull.mappings]]
-src = "$HOME/dotfiles/shell/.zshrc"
-dest = "$HOME"
+[[sync.home]]
+path = ".zshenv"
 
-[[pull.mappings]]
-src = "$HOME/dotfiles/shell/.zshenv"
-dest = "$HOME"
+[[sync.xdg_config]]
+path = "zsh"
+ignore = [".zsh_sessions", ".zsh_history", ".zcompdump"]
 ```
 
 ### Syncing Multiple Config Directories
 
 ```toml
-[[pull.mappings]]
-src = "$HOME/dotfiles/config"
-dest = "$HOME/.config"
-ignore = ["nvim", "cache", "*.log"]
+[[sync.xdg_config]]
+only = ["nvim", "alacritty", "git", "zsh", "tmux", "starship.toml"]
+force = true
+```
+
+### Per-Machine Configuration Files
+
+Use different config files for different machines:
+
+```toml
+# In dotsync.macbook.toml
+[[sync]]
+local  = "$XDG_CONFIG_HOME/dotsync.toml"
+remote = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.macbook.toml"
+
+# In dotsync.work.toml
+[[sync]]
+local  = "$XDG_CONFIG_HOME/dotsync.toml"
+remote = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.work.toml"
+```
+
+Then use `-c` flag to select the appropriate config:
+```shell
+dotsync -c ~/.config/dotsync/dotsync.macbook.toml push --apply
 ```
 
 ## Troubleshooting
