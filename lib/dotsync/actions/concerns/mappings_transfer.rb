@@ -62,7 +62,7 @@ module Dotsync
       logger.log("")
     end
 
-    def show_differences
+    def show_differences(diff_content: false)
       info("Differences:", icon: :diff)
       differs.flat_map(&:additions).sort.each do |path|
         logger.log("#{Icons.diff_created}#{path}", color: Colors.diff_additions)
@@ -75,6 +75,15 @@ module Dotsync
       end
       logger.log("  No differences") unless has_differences?
       logger.log("")
+
+      show_content_diffs if diff_content && has_modifications?
+    end
+
+    def show_content_diffs
+      info("Content Differences:", icon: :diff)
+      modification_pairs.each do |pair|
+        Dotsync::ContentDiff.new(pair[:src], pair[:dest], logger).display
+      end
     end
 
     def transfer_mappings
@@ -106,6 +115,14 @@ module Dotsync
 
       def has_differences?
         differs.any? { |differ| differ.any? }
+      end
+
+      def has_modifications?
+        differs.any? { |differ| differ.modifications.any? }
+      end
+
+      def modification_pairs
+        differs.flat_map(&:modification_pairs)
       end
 
       def confirm_action

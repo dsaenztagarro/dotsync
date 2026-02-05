@@ -31,6 +31,7 @@ module Dotsync
       def diff_mapping_directories
         additions = []
         modifications = []
+        modification_pairs = []
         removals = []
 
         Find.find(mapping_src) do |src_path|
@@ -48,6 +49,7 @@ module Dotsync
           elsif File.file?(src_path) && File.file?(dest_path)
             if files_differ?(src_path, dest_path)
               modifications << rel_path
+              modification_pairs << { rel_path: rel_path, src: src_path, dest: dest_path }
             end
           end
         end
@@ -67,21 +69,29 @@ module Dotsync
           end
         end
 
+        filtered_modifications = filter_ignores(modifications)
+        modification_pairs = modification_pairs.select { |pair| filtered_modifications.include?(pair[:rel_path]) }
+
         additions = relative_to_absolute(filter_ignores(additions), mapping_original_dest)
-        modifications = relative_to_absolute(filter_ignores(modifications), mapping_original_dest)
+        modifications = relative_to_absolute(filtered_modifications, mapping_original_dest)
         removals = relative_to_absolute(filter_ignores(removals), mapping_original_dest)
 
-        Dotsync::Diff.new(additions: additions, modifications: modifications, removals: removals)
+        Dotsync::Diff.new(additions: additions, modifications: modifications, removals: removals, modification_pairs: modification_pairs)
       end
 
       def diff_mapping_files
-        Dotsync::Diff.new.tap do |diff|
-          if @mapping.file_present_in_src_only?
-            diff.additions << @mapping.original_dest
-          elsif @mapping.file_changed?
-            diff.modifications << @mapping.original_dest
-          end
+        additions = []
+        modifications = []
+        modification_pairs = []
+
+        if @mapping.file_present_in_src_only?
+          additions << @mapping.original_dest
+        elsif @mapping.file_changed?
+          modifications << @mapping.original_dest
+          modification_pairs << { rel_path: File.basename(@mapping.original_dest), src: @mapping.src, dest: @mapping.dest }
         end
+
+        Dotsync::Diff.new(additions: additions, modifications: modifications, modification_pairs: modification_pairs)
       end
 
       def filter_ignores(all_paths)

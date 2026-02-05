@@ -51,6 +51,7 @@ opt_parser = OptionParser.new do |opts|
       --only-config         Show only the config section
       --only-mappings       Show only the mappings section
       -v, --verbose         Force showing all available information
+      --diff-content        Show git-like content diff for modified files
       --trace               Show full error backtraces (for debugging)
       --version             Show version number
       -h, --help            Show this help message
@@ -110,6 +111,10 @@ opt_parser = OptionParser.new do |opts|
 
   opts.on("-v", "--verbose", "Force showing all available information") do
     options[:verbose] = true
+  end
+
+  opts.on("--diff-content", "Show git-like content diff for modified files") do
+    options[:diff_content] = true
   end
 
   opts.on("--trace", "Show full error backtraces (for debugging)") do
