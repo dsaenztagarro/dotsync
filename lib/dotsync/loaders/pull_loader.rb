@@ -11,6 +11,7 @@ require "terminal-table"
 require_relative "../utils/file_transfer"
 require_relative "../utils/directory_differ"
 require_relative "../utils/config_cache"
+require_relative "../utils/content_diff"
 
 # Models
 require_relative "../models/mapping"

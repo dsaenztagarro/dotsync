@@ -13,7 +13,7 @@ module Dotsync
       show_mappings_legend if output_sections[:mappings_legend]
       show_mappings if output_sections[:mappings]
       show_differences_legend if has_differences? && output_sections[:differences_legend]
-      show_differences if output_sections[:differences]
+      show_differences(diff_content: output_sections[:diff_content]) if output_sections[:differences]
 
       return unless options[:apply]
 
