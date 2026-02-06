@@ -1,3 +1,23 @@
+## [0.2.0] - 2025-02-06
+
+**New Features:**
+- Add `--diff-content` CLI option to display git-like unified diff output for modified files
+  - Shows actual content changes without needing external tools like `nvim -d`
+  - Color-coded output: blue for additions, red for deletions, cyan for hunk headers
+  - Automatically skips binary files
+  - Works with both `push` and `pull` commands
+
+**Performance Optimizations:**
+- Add parallel processing for mapping operations
+  - New `Dotsync::Parallel` utility module with thread-pool based execution
+  - Diff computation runs in parallel across multiple mappings
+  - File transfers execute concurrently for independent mappings
+  - Thread-safe error collection and reporting
+- Add directory pruning optimization
+  - New `should_prune_directory?` method for early-exit during traversal
+  - Skips entire directory subtrees that are ignored or outside inclusion lists
+  - Reduces filesystem operations for large excluded directories
+
 ## [0.1.26] - 2025-01-11
 
 **Breaking Changes:**
