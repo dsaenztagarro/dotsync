@@ -140,6 +140,16 @@ module Dotsync
       ignore?(path) || !include?(path)
     end
 
+    # Returns true if a directory can be entirely skipped during destination walks.
+    # A directory should be pruned if:
+    # 1. It's ignored, OR
+    # 2. It has inclusions AND the path is neither included nor a parent of any inclusion
+    def should_prune_directory?(path)
+      return true if ignore?(path)
+      return false unless has_inclusions?
+      !bidirectional_include?(path)
+    end
+
     private
       def has_ignores?
         @original_ignores.any?

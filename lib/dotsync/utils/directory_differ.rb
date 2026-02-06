@@ -61,6 +61,12 @@ module Dotsync
 
             src_path = File.join(mapping_src, rel_path)
 
+            # Prune entire directory trees that are outside the inclusion list or ignored
+            if File.directory?(dest_path) && @mapping.should_prune_directory?(src_path)
+              Find.prune
+              next
+            end
+
             next if @mapping.skip?(src_path)
 
             if !File.exist?(src_path)

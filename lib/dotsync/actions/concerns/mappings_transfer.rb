@@ -87,28 +87,33 @@ module Dotsync
     end
 
     def transfer_mappings
-      valid_mappings.each do |mapping|
+      errors = []
+      mutex = Mutex.new
+
+      Dotsync::Parallel.each(valid_mappings) do |mapping|
         Dotsync::FileTransfer.new(mapping).transfer
       rescue Dotsync::PermissionError => e
-        logger.error("Permission denied: #{e.message}")
-        logger.info("Try: chmod +w <path> or check file permissions")
+        mutex.synchronize { errors << ["Permission denied: #{e.message}", "Try: chmod +w <path> or check file permissions"] }
       rescue Dotsync::DiskFullError => e
-        logger.error("Disk full: #{e.message}")
-        logger.info("Free up disk space and try again")
+        mutex.synchronize { errors << ["Disk full: #{e.message}", "Free up disk space and try again"] }
       rescue Dotsync::SymlinkError => e
-        logger.error("Symlink error: #{e.message}")
-        logger.info("Check that symlink target exists and is accessible")
+        mutex.synchronize { errors << ["Symlink error: #{e.message}", "Check that symlink target exists and is accessible"] }
       rescue Dotsync::TypeConflictError => e
-        logger.error("Type conflict: #{e.message}")
-        logger.info("Cannot overwrite directory with file or vice versa")
+        mutex.synchronize { errors << ["Type conflict: #{e.message}", "Cannot overwrite directory with file or vice versa"] }
       rescue Dotsync::FileTransferError => e
-        logger.error("File transfer failed: #{e.message}")
+        mutex.synchronize { errors << ["File transfer failed: #{e.message}", nil] }
+      end
+
+      # Report all errors after parallel execution
+      errors.each do |error_msg, info_msg|
+        logger.error(error_msg)
+        logger.info(info_msg) if info_msg
       end
     end
 
     private
       def differs
-        @differs ||= valid_mappings.map do |mapping|
+        @differs ||= Dotsync::Parallel.map(valid_mappings) do |mapping|
           Dotsync::DirectoryDiffer.new(mapping).diff
         end
       end
