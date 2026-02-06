@@ -1,6 +1,23 @@
 # frozen_string_literal: true
 
 module Dotsync
+  # MappingsTransfer provides shared functionality for push/pull actions.
+  #
+  # == Performance Optimizations
+  #
+  # This module uses parallel execution for two key operations:
+  #
+  # 1. **Parallel diff computation** (see #differs)
+  #    Each mapping's diff is computed in a separate thread. Since mappings are
+  #    independent (different src/dest paths), this overlaps I/O and CPU work.
+  #
+  # 2. **Parallel file transfers** (see #transfer_mappings)
+  #    File transfers for each mapping run concurrently. This is especially
+  #    beneficial for many small files where I/O latency dominates.
+  #
+  # Error handling is thread-safe: errors are collected in a mutex-protected
+  # array and reported after all parallel operations complete.
+  #
   module MappingsTransfer
     include Dotsync::PathUtils
 
@@ -86,10 +103,17 @@ module Dotsync
       end
     end
 
+    # Transfers all valid mappings from source to destination.
+    #
+    # OPTIMIZATION: Parallel execution
+    # Mappings are transferred concurrently using Dotsync::Parallel.
+    # Each mapping operates on independent paths, so parallel execution is safe.
+    # Errors are collected thread-safely and reported after all transfers complete.
     def transfer_mappings
       errors = []
       mutex = Mutex.new
 
+      # Process mappings in parallel - each mapping is independent
       Dotsync::Parallel.each(valid_mappings) do |mapping|
         Dotsync::FileTransfer.new(mapping).transfer
       rescue Dotsync::PermissionError => e
@@ -112,6 +136,12 @@ module Dotsync
     end
 
     private
+      # Computes diffs for all valid mappings.
+      #
+      # OPTIMIZATION: Parallel diff computation
+      # Each mapping's diff is computed in parallel using Dotsync::Parallel.map.
+      # Results are memoized and returned in the same order as valid_mappings.
+      # This overlaps I/O operations across mappings, reducing total wall time.
       def differs
         @differs ||= Dotsync::Parallel.map(valid_mappings) do |mapping|
           Dotsync::DirectoryDiffer.new(mapping).diff

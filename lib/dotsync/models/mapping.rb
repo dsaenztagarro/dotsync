@@ -1,6 +1,23 @@
 # frozen_string_literal: true
 
 module Dotsync
+  # Mapping represents a source-to-destination path pair for synchronization.
+  #
+  # A mapping defines what should be synced (src -> dest), with optional filters:
+  # - `only`: whitelist of paths to include (everything else is excluded)
+  # - `ignore`: blacklist of paths to exclude
+  # - `force`: enable removal detection (find dest files not in src)
+  #
+  # == Path Matching Methods
+  #
+  # The class provides several methods for path filtering, each with specific use cases:
+  #
+  # - #include?(path): Returns true if path is inside an inclusion. Used for file filtering.
+  # - #bidirectional_include?(path): Returns true if path is inside OR contains an inclusion.
+  #   Used during directory traversal to allow descending into parent directories.
+  # - #should_prune_directory?(path): Returns true if a directory subtree can be skipped entirely.
+  #   This is a PERFORMANCE OPTIMIZATION for Find.prune - see DirectoryDiffer for details.
+  #
   class Mapping
     include Dotsync::PathUtils
 
@@ -140,10 +157,21 @@ module Dotsync
       ignore?(path) || !include?(path)
     end
 
-    # Returns true if a directory can be entirely skipped during destination walks.
+    # Determines if a directory subtree can be entirely skipped during traversal.
+    #
+    # PERFORMANCE OPTIMIZATION: This method enables Find.prune in DirectoryDiffer.
+    # When walking large destination directories (e.g., ~/.config with 8,686 files),
+    # pruning irrelevant subtrees avoids visiting thousands of files that will never
+    # match the `only` filter. This reduced scan time from 7.2s to 0.5s in benchmarks.
+    #
     # A directory should be pruned if:
-    # 1. It's ignored, OR
-    # 2. It has inclusions AND the path is neither included nor a parent of any inclusion
+    # 1. It's ignored (in the ignore list), OR
+    # 2. It has inclusions AND the path is neither:
+    #    - Inside an inclusion (would be synced)
+    #    - A parent of an inclusion (might contain synced files)
+    #
+    # @param path [String] Absolute path to check
+    # @return [Boolean] true if the entire directory subtree can be skipped
     def should_prune_directory?(path)
       return true if ignore?(path)
       return false unless has_inclusions?

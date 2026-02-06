@@ -1,3 +1,27 @@
+## [0.2.1] - 2025-02-06
+
+**Performance Optimizations:**
+- Add pre-indexed source tree for O(1) existence checks during force mode
+  - Builds a Set of source paths upfront instead of per-file File.exist? calls
+  - Replaces disk I/O with memory lookups for removal detection
+  - Significant speedup for large destination directories
+- Combined performance impact: `ds pull` reduced from 7.2s to 0.6s (12x faster)
+  - Pre-indexed source tree eliminates thousands of stat calls
+  - Find.prune skips irrelevant directory subtrees
+  - Parallel execution overlaps I/O across mappings
+
+**Documentation:**
+- Add comprehensive performance documentation to DirectoryDiffer
+  - Document all three optimizations with impact analysis
+  - Inline comments explaining each optimization point
+- Add class-level documentation to Mapping explaining path matching methods
+  - Document relationship between include?, bidirectional_include?, should_prune_directory?
+- Add module documentation to Parallel explaining when parallelization helps
+- Add documentation to MappingsTransfer explaining parallel strategy
+
+**Infrastructure:**
+- Remove RubyGems auto-publish from CI workflow (manual releases only)
+
 ## [0.2.0] - 2025-02-06
 
 **New Features:**

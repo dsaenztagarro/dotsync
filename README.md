@@ -891,8 +891,24 @@ dotsync -c ~/my-config.toml setup
 - To install this gem onto your local machine, run `bundle exec rake install`.
 
 ### Releasing a new version
-- Update the version number in `version.rb`.
-- Run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+
+1. Update the version number in `lib/dotsync/version.rb`
+2. Add entry to `CHANGELOG.md` documenting changes
+3. Commit all changes: `git add . && git commit -m "Release vX.Y.Z"`
+4. Create annotated tag with changelog extract:
+   ```shell
+   git tag -a vX.Y.Z -m "Release vX.Y.Z
+
+   <paste relevant CHANGELOG section here>"
+   ```
+5. Push commits and tags: `git push && git push --tags`
+6. Build and publish gem manually:
+   ```shell
+   gem build dotsync.gemspec
+   gem push dotsync-X.Y.Z.gem
+   ```
+
+The `release.yml` GitHub Action automatically creates a GitHub Release when a version tag is pushed, extracting release notes from CHANGELOG.md.
 
 ## Contributing
 

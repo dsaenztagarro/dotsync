@@ -1,8 +1,30 @@
 # frozen_string_literal: true
 
 module Dotsync
-  # Simple thread-based parallel execution for independent operations.
-  # Uses a configurable thread pool to process items concurrently.
+  # Thread-based parallel execution for independent operations.
+  #
+  # == Why Parallelization?
+  #
+  # Dotsync processes multiple independent mappings (e.g., nvim, alacritty, zsh configs).
+  # Each mapping's diff computation and file transfer is independent of others.
+  # By processing mappings in parallel, we utilize multiple CPU cores and overlap I/O waits.
+  #
+  # == Implementation Details
+  #
+  # Uses Ruby's native Thread class with a work-stealing queue pattern:
+  # - Pre-sized results array for thread-safe index assignment (no mutex needed for writes)
+  # - Queue-based work distribution for automatic load balancing
+  # - Errors collected and re-raised after all threads complete
+  #
+  # == When It Helps
+  #
+  # Parallelization provides the most benefit when:
+  # - Processing many mappings (5+ independent directories)
+  # - Mappings have similar sizes (good load distribution)
+  # - I/O-bound operations (file reads/writes overlap)
+  #
+  # For small mapping counts or CPU-bound work, the thread overhead may negate benefits.
+  #
   module Parallel
     # Default number of threads (matches typical CPU core count)
     DEFAULT_THREADS = 4
