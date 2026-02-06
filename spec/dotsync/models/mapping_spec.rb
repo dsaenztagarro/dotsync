@@ -303,6 +303,125 @@ RSpec.describe Dotsync::Mapping do
     end
   end
 
+  describe "glob pattern support in only option" do
+    before do
+      FileUtils.mkdir_p(src)
+      FileUtils.mkdir_p(dest)
+    end
+
+    describe "#include?" do
+      context "with * wildcard" do
+        let(:only) { ["local.*.plist"] }
+
+        it "matches files against the glob pattern" do
+          path = File.join(mapping_entry.src, "local.brew.upgrade.plist")
+          expect(mapping_entry.include?(path)).to be true
+        end
+
+        it "rejects files that do not match" do
+          path = File.join(mapping_entry.src, "com.apple.something.plist")
+          expect(mapping_entry.include?(path)).to be false
+        end
+
+        it "returns true for the src directory itself" do
+          expect(mapping_entry.include?(mapping_entry.src)).to be true
+        end
+      end
+
+      context "with ? single-character wildcard" do
+        let(:only) { ["config.?" ] }
+
+        it "matches single character" do
+          path = File.join(mapping_entry.src, "config.a")
+          expect(mapping_entry.include?(path)).to be true
+        end
+
+        it "rejects multiple characters" do
+          path = File.join(mapping_entry.src, "config.ab")
+          expect(mapping_entry.include?(path)).to be false
+        end
+      end
+
+      context "with [charset] bracket pattern" do
+        let(:only) { ["log.[0-9]"] }
+
+        it "matches characters in the set" do
+          path = File.join(mapping_entry.src, "log.1")
+          expect(mapping_entry.include?(path)).to be true
+        end
+
+        it "rejects characters outside the set" do
+          path = File.join(mapping_entry.src, "log.a")
+          expect(mapping_entry.include?(path)).to be false
+        end
+      end
+
+      context "with mixed glob and exact paths" do
+        let(:only) { ["local.*.plist", "README.md"] }
+
+        it "matches files via glob" do
+          path = File.join(mapping_entry.src, "local.ollama.plist")
+          expect(mapping_entry.include?(path)).to be true
+        end
+
+        it "matches files via exact path" do
+          path = File.join(mapping_entry.src, "README.md")
+          expect(mapping_entry.include?(path)).to be true
+        end
+
+        it "rejects files matching neither" do
+          path = File.join(mapping_entry.src, "com.apple.plist")
+          expect(mapping_entry.include?(path)).to be false
+        end
+      end
+    end
+
+    describe "#bidirectional_include?" do
+      let(:only) { ["local.*.plist"] }
+
+      it "matches files against the glob pattern" do
+        path = File.join(mapping_entry.src, "local.brew.upgrade.plist")
+        expect(mapping_entry.bidirectional_include?(path)).to be true
+      end
+
+      it "returns true for the parent directory (allows traversal)" do
+        expect(mapping_entry.bidirectional_include?(mapping_entry.src)).to be true
+      end
+
+      it "rejects non-matching files" do
+        path = File.join(mapping_entry.src, "com.apple.plist")
+        expect(mapping_entry.bidirectional_include?(path)).to be false
+      end
+    end
+
+    describe "#skip?" do
+      let(:only) { ["local.*.plist"] }
+
+      it "does not skip matching files" do
+        path = File.join(mapping_entry.src, "local.brew.upgrade.plist")
+        expect(mapping_entry.skip?(path)).to be false
+      end
+
+      it "skips non-matching files" do
+        path = File.join(mapping_entry.src, "com.apple.plist")
+        expect(mapping_entry.skip?(path)).to be true
+      end
+    end
+
+    describe "#should_prune_directory?" do
+      let(:only) { ["local.*.plist"] }
+
+      it "does not prune the src directory (parent of glob targets)" do
+        expect(mapping_entry.should_prune_directory?(mapping_entry.src)).to be false
+      end
+
+      it "prunes unrelated subdirectories" do
+        subdir = File.join(mapping_entry.src, "subdir")
+        expect(mapping_entry.should_prune_directory?(subdir)).to be true
+      end
+    end
+  end
+
   # LOW PRIORITY: Additional edge case tests
   describe "path traversal security" do
     context "when paths contain .. components" do

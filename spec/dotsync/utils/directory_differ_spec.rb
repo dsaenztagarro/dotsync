@@ -164,6 +164,42 @@ RSpec.describe Dotsync::DirectoryDiffer do
             end
           end
 
+          context "including glob patterns" do
+            let(:only) { ["local.*.plist"] }
+
+            before do
+              FileUtils.rm_rf(src)
+              FileUtils.rm_rf(dest)
+              FileUtils.mkdir_p(src)
+              FileUtils.mkdir_p(dest)
+
+              # Files matching the glob
+              File.write(File.join(src, "local.brew.plist"), "new brew")
+              File.write(File.join(src, "local.notes.plist"), "new notes")
+
+              # Files NOT matching
+              File.write(File.join(src, "com.apple.finder.plist"), "finder")
+              File.write(File.join(src, "README.md"), "readme")
+
+              # Existing dest file for modification detection
+              File.write(File.join(dest, "local.brew.plist"), "old brew")
+            end
+
+            it "detects additions only for glob-matching files" do
+              diff = differ.diff
+
+              expect(diff.additions).to include(File.join(dest, "local.notes.plist"))
+              expect(diff.additions).to_not include(File.join(dest, "com.apple.finder.plist"))
+              expect(diff.additions).to_not include(File.join(dest, "README.md"))
+            end
+
+            it "detects modifications only for glob-matching files" do
+              diff = differ.diff
+
+              expect(diff.modifications).to include(File.join(dest, "local.brew.plist"))
+            end
+          end
+
           context "including deeply nested file paths" do
             let(:only) { ["deep/nested/path/config.yml"] }
 
