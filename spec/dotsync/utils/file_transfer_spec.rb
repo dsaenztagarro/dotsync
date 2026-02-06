@@ -296,6 +296,57 @@ RSpec.describe Dotsync::FileTransfer do
           end
         end
 
+        context "with glob patterns in only option" do
+          let(:only) { ["local.*.plist"] }
+
+          before do
+            FileUtils.rm_rf(src)
+            FileUtils.mkdir_p(src)
+
+            # Create files matching the glob
+            File.write(File.join(src, "local.brew.upgrade.plist"), "brew content")
+            File.write(File.join(src, "local.ollama.plist"), "ollama content")
+
+            # Create files that should NOT match
+            File.write(File.join(src, "com.apple.something.plist"), "apple content")
+            File.write(File.join(src, "README.md"), "readme content")
+          end
+
+          it "includes only files matching the glob pattern" do
+            subject.transfer
+
+            expect(File.exist?(File.join(dest, "local.brew.upgrade.plist"))).to be true
+            expect(File.read(File.join(dest, "local.brew.upgrade.plist"))).to eq("brew content")
+
+            expect(File.exist?(File.join(dest, "local.ollama.plist"))).to be true
+            expect(File.read(File.join(dest, "local.ollama.plist"))).to eq("ollama content")
+
+            expect(File.exist?(File.join(dest, "com.apple.something.plist"))).to be false
+            expect(File.exist?(File.join(dest, "README.md"))).to be false
+          end
+
+          context "with force option enabled" do
+            let(:force) { true }
+
+            before do
+              # Pre-existing files in dest
+              File.write(File.join(dest, "local.brew.upgrade.plist"), "old brew")
+              File.write(File.join(dest, "local.obsolete.plist"), "obsolete")
+              File.write(File.join(dest, "com.apple.finder.plist"), "finder")
+            end
+
+            it "preserves non-matching files in destination" do
+              subject.transfer
+
+              # Matching files are updated
+              expect(File.read(File.join(dest, "local.brew.upgrade.plist"))).to eq("brew content")
+
+              # Non-matching files are preserved (not managed by glob)
+              expect(File.exist?(File.join(dest, "com.apple.finder.plist"))).to be true
+            end
+          end
+        end
+
         context "with nested file paths in only option" do
           let(:only) { ["deep/nested/path/config.yml"] }
 

@@ -401,11 +401,11 @@ ignore = ["lazy-lock.json"]
 
 ##### `only` Option
 
-An array of relative paths (files or directories) to selectively transfer from the source. This option provides precise control over which files get synchronized.
+An array of relative paths (files or directories) or glob patterns to selectively transfer from the source. This option provides precise control over which files get synchronized.
 
 **How it works:**
 - Paths are relative to the `src` directory
-- You can specify entire directories or individual files
+- You can specify entire directories, individual files, or glob patterns (`*`, `?`, `[charset]`)
 - Parent directories are automatically created as needed
 - Other files in the source are ignored
 - With `force = true`, only files matching the `only` filter are cleaned up in the destination
@@ -437,7 +437,27 @@ This transfers only specific configuration files from different subdirectories:
 
 The parent directories (`bundle/`, `ghc/`, `cabal/`) are created automatically in the destination, but other files in those directories are not transferred.
 
-**Example 4: Deeply nested paths**
+**Example 4: Glob patterns**
+```toml
+[[sync.home]]
+path = "Library/LaunchAgents"
+only = ["local.*.plist"]
+```
+This transfers only files matching the glob pattern — e.g., `local.brew.upgrade.plist`, `local.ollama.plist` — while ignoring system-generated plists like `com.apple.*.plist`.
+
+Supported glob characters:
+- `*` — matches any sequence of characters (e.g., `local.*.plist`)
+- `?` — matches any single character (e.g., `config.?`)
+- `[charset]` — matches any character in the set (e.g., `log.[0-9]`)
+
+Glob patterns can be mixed with exact paths in the same `only` array:
+```toml
+[[sync.home]]
+path = "Library/LaunchAgents"
+only = ["local.*.plist", "README.md"]
+```
+
+**Example 5: Deeply nested paths**
 ```toml
 [[sync.xdg_config]]
 only = ["nvim/lua/plugins/init.lua", "nvim/lua/config/settings.lua"]
@@ -447,7 +467,8 @@ This transfers only specific Lua files from deeply nested paths within the nvim 
 **Important behaviors:**
 - **File-specific paths**: When specifying individual files (e.g., `"bundle/config"`), only that file is managed. Sibling files in the same directory are not affected, even with `force = true`.
 - **Directory paths**: When specifying directories (e.g., `"nvim"`), all contents of that directory are managed, including subdirectories.
-- **Combining with `force`**: With `force = true` and directory paths, files in the destination directory that don't exist in the source are removed. With file-specific paths, only that specific file is managed.
+- **Glob patterns**: When using patterns (e.g., `"local.*.plist"`), only files whose names match the pattern are managed. Non-matching files in the same directory are untouched.
+- **Combining with `force`**: With `force = true` and directory paths, files in the destination directory that don't exist in the source are removed. With file-specific paths or glob patterns, only matching files are managed.
 
 ##### `ignore` Option
 
