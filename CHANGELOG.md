@@ -1,3 +1,23 @@
+## [0.2.2] - 2025-02-07
+
+**New Features:**
+- Add glob pattern support to `only` filter (#15)
+  - `*` matches any sequence of characters (e.g., `local.*.plist`)
+  - `?` matches any single character (e.g., `config.?`)
+  - `[charset]` matches any character in the set (e.g., `log.[0-9]`)
+  - Glob and exact paths can be mixed in the same `only` array
+  - Non-glob entries retain existing exact path matching behavior
+
+**Documentation:**
+- Document glob pattern support in README with examples
+- Add "Glob patterns" to the `only` option important behaviors section
+
+**Testing:**
+- Add unit tests for glob matching in `include?`, `bidirectional_include?`, `skip?`, `should_prune_directory?`
+- Add integration tests for glob patterns in FileTransfer (including force mode)
+- Add integration tests for glob patterns in DirectoryDiffer
+- All 432 tests pass with 96.29% line coverage
+
 ## [0.2.1] - 2025-02-06
 
 **Performance Optimizations:**
