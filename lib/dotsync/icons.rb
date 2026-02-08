@@ -18,6 +18,7 @@ module Dotsync
     DEFAULT_ONLY = " "
     DEFAULT_IGNORE = "󰈉 "
     DEFAULT_INVALID = "󱏏 "
+    DEFAULT_HOOK = "󰜎 "
 
     # Default Mappings Differences icons
     DEFAULT_DIFF_CREATED = " "
@@ -50,6 +51,7 @@ module Dotsync
         only: config.dig("icons", "only") || DEFAULT_ONLY,
         ignore: config.dig("icons", "ignore") || DEFAULT_IGNORE,
         invalid: config.dig("icons", "invalid") || DEFAULT_INVALID,
+        hook: config.dig("icons", "hook") || DEFAULT_HOOK,
         # Differences Legend
         diff_created: config.dig("icons", "diff_created") || DEFAULT_DIFF_CREATED,
         diff_updated: config.dig("icons", "diff_updated") || DEFAULT_DIFF_UPDATED,
@@ -73,6 +75,10 @@ module Dotsync
 
     def self.invalid
       @custom_icons[:invalid] || DEFAULT_INVALID
+    end
+
+    def self.hook
+      @custom_icons[:hook] || DEFAULT_HOOK
     end
 
     # Differences Legend methods
@@ -100,6 +106,7 @@ module Dotsync
       diff: DIFF,
       force: -> { force },
       ignore: -> { ignore },
+      hook: DEFAULT_HOOK,
       pull: PULL,
       push: PUSH,
       watch: WATCH,

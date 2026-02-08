@@ -193,6 +193,67 @@ RSpec.describe Dotsync::PushAction do
         end
       end
 
+      context "with hooks" do
+        let(:mapping_with_hooks) do
+          Dotsync::Mapping.new(
+            "src" => File.join(root, "src2"),
+            "dest" => File.join(root, "dest2"),
+            "force" => false,
+            "ignore" => [],
+            "hooks" => ["echo hook_ran"]
+          )
+        end
+        let(:mappings) { [mapping1, mapping_with_hooks] }
+
+        before do
+          File.write(mapping_with_hooks.src, "#{mapping_with_hooks.src} content")
+          File.write(mapping_with_hooks.dest, "#{mapping_with_hooks.dest} content")
+          allow(Dotsync::FileTransfer).to receive(:new).with(mappings[1]).and_return(file_transfer2)
+        end
+
+        it "executes hooks after transfer when files changed" do
+          expect_any_instance_of(Dotsync::HookRunner).to receive(:execute).and_return([])
+
+          action.execute(apply: true, yes: true)
+        end
+
+        context "when no files changed" do
+          before do
+            File.write(mapping_with_hooks.dest, "#{mapping_with_hooks.src} content")
+          end
+
+          it "does not execute hooks" do
+            expect(Dotsync::HookRunner).not_to receive(:new)
+
+            action.execute(apply: true, yes: true)
+          end
+        end
+      end
+
+      context "hooks in dry-run mode" do
+        let(:mapping_with_hooks) do
+          Dotsync::Mapping.new(
+            "src" => File.join(root, "src2"),
+            "dest" => File.join(root, "dest2"),
+            "force" => false,
+            "ignore" => [],
+            "hooks" => ["echo hook_ran"]
+          )
+        end
+        let(:mappings) { [mapping1, mapping_with_hooks] }
+
+        before do
+          File.write(mapping_with_hooks.src, "#{mapping_with_hooks.src} content")
+          File.write(mapping_with_hooks.dest, "#{mapping_with_hooks.dest} content")
+        end
+
+        it "does not execute hooks without --apply" do
+          expect_any_instance_of(Dotsync::HookRunner).not_to receive(:execute)
+
+          action.execute
+        end
+      end
+
       context "error handling during transfer" do
         context "when PermissionError occurs" do
           before do

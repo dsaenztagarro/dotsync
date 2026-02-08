@@ -13,6 +13,7 @@ require_relative "../utils/directory_differ"
 require_relative "../utils/config_cache"
 require_relative "../utils/content_diff"
 require_relative "../utils/parallel"
+require_relative "../utils/hook_runner"
 
 # Models
 require_relative "../models/mapping"

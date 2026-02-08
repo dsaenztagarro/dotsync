@@ -190,6 +190,64 @@ RSpec.describe Dotsync::Mapping do
     end
   end
 
+  describe "#hooks" do
+    context "without hooks attribute" do
+      it "returns an empty array" do
+        expect(mapping_entry.hooks).to eq([])
+      end
+    end
+
+    context "with a single hook string" do
+      let(:attributes) do
+        {
+          "src" => src,
+          "dest" => dest,
+          "hooks" => "echo hello"
+        }
+      end
+
+      it "wraps it in an array" do
+        expect(mapping_entry.hooks).to eq(["echo hello"])
+      end
+    end
+
+    context "with an array of hooks" do
+      let(:attributes) do
+        {
+          "src" => src,
+          "dest" => dest,
+          "hooks" => ["echo first", "echo second"]
+        }
+      end
+
+      it "returns the array" do
+        expect(mapping_entry.hooks).to eq(["echo first", "echo second"])
+      end
+    end
+  end
+
+  describe "#has_hooks?" do
+    context "without hooks" do
+      it "returns false" do
+        expect(mapping_entry.has_hooks?).to be false
+      end
+    end
+
+    context "with hooks" do
+      let(:attributes) do
+        {
+          "src" => src,
+          "dest" => dest,
+          "hooks" => ["echo hello"]
+        }
+      end
+
+      it "returns true" do
+        expect(mapping_entry.has_hooks?).to be true
+      end
+    end
+  end
+
   describe "#icons" do
     let(:subject) { mapping_entry.icons }
 
@@ -219,6 +277,20 @@ RSpec.describe Dotsync::Mapping do
         expect(subject).to include(Dotsync::Icons.ignore)
         expect(subject).to_not include(Dotsync::Icons.force)
         expect(subject).to_not include(Dotsync::Icons.invalid)
+      end
+    end
+
+    context "when hooks are set" do
+      let(:attributes) do
+        {
+          "src" => src,
+          "dest" => dest,
+          "hooks" => ["echo hello"]
+        }
+      end
+
+      it "returns a formatted string with hook icon" do
+        expect(subject).to include(Dotsync::Icons.hook)
       end
     end
 

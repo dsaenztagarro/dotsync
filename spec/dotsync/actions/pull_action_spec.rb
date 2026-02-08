@@ -190,6 +190,56 @@ RSpec.describe Dotsync::PullAction do
         end
       end
 
+      context "with hooks" do
+        let(:mapping_with_hooks) do
+          Dotsync::Mapping.new(
+            "src" => file2_src,
+            "dest" => file2_dest,
+            "hooks" => ["echo hook_ran"]
+          )
+        end
+        let(:mappings) { [mapping1, mapping_with_hooks] }
+
+        before do
+          allow(Dotsync::FileTransfer).to receive(:new).with(mappings[1]).and_return(file_transfer2)
+        end
+
+        it "executes hooks after transfer when files changed" do
+          expect_any_instance_of(Dotsync::HookRunner).to receive(:execute).and_return([])
+
+          action.execute(apply: true, yes: true)
+        end
+
+        context "when no files changed" do
+          before do
+            File.write(mapping_with_hooks.dest, "#{mapping_with_hooks.src} content")
+          end
+
+          it "does not execute hooks" do
+            expect(Dotsync::HookRunner).not_to receive(:new)
+
+            action.execute(apply: true, yes: true)
+          end
+        end
+      end
+
+      context "hooks in dry-run mode" do
+        let(:mapping_with_hooks) do
+          Dotsync::Mapping.new(
+            "src" => file2_src,
+            "dest" => file2_dest,
+            "hooks" => ["echo hook_ran"]
+          )
+        end
+        let(:mappings) { [mapping1, mapping_with_hooks] }
+
+        it "does not execute hooks without --apply" do
+          expect_any_instance_of(Dotsync::HookRunner).not_to receive(:execute)
+
+          action.execute
+        end
+      end
+
       context "backup" do
         context "without differences" do
           before do

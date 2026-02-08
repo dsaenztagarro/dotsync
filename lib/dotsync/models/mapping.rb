@@ -29,6 +29,7 @@ module Dotsync
       @original_ignores = Array(attributes["ignore"])
       @original_only = Array(attributes["only"])
       @force = attributes["force"] || false
+      @hooks = Array(attributes["hooks"])
 
       @sanitized_src, @sanitized_dest, @sanitized_ignores, @sanitized_only = process_paths(
         @original_src,
@@ -56,6 +57,12 @@ module Dotsync
 
     def force?
       @force
+    end
+
+    attr_reader :hooks
+
+    def has_hooks?
+      @hooks.any?
     end
 
     def directories?
@@ -103,6 +110,7 @@ module Dotsync
       msg << Icons.force if force?
       msg << Icons.only if has_inclusions?
       msg << Icons.ignore if has_ignores?
+      msg << Icons.hook if has_hooks?
       msg << Icons.invalid unless valid?
       msg.join
     end

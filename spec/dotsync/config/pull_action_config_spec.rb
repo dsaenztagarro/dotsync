@@ -96,6 +96,66 @@ RSpec.describe Dotsync::PullActionConfig do
     end
   end
 
+  describe "hooks" do
+    context "with valid post_pull hooks" do
+      before do
+        File.write(config_path, <<~TOML)
+          [pull]
+          [[pull.mappings]]
+          src = "#{src_path}"
+          dest = "#{dest_path}"
+
+          [pull.mappings.hooks]
+          post_pull = "echo pulled"
+        TOML
+      end
+
+      it "extracts post_pull hooks into mapping" do
+        config = described_class.new(config_path)
+        mapping = config.mappings.first
+        expect(mapping.hooks).to eq(["echo pulled"])
+      end
+    end
+
+    context "with invalid hook keys in pull mappings" do
+      before do
+        File.write(config_path, <<~TOML)
+          [pull]
+          [[pull.mappings]]
+          src = "#{src_path}"
+          dest = "#{dest_path}"
+
+          [pull.mappings.hooks]
+          post_sync = "echo sync"
+        TOML
+      end
+
+      it "raises ConfigError for non-post_pull hooks" do
+        expect { described_class.new(config_path) }.to raise_error(
+          Dotsync::ConfigError,
+          /Only 'post_pull' hooks are allowed in \[pull\] mappings/
+        )
+      end
+    end
+
+    context "without hooks" do
+      before do
+        File.write(config_path, <<~TOML)
+          [pull]
+          [[pull.mappings]]
+          src = "#{src_path}"
+          dest = "#{dest_path}"
+        TOML
+      end
+
+      it "has no hooks" do
+        config = described_class.new(config_path)
+        mapping = config.mappings.first
+        expect(mapping.has_hooks?).to be false
+      end
+    end
+  end
+
   describe "XDGBaseDirectory inclusion" do
     it "includes XDGBaseDirectory module" do
       expect(described_class.included_modules).to include(Dotsync::XDGBaseDirectory)

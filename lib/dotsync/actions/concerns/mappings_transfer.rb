@@ -23,8 +23,9 @@ module Dotsync
 
     MAPPINGS_LEGEND = [
       [Icons.force, "The source will overwrite the destination"],
-      [Icons.only, "Paths designated explicitly as source only"],
-      [Icons.ignore, "Paths configured to be ignored in the destination"],
+      [Icons.only, "Filtered by 'only' whitelist"],
+      [Icons.ignore, "Filtered by 'ignore' blacklist"],
+      [Icons.hook, "Post-sync hooks configured"],
       [Icons.invalid, "Invalid paths detected in the source or destination"]
     ]
 
@@ -133,6 +134,42 @@ module Dotsync
         logger.error(error_msg)
         logger.info(info_msg) if info_msg
       end
+    end
+
+    def execute_hooks
+      valid_mappings.each_with_index do |mapping, idx|
+        next unless mapping.has_hooks?
+
+        differ = differs[idx]
+        changed_files = differ.additions + differ.modifications
+        next if changed_files.empty?
+
+        runner = Dotsync::HookRunner.new(mapping: mapping, changed_files: changed_files, logger: logger)
+        runner.execute
+      end
+    end
+
+    def show_hooks_preview
+      hooks_to_run = []
+
+      valid_mappings.each_with_index do |mapping, idx|
+        next unless mapping.has_hooks?
+
+        differ = differs[idx]
+        changed_files = differ.additions + differ.modifications
+        next if changed_files.empty?
+
+        runner = Dotsync::HookRunner.new(mapping: mapping, changed_files: changed_files, logger: logger)
+        hooks_to_run.concat(runner.preview)
+      end
+
+      return if hooks_to_run.empty?
+
+      info("Hooks to run:", icon: :hook)
+      hooks_to_run.each do |command|
+        logger.log("  #{command}")
+      end
+      logger.log("")
     end
 
     private

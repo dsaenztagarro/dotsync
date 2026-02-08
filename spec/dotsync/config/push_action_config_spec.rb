@@ -198,6 +198,66 @@ RSpec.describe Dotsync::PushActionConfig do
     end
   end
 
+  describe "hooks" do
+    context "with valid post_push hooks" do
+      before do
+        File.write(config_path, <<~TOML)
+          [push]
+          [[push.mappings]]
+          src = "#{src_path}"
+          dest = "#{dest_path}"
+
+          [push.mappings.hooks]
+          post_push = "echo pushed"
+        TOML
+      end
+
+      it "extracts post_push hooks into mapping" do
+        config = described_class.new(config_path)
+        mapping = config.mappings.first
+        expect(mapping.hooks).to eq(["echo pushed"])
+      end
+    end
+
+    context "with invalid hook keys in push mappings" do
+      before do
+        File.write(config_path, <<~TOML)
+          [push]
+          [[push.mappings]]
+          src = "#{src_path}"
+          dest = "#{dest_path}"
+
+          [push.mappings.hooks]
+          post_sync = "echo sync"
+        TOML
+      end
+
+      it "raises ConfigError for non-post_push hooks" do
+        expect { described_class.new(config_path) }.to raise_error(
+          Dotsync::ConfigError,
+          /Only 'post_push' hooks are allowed in \[push\] mappings/
+        )
+      end
+    end
+
+    context "without hooks" do
+      before do
+        File.write(config_path, <<~TOML)
+          [push]
+          [[push.mappings]]
+          src = "#{src_path}"
+          dest = "#{dest_path}"
+        TOML
+      end
+
+      it "has no hooks" do
+        config = described_class.new(config_path)
+        mapping = config.mappings.first
+        expect(mapping.has_hooks?).to be false
+      end
+    end
+  end
+
   describe "SECTION_NAME constant" do
     it "is set to 'push'" do
       expect(described_class.const_get(:SECTION_NAME)).to eq("push")
