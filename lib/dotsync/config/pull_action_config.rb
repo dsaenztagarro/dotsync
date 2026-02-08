@@ -22,7 +22,15 @@ module Dotsync
 
       def section_mappings
         return [] unless section && section["mappings"]
-        Array(section["mappings"]).map { |mapping| Dotsync::Mapping.new(mapping) }
+        Array(section["mappings"]).map do |mapping|
+          attrs = mapping.dup
+          if attrs.key?("hooks") && attrs["hooks"].is_a?(Hash)
+            resolved = Array(attrs["hooks"]["post_pull"])
+            attrs["hooks"] = resolved.any? ? resolved : nil
+            attrs.delete("hooks") unless attrs["hooks"]
+          end
+          Dotsync::Mapping.new(attrs)
+        end
       end
 
       def validate!
@@ -45,6 +53,16 @@ module Dotsync
         Array(section["mappings"]).each_with_index do |mapping, index|
           unless mapping.is_a?(Hash) && mapping.key?("src") && mapping.key?("dest")
             raise "Configuration error in pull mapping ##{index + 1}: Each mapping must have 'src' and 'dest' keys."
+          end
+
+          if mapping.is_a?(Hash) && mapping.key?("hooks") && mapping["hooks"].is_a?(Hash)
+            invalid_keys = mapping["hooks"].keys - ["post_pull"]
+            if invalid_keys.any?
+              raise Dotsync::ConfigError,
+                "Configuration error in pull mapping ##{index + 1}: " \
+                "Only 'post_pull' hooks are allowed in [pull] mappings. " \
+                "Invalid key(s): #{invalid_keys.join(", ")}"
+            end
           end
         end
       end

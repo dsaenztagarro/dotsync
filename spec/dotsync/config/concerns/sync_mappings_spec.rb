@@ -85,6 +85,203 @@ RSpec.describe Dotsync::SyncMappings do
     end
   end
 
+  describe "hooks resolution" do
+    context "for push direction with post_sync and post_push" do
+      let(:config) do
+        {
+          "sync" => {
+            "mappings" => [
+              {
+                "local" => local_path,
+                "remote" => remote_path,
+                "hooks" => {
+                  "post_sync" => "echo sync",
+                  "post_push" => "echo push"
+                }
+              }
+            ]
+          }
+        }
+      end
+
+      it "combines post_sync and post_push hooks" do
+        instance = test_class.new(config)
+        mappings = instance.sync_mappings_for_push
+
+        expect(mappings.first.hooks).to eq(["echo sync", "echo push"])
+      end
+    end
+
+    context "for pull direction with post_sync and post_pull" do
+      let(:config) do
+        {
+          "sync" => {
+            "mappings" => [
+              {
+                "local" => local_path,
+                "remote" => remote_path,
+                "hooks" => {
+                  "post_sync" => "echo sync",
+                  "post_pull" => "echo pull"
+                }
+              }
+            ]
+          }
+        }
+      end
+
+      it "combines post_sync and post_pull hooks" do
+        instance = test_class.new(config)
+        mappings = instance.sync_mappings_for_pull
+
+        expect(mappings.first.hooks).to eq(["echo sync", "echo pull"])
+      end
+    end
+
+    context "for push direction excludes post_pull" do
+      let(:config) do
+        {
+          "sync" => {
+            "mappings" => [
+              {
+                "local" => local_path,
+                "remote" => remote_path,
+                "hooks" => {
+                  "post_pull" => "echo pull_only"
+                }
+              }
+            ]
+          }
+        }
+      end
+
+      it "does not include post_pull hooks" do
+        instance = test_class.new(config)
+        mappings = instance.sync_mappings_for_push
+
+        expect(mappings.first.hooks).to eq([])
+      end
+    end
+
+    context "with array hooks that get concatenated" do
+      let(:config) do
+        {
+          "sync" => {
+            "mappings" => [
+              {
+                "local" => local_path,
+                "remote" => remote_path,
+                "hooks" => {
+                  "post_sync" => ["echo sync1", "echo sync2"],
+                  "post_push" => ["echo push1"]
+                }
+              }
+            ]
+          }
+        }
+      end
+
+      it "concatenates all hook arrays" do
+        instance = test_class.new(config)
+        mappings = instance.sync_mappings_for_push
+
+        expect(mappings.first.hooks).to eq(["echo sync1", "echo sync2", "echo push1"])
+      end
+    end
+
+    context "without hooks" do
+      let(:config) do
+        {
+          "sync" => {
+            "mappings" => [
+              { "local" => local_path, "remote" => remote_path }
+            ]
+          }
+        }
+      end
+
+      it "returns empty hooks" do
+        instance = test_class.new(config)
+        mappings = instance.sync_mappings_for_push
+
+        expect(mappings.first.hooks).to eq([])
+      end
+    end
+
+    context "with shorthand mappings and hooks" do
+      before do
+        ENV["XDG_BIN_HOME"] = File.join(root, "bin")
+        ENV["XDG_BIN_HOME_MIRROR"] = File.join(root, "bin_mirror")
+        FileUtils.mkdir_p(ENV["XDG_BIN_HOME"])
+        FileUtils.mkdir_p(ENV["XDG_BIN_HOME_MIRROR"])
+      end
+
+      after do
+        ENV.delete("XDG_BIN_HOME")
+        ENV.delete("XDG_BIN_HOME_MIRROR")
+      end
+
+      let(:config) do
+        {
+          "sync" => {
+            "xdg_bin" => [
+              {
+                "force" => true,
+                "hooks" => {
+                  "post_sync" => "codesign -s - {files}",
+                  "post_pull" => "launchctl kickstart"
+                }
+              }
+            ]
+          }
+        }
+      end
+
+      it "resolves hooks for pull direction" do
+        instance = test_class.new(config)
+        mappings = instance.sync_mappings_for_pull
+
+        expect(mappings.first.hooks).to eq(["codesign -s - {files}", "launchctl kickstart"])
+      end
+
+      it "resolves hooks for push direction (only post_sync)" do
+        instance = test_class.new(config)
+        mappings = instance.sync_mappings_for_push
+
+        expect(mappings.first.hooks).to eq(["codesign -s - {files}"])
+      end
+    end
+  end
+
+  describe "hooks validation" do
+    context "with invalid hook keys" do
+      let(:config) do
+        {
+          "sync" => {
+            "mappings" => [
+              {
+                "local" => local_path,
+                "remote" => remote_path,
+                "hooks" => {
+                  "post_sync" => "echo ok",
+                  "invalid_hook" => "echo bad"
+                }
+              }
+            ]
+          }
+        }
+      end
+
+      it "raises a ConfigError" do
+        instance = test_class.new(config)
+        expect { instance.send(:validate_sync_mappings!) }.to raise_error(
+          Dotsync::ConfigError,
+          /Invalid hook key\(s\): invalid_hook/
+        )
+      end
+    end
+  end
+
   describe "#validate_sync_mappings!" do
     context "with valid sync.mappings" do
       let(:config) do

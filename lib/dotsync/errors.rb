@@ -8,4 +8,5 @@ module Dotsync
   class DiskFullError < FileTransferError; end
   class SymlinkError < FileTransferError; end
   class TypeConflictError < FileTransferError; end
+  class HookError < Error; end
 end

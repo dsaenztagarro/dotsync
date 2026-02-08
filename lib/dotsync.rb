@@ -32,6 +32,7 @@ require_relative "dotsync/utils/directory_differ"
 require_relative "dotsync/utils/version_checker"
 require_relative "dotsync/utils/config_cache"
 require_relative "dotsync/utils/parallel"
+require_relative "dotsync/utils/hook_runner"
 
 # Models
 require_relative "dotsync/models/mapping"

@@ -19,6 +19,7 @@ Dotsync is a powerful Ruby gem for managing and synchronizing your dotfiles acro
 - **Smart Filtering**: Use `force`, `only`, and `ignore` options to precisely control what gets synced
 - **Automatic Backups**: Pull operations create timestamped backups for easy recovery
 - **Live Watching**: Continuously monitor and sync changes in real-time with `watch` command
+- **Post-Sync Hooks**: Run commands automatically after files change (e.g., codesigning, chmod, service reload)
 - **Customizable Output**: Control verbosity and customize icons to match your preferences
 - **Auto-Updates**: Get notified when new versions are available
 
@@ -33,6 +34,7 @@ Dotsync is a powerful Ruby gem for managing and synchronizing your dotfiles acro
     - [Bidirectional Sync Mappings (Recommended)](#bidirectional-sync-mappings-recommended)
     - [Alternative: Unidirectional Mappings](#alternative-unidirectional-mappings)
     - [Mapping Options (force, only, ignore)](#force-only-and-ignore-options-in-mappings)
+    - [Post-Sync Hooks](#post-sync-hooks)
   - [Safety Features](#safety-features)
   - [Customizing Icons](#customizing-icons)
   - [Automatic Update Checks](#automatic-update-checks)
@@ -477,6 +479,84 @@ This configuration:
 > When `ignore` and `only` both match a path, `ignore` takes precedence.
 
 These options apply when the source is a directory and are relevant for both `push` and `pull` operations.
+
+#### Post-Sync Hooks
+
+Hooks let you run commands automatically after a mapping's files are transferred. Hooks only execute when files actually changed, and only when using `--apply`.
+
+##### Hook Types
+
+| Hook | Description | Valid in |
+|------|-------------|----------|
+| `post_sync` | Runs after sync in both directions | `[[sync]]` mappings |
+| `post_push` | Runs only after push | `[[sync]]` and `[[push]]` mappings |
+| `post_pull` | Runs only after pull | `[[sync]]` and `[[pull]]` mappings |
+
+For sync mappings, hooks are resolved by direction:
+- **Push**: `post_sync` + `post_push` commands
+- **Pull**: `post_sync` + `post_pull` commands
+
+##### Examples
+
+**Single command (shorthand mapping):**
+```toml
+[[sync.xdg_bin]]
+force = true
+
+[sync.xdg_bin.hooks]
+post_sync = "codesign -s - {files}"
+```
+
+**Multiple commands (explicit sync):**
+```toml
+[[sync.mappings]]
+local  = "$XDG_CONFIG_HOME/scripts"
+remote = "$XDG_CONFIG_HOME_MIRROR/scripts"
+
+[sync.mappings.hooks]
+post_sync = ["codesign -s - {files}", "chmod 700 {files}"]
+post_pull = "launchctl kickstart -k gui/$(id -u)/com.example.service"
+```
+
+**Unidirectional mapping:**
+```toml
+[[pull.mappings]]
+src = "$DOTFILES_DIR/scripts"
+dest = "$HOME/Scripts"
+
+[pull.mappings.hooks]
+post_pull = ["codesign -s - {files}", "chmod 700 {files}"]
+```
+
+##### Template Variables
+
+| Variable | Description |
+|----------|-------------|
+| `{files}` | Shell-quoted paths of changed destination files |
+| `{src}` | The mapping's source path |
+| `{dest}` | The mapping's destination path |
+
+##### Real-World Examples
+
+```toml
+# Codesign scripts after pulling (macOS Ventura+ requirement for LaunchAgents)
+[[sync.xdg_bin]]
+force = true
+
+[sync.xdg_bin.hooks]
+post_pull = "codesign -s - {files}"
+
+# Reload a LaunchAgent after pulling config changes
+[[pull.mappings]]
+src = "$DOTFILES_DIR/LaunchAgents/com.example.plist"
+dest = "$HOME/Library/LaunchAgents/com.example.plist"
+
+[pull.mappings.hooks]
+post_pull = "launchctl kickstart -k gui/$(id -u)/com.example"
+```
+
+> [!NOTE]
+> In preview mode (without `--apply`), hooks are displayed as a preview showing what commands would run. Hook failures log errors but do not abort remaining hooks or mappings.
 
 ### Safety Features
 

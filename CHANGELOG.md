@@ -1,3 +1,34 @@
+## [0.2.2] - 2026-02-08
+
+**New Features:**
+- Add per-mapping post-sync hooks that run commands after files are transferred
+  - `post_sync` — runs after sync in both directions (`[[sync]]` mappings)
+  - `post_push` — runs only after push (`[[sync]]` and `[[push]]` mappings)
+  - `post_pull` — runs only after pull (`[[sync]]` and `[[pull]]` mappings)
+  - Template variables: `{files}` (shell-quoted changed dest paths), `{src}`, `{dest}`
+  - Hooks only execute when files actually changed and only with `--apply`
+  - Hook failures log errors but do not abort remaining hooks or mappings
+  - Preview mode shows what commands would run without executing
+- Add `HookError` error class for hook-related errors
+- Add hook icon (󰜎) to mappings legend with custom icon support
+
+**New Files:**
+- `lib/dotsync/utils/hook_runner.rb` — HookRunner utility with execute, preview, and template expansion
+- `spec/dotsync/utils/hook_runner_spec.rb` — Comprehensive tests for HookRunner
+
+**Documentation:**
+- Add "Post-Sync Hooks" section to README with hook types, examples, template variables, and real-world use cases
+- Add post-sync hooks to Key Features and Table of Contents
+
+**Testing:**
+- Add 35 new test examples covering hooks across all layers
+  - HookRunner: template expansion, multiple commands, failure handling, shell-escaped paths, preview mode
+  - Mapping: hooks attribute, has_hooks?, hook icon display
+  - SyncMappings: direction resolution, array concatenation, shorthand hooks, validation of invalid keys
+  - PushActionConfig/PullActionConfig: hook extraction, validation of unidirectional constraints
+  - PushAction/PullAction: hook execution with changes, skipped without changes, skipped in dry-run
+- Total: 446 examples, 0 failures | Line: 96.42% | Branch: 82.43%
+
 ## [0.2.1] - 2025-02-06
 
 **Performance Optimizations:**

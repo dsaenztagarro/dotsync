@@ -96,6 +96,12 @@ module Dotsync
         base["ignore"] = mapping["ignore"] if mapping.key?("ignore")
         base["only"] = mapping["only"] if mapping.key?("only")
 
+        # Resolve hooks for direction
+        if mapping.key?("hooks")
+          resolved = resolve_hooks_for_direction(mapping["hooks"], direction)
+          base["hooks"] = resolved if resolved.any?
+        end
+
         base
       end
 
@@ -142,7 +148,39 @@ module Dotsync
         base["ignore"] = mapping["ignore"] if mapping.key?("ignore")
         base["only"] = only if only
 
+        # Resolve hooks for direction
+        if mapping.key?("hooks")
+          resolved = resolve_hooks_for_direction(mapping["hooks"], direction)
+          base["hooks"] = resolved if resolved.any?
+        end
+
         base
+      end
+
+      def resolve_hooks_for_direction(raw_hooks, direction)
+        return [] unless raw_hooks.is_a?(Hash)
+
+        hooks = Array(raw_hooks["post_sync"])
+        case direction
+        when :push
+          hooks += Array(raw_hooks["post_push"])
+        when :pull
+          hooks += Array(raw_hooks["post_pull"])
+        end
+        hooks
+      end
+
+      def validate_hooks!(hooks, context)
+        return unless hooks.is_a?(Hash)
+
+        valid_keys = %w[post_sync post_push post_pull]
+        invalid_keys = hooks.keys - valid_keys
+        return if invalid_keys.empty?
+
+        raise Dotsync::ConfigError,
+          "Configuration error in #{context}: " \
+          "Invalid hook key(s): #{invalid_keys.join(", ")}. " \
+          "Valid keys are: #{valid_keys.join(", ")}"
       end
 
       def build_path(base, path)
@@ -171,6 +209,8 @@ module Dotsync
               "Configuration error in sync.mappings ##{index + 1}: " \
               "Each mapping must have 'local' and 'remote' keys."
           end
+
+          validate_hooks!(mapping["hooks"], "sync.mappings ##{index + 1}") if mapping.key?("hooks")
         end
       end
 
@@ -184,6 +224,8 @@ module Dotsync
                 "Configuration error in sync.#{shorthand_type} ##{index + 1}: " \
                 "Each mapping must be a table."
             end
+
+            validate_hooks!(mapping["hooks"], "sync.#{shorthand_type} ##{index + 1}") if mapping.is_a?(Hash) && mapping.key?("hooks")
           end
         end
       end
