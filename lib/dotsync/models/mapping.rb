@@ -148,13 +148,13 @@ module Dotsync
     def include?(path)
       return true unless has_inclusions?
       return true if path == src
-      inclusions.any? { |inclusion| path_is_parent_or_same?(inclusion, path) }
+      inclusions.any? { |inclusion| inclusion_matches?(inclusion, path) }
     end
 
     def bidirectional_include?(path)
       return true unless has_inclusions?
       return true if path == src
-      inclusions.any? { |inclusion| path_is_parent_or_same?(inclusion, path) || path_is_parent_or_same?(path, inclusion) }
+      inclusions.any? { |inclusion| inclusion_matches?(inclusion, path) || inclusion_is_ancestor?(path, inclusion) }
     end
 
     def ignore?(path)
@@ -187,6 +187,26 @@ module Dotsync
     end
 
     private
+      def glob_pattern?(path)
+        path.match?(/[*?\[]/)
+      end
+
+      def inclusion_matches?(inclusion, path)
+        if glob_pattern?(inclusion)
+          File.fnmatch(inclusion, path)
+        else
+          path_is_parent_or_same?(inclusion, path)
+        end
+      end
+
+      def inclusion_is_ancestor?(path, inclusion)
+        if glob_pattern?(inclusion)
+          path_is_parent_or_same?(path, File.dirname(inclusion))
+        else
+          path_is_parent_or_same?(path, inclusion)
+        end
+      end
+
       def has_ignores?
         @original_ignores.any?
       end
