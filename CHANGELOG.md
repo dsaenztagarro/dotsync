@@ -1,4 +1,4 @@
-## [0.2.2] - 2026-02-08
+## [0.2.3] - 2026-02-08
 
 **New Features:**
 - Add per-mapping post-sync hooks that run commands after files are transferred
@@ -11,12 +11,6 @@
   - Preview mode shows what commands would run without executing
 - Add `HookError` error class for hook-related errors
 - Add hook icon (󰜎) to mappings legend with custom icon support
-- Add glob pattern support to `only` filter (#15)
-  - `*` matches any sequence of characters (e.g., `local.*.plist`)
-  - `?` matches any single character (e.g., `config.?`)
-  - `[charset]` matches any character in the set (e.g., `log.[0-9]`)
-  - Glob and exact paths can be mixed in the same `only` array
-  - Non-glob entries retain existing exact path matching behavior
 
 **New Files:**
 - `lib/dotsync/utils/hook_runner.rb` — HookRunner utility with execute, preview, and template expansion
@@ -25,8 +19,6 @@
 **Documentation:**
 - Add "Post-Sync Hooks" section to README with hook types, examples, template variables, and real-world use cases
 - Add post-sync hooks to Key Features and Table of Contents
-- Document glob pattern support in README with examples
-- Add "Glob patterns" to the `only` option important behaviors section
 
 **Testing:**
 - Add 35 new test examples covering hooks across all layers
@@ -35,9 +27,27 @@
   - SyncMappings: direction resolution, array concatenation, shorthand hooks, validation of invalid keys
   - PushActionConfig/PullActionConfig: hook extraction, validation of unidirectional constraints
   - PushAction/PullAction: hook execution with changes, skipped without changes, skipped in dry-run
+- Total: 467 examples, 0 failures | Line: 96.45% | Branch: 82.86%
+
+## [0.2.2] - 2025-02-07
+
+**New Features:**
+- Add glob pattern support to `only` filter (#15)
+  - `*` matches any sequence of characters (e.g., `local.*.plist`)
+  - `?` matches any single character (e.g., `config.?`)
+  - `[charset]` matches any character in the set (e.g., `log.[0-9]`)
+  - Glob and exact paths can be mixed in the same `only` array
+  - Non-glob entries retain existing exact path matching behavior
+
+**Documentation:**
+- Document glob pattern support in README with examples
+- Add "Glob patterns" to the `only` option important behaviors section
+
+**Testing:**
 - Add unit tests for glob matching in `include?`, `bidirectional_include?`, `skip?`, `should_prune_directory?`
 - Add integration tests for glob patterns in FileTransfer (including force mode)
 - Add integration tests for glob patterns in DirectoryDiffer
+- All 432 tests pass with 96.29% line coverage
 ## [0.2.1] - 2025-02-06
 
 **Performance Optimizations:**
