@@ -22,14 +22,22 @@ def strip_markdown(text)
     .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1') # [text](url) → text
 end
 
+# Load local version.rb, overriding any gem-installed constant
+def local_version
+  verbose = $VERBOSE
+  $VERBOSE = nil
+  load File.expand_path("lib/dotsync/version.rb", __dir__)
+  $VERBOSE = verbose
+  Dotsync::VERSION
+end
+
 namespace :release do
   desc "Generate CHANGELOG entry for a new version"
   # Usage: rake release:changelog[0.2.1]
   task :changelog, [:version] do |_t, args|
     version = args[:version]
     unless version
-      require_relative "./lib/dotsync/version"
-      version = Dotsync::VERSION
+      version = local_version
     end
     version = version.sub(/^v/, "")
     today = Date.today.strftime("%Y-%m-%d")
@@ -95,8 +103,7 @@ namespace :release do
   task :tag, [:version] do |_t, args|
     version = args[:version]
     unless version
-      require_relative "./lib/dotsync/version"
-      version = Dotsync::VERSION
+      version = local_version
     end
     version = version.sub(/^v/, "")
     tag_name = "v#{version}"
@@ -131,8 +138,7 @@ namespace :release do
   task :publish, [:version] do |_t, args|
     version = args[:version]
     unless version
-      require_relative "./lib/dotsync/version"
-      version = Dotsync::VERSION
+      version = local_version
     end
     version = version.sub(/^v/, "")
 
