@@ -5,6 +5,8 @@ require "shellwords"
 
 module Dotsync
   class HookRunner
+    include Dotsync::PathUtils
+
     def initialize(mapping:, changed_files:, logger:)
       @mapping = mapping
       @changed_files = changed_files
@@ -24,7 +26,7 @@ module Dotsync
 
     private
       def expand_template(command)
-        files_str = @changed_files.map { |f| Shellwords.escape(f) }.join(" ")
+        files_str = @changed_files.map { |f| Shellwords.escape(sanitize_path(f)) }.join(" ")
 
         command
           .gsub("{files}", files_str)
