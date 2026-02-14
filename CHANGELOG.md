@@ -1,3 +1,13 @@
+## [0.3.2] - 2026-02-14
+
+### Fixed
+
+- Fix hook runner not expanding env vars in file paths (#24)
+
+### Dependencies
+
+- Bump version to 0.3.2
+
 ## [0.3.1] - 2026-02-14
 
 ### Fixed
@@ -441,4 +451,5 @@ Add gem executables
 
 Initial version
 
+[0.3.2]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.0...v0.3.1
