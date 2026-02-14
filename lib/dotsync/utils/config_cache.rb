@@ -26,6 +26,8 @@ module Dotsync
 
       # Fast path: load from cache
       Marshal.load(File.binread(@cache_file))
+    rescue ConfigError
+      raise
     rescue StandardError
       # Fallback: reparse if cache corrupted or any error
       parse_and_cache
@@ -67,13 +69,14 @@ module Dotsync
         config = resolve_config
 
         # Write cache files
-        FileUtils.mkdir_p(@cache_dir)
-        File.binwrite(@cache_file, Marshal.dump(config))
-        File.write(@meta_file, JSON.generate(build_metadata))
+        begin
+          FileUtils.mkdir_p(@cache_dir)
+          File.binwrite(@cache_file, Marshal.dump(config))
+          File.write(@meta_file, JSON.generate(build_metadata))
+        rescue StandardError
+          # If caching fails, still return the parsed config
+        end
 
-        config
-      rescue StandardError
-        # If caching fails, still return the parsed config
         config
       end
 
