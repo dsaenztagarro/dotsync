@@ -1050,21 +1050,31 @@ dotsync -c ~/my-config.toml setup
 
 ### Releasing a new version
 
-1. Update the version number in `lib/dotsync/version.rb`
-2. Add entry to `CHANGELOG.md` documenting changes
-3. Commit all changes: `git add . && git commit -m "Release vX.Y.Z"`
-4. Create annotated tag with changelog extract:
-   ```shell
-   git tag -a vX.Y.Z -m "Release vX.Y.Z
+**Automated (recommended):**
 
-   <paste relevant CHANGELOG section here>"
-   ```
-5. Push commits and tags: `git push && git push --tags`
-6. Build and publish gem manually:
-   ```shell
-   gem build dotsync.gemspec
-   gem push dotsync-X.Y.Z.gem
-   ```
+```shell
+# 1. Update version in lib/dotsync/version.rb
+# 2. Commit all changes
+# 3. Run the full release workflow:
+rake release:publish
+```
+
+This generates a CHANGELOG entry from commits, opens it for review, commits, creates an annotated tag (with markdown stripped to plain text), and pushes everything.
+
+**Individual tasks:**
+
+```shell
+rake release:changelog        # Generate CHANGELOG entry from commits since last tag
+rake release:tag              # Create annotated tag from CHANGELOG (uses Dotsync::VERSION)
+rake release:tag[0.3.0]      # Create annotated tag for a specific version
+```
+
+**Publishing the gem:**
+
+```shell
+gem build dotsync.gemspec
+gem push dotsync-X.Y.Z.gem
+```
 
 The `release.yml` GitHub Action automatically creates a GitHub Release when a version tag is pushed, extracting release notes from CHANGELOG.md.
 
