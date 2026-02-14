@@ -31,7 +31,7 @@ RSpec.describe Dotsync::ConfigCache do
     end
 
     # Clean up cache directory - try with a valid path first
-    if defined?(temp_config_path) && File.exist?(temp_config_path)
+    if defined?(temp_config_path) && temp_config_path && File.exist?(temp_config_path)
       cache = described_class.new(temp_config_path)
       cache_dir = cache.instance_variable_get(:@cache_dir)
       FileUtils.rm_rf(cache_dir) if cache_dir && File.exist?(cache_dir)
@@ -72,11 +72,11 @@ RSpec.describe Dotsync::ConfigCache do
 
   describe "#load" do
     context "when cache is disabled via environment variable" do
-      it "parses TOML directly without using cache" do
+      it "resolves config directly without using cache" do
         ENV["DOTSYNC_NO_CACHE"] = "1"
         cache = described_class.new(temp_config_path)
 
-        expect(cache).to receive(:parse_toml).and_call_original
+        expect(cache).to receive(:resolve_config).and_call_original
         expect(cache).not_to receive(:valid_cache?)
 
         result = cache.load
@@ -120,14 +120,14 @@ RSpec.describe Dotsync::ConfigCache do
     end
 
     context "when cache exists and is valid" do
-      it "loads from cache without parsing TOML" do
+      it "loads from cache without resolving config" do
         cache = described_class.new(temp_config_path)
 
         # First load creates cache
         cache.load
 
         # Second load should use cache
-        expect(cache).not_to receive(:parse_toml)
+        expect(cache).not_to receive(:resolve_config)
         result = cache.load
 
         expect(result).to be_a(Hash)
@@ -367,6 +367,7 @@ RSpec.describe Dotsync::ConfigCache do
   describe "#build_metadata" do
     it "includes all required metadata fields" do
       cache = described_class.new(temp_config_path)
+      cache.send(:resolve_config)
       metadata = cache.send(:build_metadata)
 
       expect(metadata).to have_key(:source_path)
@@ -378,6 +379,7 @@ RSpec.describe Dotsync::ConfigCache do
 
     it "captures current source file statistics" do
       cache = described_class.new(temp_config_path)
+      cache.send(:resolve_config)
       metadata = cache.send(:build_metadata)
 
       stat = File.stat(temp_config_path)
@@ -388,9 +390,110 @@ RSpec.describe Dotsync::ConfigCache do
 
     it "includes current dotsync version" do
       cache = described_class.new(temp_config_path)
+      cache.send(:resolve_config)
       metadata = cache.send(:build_metadata)
 
       expect(metadata[:dotsync_version]).to eq(Dotsync::VERSION)
+    end
+  end
+
+  describe "include-aware caching" do
+    let(:include_dir) { File.join("/tmp", "dotsync_include_cache_spec") }
+    let(:base_path) { File.join(include_dir, "base.toml") }
+    let(:overlay_path) { File.join(include_dir, "overlay.toml") }
+
+    before do
+      FileUtils.mkdir_p(include_dir)
+      File.write(base_path, <<~TOML)
+        [[pull.mappings]]
+        src = "$HOME/dotfiles"
+        dest = "$HOME/.config"
+      TOML
+      File.write(overlay_path, <<~TOML)
+        include = "base.toml"
+
+        [[pull.mappings]]
+        src = "$HOME/extra"
+        dest = "$HOME/.extra"
+      TOML
+    end
+
+    after do
+      FileUtils.rm_rf(include_dir)
+    end
+
+    it "invalidates cache when include file mtime changes" do
+      cache = described_class.new(overlay_path)
+      cache.load
+
+      sleep 0.1
+      FileUtils.touch(base_path)
+
+      expect(cache).to receive(:parse_and_cache).and_call_original
+      cache.load
+    end
+
+    it "invalidates cache when include file size changes" do
+      cache = described_class.new(overlay_path)
+      cache.load
+
+      File.write(base_path, <<~TOML)
+        [[pull.mappings]]
+        src = "$HOME/dotfiles"
+        dest = "$HOME/.config"
+
+        [[pull.mappings]]
+        src = "$HOME/more"
+        dest = "$HOME/.more"
+      TOML
+
+      expect(cache).to receive(:parse_and_cache).and_call_original
+      cache.load
+    end
+
+    it "invalidates cache when include file is deleted" do
+      cache = described_class.new(overlay_path)
+      cache.load
+
+      File.delete(base_path)
+
+      expect(cache.send(:valid_cache?)).to be false
+    end
+
+    it "stores include file stats in metadata" do
+      cache = described_class.new(overlay_path)
+      cache.load
+
+      meta_file = cache.instance_variable_get(:@meta_file)
+      metadata = JSON.parse(File.read(meta_file))
+
+      expect(metadata).to have_key("include_path")
+      expect(metadata).to have_key("include_mtime")
+      expect(metadata).to have_key("include_size")
+      expect(metadata["include_path"]).to eq(base_path)
+    end
+
+    it "works in no-cache mode with includes" do
+      ENV["DOTSYNC_NO_CACHE"] = "1"
+      cache = described_class.new(overlay_path)
+
+      result = cache.load
+      expect(result).to be_a(Hash)
+      expect(result["pull"]["mappings"].length).to eq(2)
+
+      ENV.delete("DOTSYNC_NO_CACHE")
+    end
+
+    it "does not store include metadata when no include" do
+      cache = described_class.new(temp_config_path)
+      cache.load
+
+      meta_file = cache.instance_variable_get(:@meta_file)
+      metadata = JSON.parse(File.read(meta_file))
+
+      expect(metadata).not_to have_key("include_path")
+      expect(metadata).not_to have_key("include_mtime")
+      expect(metadata).not_to have_key("include_size")
     end
   end
 end

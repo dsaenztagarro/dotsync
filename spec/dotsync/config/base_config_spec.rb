@@ -215,4 +215,35 @@ RSpec.describe Dotsync::BaseConfig do
       expect(described_class.included_modules).to include(Dotsync::PathUtils)
     end
   end
+
+  describe "config include support" do
+    let(:base_config_path) { File.join(config_dir, "base.toml") }
+    let(:overlay_config_path) { File.join(config_dir, "overlay.toml") }
+
+    before do
+      File.write(base_config_path, <<~TOML)
+        [test_section]
+        base_key = "base_value"
+        shared_key = "from_base"
+      TOML
+
+      File.write(overlay_config_path, <<~TOML)
+        include = "base.toml"
+
+        [test_section]
+        overlay_key = "overlay_value"
+        shared_key = "from_overlay"
+      TOML
+    end
+
+    it "loads merged config via include directive" do
+      config = test_config_class.new(overlay_config_path)
+      hash = config.to_h
+
+      expect(hash["test_section"]["base_key"]).to eq("base_value")
+      expect(hash["test_section"]["overlay_key"]).to eq("overlay_value")
+      expect(hash["test_section"]["shared_key"]).to eq("from_overlay")
+      expect(hash).not_to have_key("include")
+    end
+  end
 end

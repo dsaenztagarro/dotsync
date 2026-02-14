@@ -1,3 +1,27 @@
+## [0.3.0] - 2026-02-14
+
+**New Features:**
+- Add `include` directive for config file composition
+  - Base config holds shared content; machine overlays contain only the delta
+  - `include = "base.toml"` — resolves path relative to the config file's directory
+  - Deep merge semantics: arrays concatenate, hashes merge recursively, scalars overlay wins
+  - Chained includes are rejected to keep behavior predictable
+  - Cache invalidation tracks included file's mtime and size alongside overlay file
+  - Zero downstream changes — `BaseConfig`, `PullActionConfig`, `PushActionConfig`, `SyncMappings` all see a plain merged hash
+
+**New Files:**
+- `lib/dotsync/utils/config_merger.rb` — ConfigMerger utility with resolve, deep merge, and include validation
+- `spec/dotsync/utils/config_merger_spec.rb` — Comprehensive tests for ConfigMerger
+
+**Documentation:**
+- Add "Config Includes" section to README with usage examples and merge semantics
+- Update "Per-Machine Configuration Files" section with include-based example
+
+**Testing:**
+- Add ConfigMerger specs: no-include passthrough, array concatenation, hash deep merge, scalar override, include key consumption, relative path resolution, missing file error, chained include rejection, non-string include error, base/overlay key preservation, empty overlay, include_path accessor
+- Add include-aware ConfigCache specs: mtime/size invalidation, deleted include, metadata contains include stats, no-cache mode with includes
+- Add end-to-end BaseConfig spec: base.toml + overlay.toml with include → to_h returns merged result
+
 ## [0.2.3] - 2026-02-08
 
 **New Features:**
