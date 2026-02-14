@@ -126,6 +126,26 @@ RSpec.describe Dotsync::HookRunner do
       end
     end
 
+    context "with files containing environment variables" do
+      let(:mapping) do
+        Dotsync::Mapping.new(
+          "src" => src,
+          "dest" => dest,
+          "hooks" => ["echo {files}"]
+        )
+      end
+      let(:changed_files) { ["$HOME/Scripts/setup.sh"] }
+      let(:runner) { described_class.new(mapping: mapping, changed_files: changed_files, logger: logger) }
+
+      it "expands environment variables in file paths" do
+        results = runner.execute
+
+        expect(results.first[:stdout]).to include(ENV["HOME"])
+        expect(results.first[:stdout]).to include("Scripts/setup.sh")
+        expect(results.first[:success]).to be true
+      end
+    end
+
     context "with template variables {src} and {dest}" do
       let(:mapping) do
         Dotsync::Mapping.new(
