@@ -2,6 +2,7 @@
 
 require "json"
 require "digest"
+require_relative "config_merger"
 
 module Dotsync
   class ConfigCache
@@ -19,7 +20,7 @@ module Dotsync
 
     def load
       # Skip cache if disabled via environment variable
-      return parse_toml if ENV["DOTSYNC_NO_CACHE"]
+      return resolve_config if ENV["DOTSYNC_NO_CACHE"]
 
       return parse_and_cache unless valid_cache?
 
@@ -47,6 +48,15 @@ module Dotsync
         cache_age_days = (Time.now.to_f - meta["cached_at"]) / 86400
         return false if cache_age_days > 7
 
+        # Check include file validity if present
+        if meta["include_path"]
+          return false unless File.exist?(meta["include_path"])
+
+          include_stat = File.stat(meta["include_path"])
+          return false if include_stat.mtime.to_f != meta["include_mtime"]
+          return false if include_stat.size != meta["include_size"]
+        end
+
         true
       rescue StandardError
         # Any error in validation means invalid cache
@@ -54,7 +64,7 @@ module Dotsync
       end
 
       def parse_and_cache
-        config = parse_toml
+        config = resolve_config
 
         # Write cache files
         FileUtils.mkdir_p(@cache_dir)
@@ -67,6 +77,12 @@ module Dotsync
         config
       end
 
+      def resolve_config
+        raw = parse_toml
+        @merger = ConfigMerger.new(raw, @config_path)
+        @merger.resolve
+      end
+
       def parse_toml
         require "toml-rb"
         TomlRB.load_file(@config_path)
@@ -74,13 +90,22 @@ module Dotsync
 
       def build_metadata
         source_stat = File.stat(@config_path)
-        {
+        meta = {
           source_path: @config_path,
           source_size: source_stat.size,
           source_mtime: source_stat.mtime.to_f,
           cached_at: Time.now.to_f,
           dotsync_version: Dotsync::VERSION
         }
+
+        if @merger&.include_path
+          include_stat = File.stat(@merger.include_path)
+          meta[:include_path] = @merger.include_path
+          meta[:include_mtime] = include_stat.mtime.to_f
+          meta[:include_size] = include_stat.size
+        end
+
+        meta
       end
   end
 end

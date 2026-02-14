@@ -19,6 +19,7 @@ Dotsync is a powerful Ruby gem for managing and synchronizing your dotfiles acro
 - **Smart Filtering**: Use `force`, `only`, and `ignore` options to precisely control what gets synced
 - **Automatic Backups**: Pull operations create timestamped backups for easy recovery
 - **Live Watching**: Continuously monitor and sync changes in real-time with `watch` command
+- **Config Includes**: Compose configs from a shared base + machine-specific overlays with `include`
 - **Post-Sync Hooks**: Run commands automatically after files change (e.g., codesigning, chmod, service reload)
 - **Customizable Output**: Control verbosity and customize icons to match your preferences
 - **Auto-Updates**: Get notified when new versions are available
@@ -35,6 +36,7 @@ Dotsync is a powerful Ruby gem for managing and synchronizing your dotfiles acro
     - [Alternative: Unidirectional Mappings](#alternative-unidirectional-mappings)
     - [Mapping Options (force, only, ignore)](#force-only-and-ignore-options-in-mappings)
     - [Post-Sync Hooks](#post-sync-hooks)
+    - [Config Includes](#config-includes)
   - [Safety Features](#safety-features)
   - [Customizing Icons](#customizing-icons)
   - [Automatic Update Checks](#automatic-update-checks)
@@ -579,6 +581,52 @@ post_pull = "launchctl kickstart -k gui/$(id -u)/com.example"
 > [!NOTE]
 > In preview mode (without `--apply`), hooks are displayed as a preview showing what commands would run. Hook failures log errors but do not abort remaining hooks or mappings.
 
+#### Config Includes
+
+Use `include` to compose a config from a shared base file and a machine-specific overlay. This eliminates duplication when multiple machines share most of the same mappings.
+
+```toml
+# dotsync.mbp_personal.toml (overlay — only the delta)
+include = "dotsync.base.toml"
+
+# Machine-specific mappings appended to base
+[[sync.xdg_config]]
+path = "claude"
+only = ["settings.json", "instructions", "commands"]
+
+[[sync.mappings]]
+local  = "$XDG_CONFIG_HOME/opencode/opencode.jsonc"
+remote = "$XDG_CONFIG_HOME_MIRROR/opencode/opencode.mbp_personal.jsonc"
+```
+
+```toml
+# dotsync.base.toml (shared across all machines)
+[[sync.home]]
+path = ".zshenv"
+
+[[sync.xdg_config]]
+only = ["alacritty", "brewfile", "git", "nvim", "zsh"]
+force = true
+
+[watch]
+src = "~/.config"
+paths = ["~/.config/nvim/", "~/.config/zsh/"]
+```
+
+**Merge semantics:**
+
+| Type | Behavior | Example |
+|------|----------|---------|
+| Arrays (`[[array-of-tables]]`) | Concatenate (base + overlay) | Base `[[sync.home]]` entries + overlay `[[sync.home]]` entries |
+| Hashes (`[tables]`) | Recursive deep merge (overlay wins on leaves) | Overlay `[watch].dest` overrides base `[watch].dest` |
+| Scalars | Overlay wins | Overlay `force = false` overrides base `force = true` |
+
+**Rules:**
+- The `include` path is resolved relative to the overlay file's directory
+- Chained includes (an included file that itself has `include`) are not supported
+- The `include` key is consumed and does not appear in the merged config
+- Cache invalidation tracks both the overlay and included file's mtime/size
+
 ### Safety Features
 
 Dotsync includes several safety mechanisms to prevent accidental data loss:
@@ -853,21 +901,30 @@ force = true
 
 ### Per-Machine Configuration Files
 
-Use different config files for different machines:
+Use `include` to share a base config across machines, with each machine adding only its delta:
 
-```toml
-# In dotsync.macbook.toml
-[[sync.mappings]]
-local  = "$XDG_CONFIG_HOME/dotsync.toml"
-remote = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.macbook.toml"
-
-# In dotsync.work.toml
-[[sync.mappings]]
-local  = "$XDG_CONFIG_HOME/dotsync.toml"
-remote = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.work.toml"
+```
+dotfiles/xdg_config_home/dotsync/
+  dotsync.base.toml            # shared mappings, hooks, watch paths
+  dotsync.mbp_personal.toml    # include + personal-only mappings
+  dotsync.mbp_work.toml        # include + work-only mappings
+  dotsync.mac_mini.toml        # include + mac-mini-only mappings
 ```
 
-Then use `-c` flag to select the appropriate config:
+```toml
+# dotsync.mbp_personal.toml — slim overlay
+include = "dotsync.base.toml"
+
+[[sync.xdg_config]]
+path = "claude"
+only = ["settings.json", "instructions", "commands"]
+
+[[sync.mappings]]
+local  = "$XDG_CONFIG_HOME/dotsync.toml"
+remote = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.mbp_personal.toml"
+```
+
+Each machine's overlay self-references so `ds push` keeps it in sync with the repo. Use `-c` to select a config:
 ```shell
 dotsync -c ~/.config/dotsync/dotsync.macbook.toml push --apply
 ```
