@@ -1,3 +1,14 @@
+## [0.3.1] - 2026-02-14
+
+### Fixed
+
+- Fix config cache swallowing ConfigError and returning nil (#22)
+- Fix release tasks reading installed gem version instead of local
+
+### Dependencies
+
+- Bump version to 0.3.1
+
 ## [0.3.0] - 2026-02-14
 
 **New Features:**
@@ -429,3 +440,5 @@ Add gem executables
 # 0.1.0
 
 Initial version
+
+[0.3.1]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.0...v0.3.1
