@@ -14,6 +14,14 @@ end
 
 task default: :spec
 
+# Strip markdown formatting for plain-text contexts (git tag messages)
+def strip_markdown(text)
+  text
+    .gsub(/\*\*(.+?)\*\*/, '\1')  # **bold** → bold
+    .gsub(/`([^`]+)`/, '\1')      # `code`  → code
+    .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1') # [text](url) → text
+end
+
 namespace :release do
   desc "Generate CHANGELOG entry for a new version"
   # Usage: rake release:changelog[0.2.1]
@@ -109,11 +117,11 @@ namespace :release do
       abort "Version #{version} not found in CHANGELOG.md\nRun 'rake release:changelog[#{version}]' first."
     end
 
-    date = match[1]
-    content = match[2].strip
-    tag_message = "#{version} - #{date}\n\n#{content}"
+    content = strip_markdown(match[2].strip)
+    tag_message = "Release v#{version}\n\n#{content}"
 
     puts "Tagging commit as #{tag_name}..."
+    puts "\n--- Tag message ---\n#{tag_message}\n---\n\n"
     sh "git", "tag", "-a", tag_name, "-m", tag_message
     puts "Tag created. Push with: git push origin #{tag_name}"
   end
