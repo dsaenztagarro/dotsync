@@ -1,3 +1,13 @@
+## [0.3.3] - 2026-02-16
+
+### Added
+
+- Add --force-hooks flag to re-run hooks when no files changed (#25) (#26)
+
+### Changed
+
+- Update version
+
 ## [0.3.2] - 2026-02-14
 
 ### Fixed
@@ -451,5 +461,6 @@ Add gem executables
 
 Initial version
 
+[0.3.3]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.0...v0.3.1
