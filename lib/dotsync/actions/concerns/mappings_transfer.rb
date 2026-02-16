@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "find"
+
 module Dotsync
   # MappingsTransfer provides shared functionality for push/pull actions.
   #
@@ -136,20 +138,25 @@ module Dotsync
       end
     end
 
-    def execute_hooks
+    def execute_hooks(force: false)
       valid_mappings.each_with_index do |mapping, idx|
         next unless mapping.has_hooks?
 
         differ = differs[idx]
         changed_files = differ.additions + differ.modifications
-        next if changed_files.empty?
+        if changed_files.empty?
+          next unless force
+
+          changed_files = all_dest_files(mapping)
+          next if changed_files.empty?
+        end
 
         runner = Dotsync::HookRunner.new(mapping: mapping, changed_files: changed_files, logger: logger)
         runner.execute
       end
     end
 
-    def show_hooks_preview
+    def show_hooks_preview(force: false)
       hooks_to_run = []
 
       valid_mappings.each_with_index do |mapping, idx|
@@ -157,7 +164,12 @@ module Dotsync
 
         differ = differs[idx]
         changed_files = differ.additions + differ.modifications
-        next if changed_files.empty?
+        if changed_files.empty?
+          next unless force
+
+          changed_files = all_dest_files(mapping)
+          next if changed_files.empty?
+        end
 
         runner = Dotsync::HookRunner.new(mapping: mapping, changed_files: changed_files, logger: logger)
         hooks_to_run.concat(runner.preview)
@@ -216,6 +228,22 @@ module Dotsync
 
       def valid_mappings
         mappings.select(&:valid?)
+      end
+
+      def all_dest_files(mapping)
+        if File.directory?(mapping.dest)
+          files = []
+          Find.find(mapping.dest) do |path|
+            next if File.directory?(path)
+
+            files << path
+          end
+          files
+        elsif File.file?(mapping.dest)
+          [mapping.dest]
+        else
+          []
+        end
       end
   end
 end

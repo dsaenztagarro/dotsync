@@ -220,6 +220,20 @@ RSpec.describe Dotsync::PullAction do
 
             action.execute(apply: true, yes: true)
           end
+
+          context "with force_hooks option" do
+            it "executes hooks on all dest files" do
+              expect_any_instance_of(Dotsync::HookRunner).to receive(:execute).and_return([])
+
+              action.execute(apply: true, yes: true, force_hooks: true)
+            end
+
+            it "shows hooks preview in dry-run mode" do
+              expect_any_instance_of(Dotsync::HookRunner).to receive(:preview).and_return(["echo hook_ran"])
+
+              action.execute(force_hooks: true)
+            end
+          end
         end
       end
 

@@ -23,6 +23,7 @@ module Dotsync
       def show_options(options)
         info("Options:", icon: :options)
         logger.log("  Apply: #{options[:apply] ? "TRUE" : "FALSE"}")
+        logger.log("  Force hooks: TRUE") if options[:force_hooks]
         logger.log("")
       end
   end
