@@ -48,15 +48,13 @@ module Dotsync
       info("Environment variables:", icon: :env_vars)
 
       rows = env_vars.map { |env_var| [env_var, ENV[env_var]] }.sort_by(&:first)
-      table = Terminal::Table.new(rows: rows)
-      logger.log(table)
+      logger.log(Dotsync::TableRenderer.new(rows: rows).render)
       logger.log("")
     end
 
     def show_mappings_legend
       info("Mappings Legend:", icon: :legend)
-      table = Terminal::Table.new(rows: MAPPINGS_LEGEND)
-      logger.log(table)
+      logger.log(Dotsync::TableRenderer.new(rows: MAPPINGS_LEGEND).render)
       logger.log("")
     end
 
@@ -70,15 +68,13 @@ module Dotsync
           colorize_env_vars(mapping.original_dest)
         ]
       end
-      table = Terminal::Table.new(headings: ["Flags", "Source", "Destination"], rows: rows)
-      logger.log(table)
+      logger.log(Dotsync::TableRenderer.new(headings: ["Flags", "Source", "Destination"], rows: rows).render)
       logger.log("")
     end
 
     def show_differences_legend
       info("Differences Legend:", icon: :legend)
-      table = Terminal::Table.new(rows: DIFFERENCES_LEGEND)
-      logger.log(table)
+      logger.log(Dotsync::TableRenderer.new(rows: DIFFERENCES_LEGEND).render)
       logger.log("")
     end
 
