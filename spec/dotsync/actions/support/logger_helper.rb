@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 module LoggerHelper
-  def expect_show_options(apply: false)
+  def expect_show_options(apply: false, force_hooks: false)
     value = apply ? "TRUE" : "FALSE"
     expect(logger).to receive(:info).with("Options:", icon: :options).ordered
     expect(logger).to receive(:log).with("  Apply: #{value}").ordered
+    expect(logger).to receive(:log).with("  Force hooks: TRUE").ordered if force_hooks
     expect(logger).to receive(:log).with("").ordered
   end
 

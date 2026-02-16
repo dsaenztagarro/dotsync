@@ -14,7 +14,7 @@ module Dotsync
       show_mappings if output_sections[:mappings]
       show_differences_legend if has_differences? && output_sections[:differences_legend]
       show_differences(diff_content: output_sections[:diff_content]) if output_sections[:differences]
-      show_hooks_preview if output_sections[:differences]
+      show_hooks_preview(force: options[:force_hooks]) if output_sections[:differences]
 
       return unless options[:apply]
 
@@ -24,7 +24,7 @@ module Dotsync
       end
 
       transfer_mappings
-      execute_hooks
+      execute_hooks(force: options[:force_hooks])
       action("Mappings pushed", icon: :done)
     end
   end
