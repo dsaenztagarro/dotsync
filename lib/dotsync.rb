@@ -11,7 +11,7 @@ require "logger"
 require "forwardable" # Ruby standard library
 require "ostruct"
 require "find"
-require "terminal-table"
+require_relative "dotsync/utils/table_renderer"
 
 # Base classes
 require_relative "dotsync/errors"

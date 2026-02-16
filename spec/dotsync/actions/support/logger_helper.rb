@@ -42,10 +42,13 @@ module LoggerHelper
 
   private
     def expect_logger_log_table(expected_rows)
-      expect(logger).to receive(:log) do |table|
-        expect(table).to be_a(Terminal::Table)
-        rows_cells = table.rows.map { |row| row.cells.map(&:value) }
-        expect(rows_cells).to eq(expected_rows)
+      expect(logger).to receive(:log) do |rendered|
+        expect(rendered).to be_a(String)
+        expected_rows.each do |row|
+          row.each do |cell|
+            expect(rendered).to include(cell.to_s)
+          end
+        end
       end.ordered
     end
 end

@@ -5,7 +5,7 @@ require_relative "../core"
 
 # Gems needed for pull
 require "toml-rb"
-require "terminal-table"
+require_relative "../utils/table_renderer"
 
 # Utils needed for pull
 require_relative "../utils/file_transfer"
