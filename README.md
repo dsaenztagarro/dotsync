@@ -20,6 +20,7 @@ Dotsync is a powerful Ruby gem for managing and synchronizing your dotfiles acro
 - **Automatic Backups**: Pull operations create timestamped backups for easy recovery
 - **Live Watching**: Continuously monitor and sync changes in real-time with `watch` command
 - **Config Includes**: Compose configs from a shared base + machine-specific overlays with `include`
+- **Config Source**: Point local config to your dotfiles repo with `source` — changes are visible immediately without syncing
 - **Post-Sync Hooks**: Run commands automatically after files change (e.g., codesigning, chmod, service reload)
 - **Customizable Output**: Control verbosity and customize icons to match your preferences
 - **Auto-Updates**: Get notified when new versions are available
@@ -37,6 +38,7 @@ Dotsync is a powerful Ruby gem for managing and synchronizing your dotfiles acro
     - [Mapping Options (force, only, ignore)](#force-only-and-ignore-options-in-mappings)
     - [Post-Sync Hooks](#post-sync-hooks)
     - [Config Includes](#config-includes)
+    - [Config Source](#config-source)
   - [Safety Features](#safety-features)
   - [Customizing Icons](#customizing-icons)
   - [Automatic Update Checks](#automatic-update-checks)
@@ -626,6 +628,54 @@ paths = ["~/.config/nvim/", "~/.config/zsh/"]
 - Chained includes (an included file that itself has `include`) are not supported
 - The `include` key is consumed and does not appear in the merged config
 - Cache invalidation tracks both the overlay and included file's mtime/size
+
+#### Config Source
+
+Use `source` to point your local config at the authoritative copy in your dotfiles repository. Instead of syncing config files back and forth, dotsync reads the config directly from the repo. Changes are visible immediately — no pull needed.
+
+**The problem it solves:** When config files change in your dotfiles repo, you normally need to `ds pull` to update local copies, then run `ds pull` again so the new config takes effect. With `source`, dotsync reads from the repo directly, eliminating this two-pass problem.
+
+**Setup:**
+
+```toml
+# ~/.config/dotsync.toml (one-time setup — never changes)
+source = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.mbp_personal.toml"
+```
+
+```toml
+# ~/Code/dotfiles/xdg_config_home/dotsync/dotsync.mbp_personal.toml (the real config)
+include = "dotsync.base.toml"
+
+[[sync.xdg_config]]
+path = "zsh"
+ignore = [".zsh_sessions", ".zsh_history", ".zcompdump"]
+
+[[sync.xdg_config]]
+path = "nvim"
+force = true
+ignore = ["lazy-lock.json"]
+```
+
+The local file is a thin pointer that never changes. The real config (and its `include` base) live in the repo and are read directly.
+
+**Rules:**
+- `source` must be the **only** key in the pointer file — no other config keys allowed
+- The source file can use `include` to compose with a base config (resolved relative to the source file)
+- Chained sources (a source file pointing to another source) are not supported
+- Environment variables are expanded in the `source` path (e.g., `$XDG_CONFIG_HOME_MIRROR`)
+- Cache invalidation tracks the pointer file, the source file, and any included file
+
+**Per-machine setup:**
+
+```
+dotfiles/xdg_config_home/dotsync/
+  dotsync.base.toml            # shared mappings, hooks, watch paths
+  dotsync.mbp_personal.toml    # include + personal-only mappings
+  dotsync.mbp_work.toml        # include + work-only mappings
+  dotsync.mac_mini.toml        # include + mac-mini-only mappings
+```
+
+Each machine's `~/.config/dotsync.toml` is a one-line pointer to its overlay. Edit the repo files and changes take effect immediately — no syncing, no two-pass.
 
 ### Safety Features
 

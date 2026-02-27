@@ -397,6 +397,243 @@ RSpec.describe Dotsync::ConfigCache do
     end
   end
 
+  describe "source-aware loading" do
+    let(:source_dir) { File.join("/tmp", "dotsync_source_spec") }
+    let(:pointer_path) { File.join(source_dir, "pointer.toml") }
+    let(:source_config_path) { File.join(source_dir, "remote", "dotsync.mbp_personal.toml") }
+    let(:source_base_path) { File.join(source_dir, "remote", "dotsync.base.toml") }
+
+    before do
+      FileUtils.mkdir_p(File.join(source_dir, "remote"))
+    end
+
+    after do
+      FileUtils.rm_rf(source_dir)
+    end
+
+    context "basic source resolution" do
+      before do
+        File.write(source_config_path, <<~TOML)
+          [[sync.home]]
+          path = ".zshenv"
+        TOML
+        File.write(pointer_path, <<~TOML)
+          source = "#{source_config_path}"
+        TOML
+      end
+
+      it "loads config from the source file" do
+        cache = described_class.new(pointer_path)
+        result = cache.load
+
+        expect(result["sync"]["home"]).to eq([{ "path" => ".zshenv" }])
+      end
+
+      it "does not include the source key in the result" do
+        cache = described_class.new(pointer_path)
+        result = cache.load
+
+        expect(result).not_to have_key("source")
+      end
+    end
+
+    context "source with include" do
+      before do
+        File.write(source_base_path, <<~TOML)
+          [[sync.home]]
+          path = ".zshenv"
+        TOML
+        File.write(source_config_path, <<~TOML)
+          include = "dotsync.base.toml"
+
+          [[sync.xdg_config]]
+          path = "nvim"
+        TOML
+        File.write(pointer_path, <<~TOML)
+          source = "#{source_config_path}"
+        TOML
+      end
+
+      it "resolves include relative to the source file" do
+        cache = described_class.new(pointer_path)
+        result = cache.load
+
+        expect(result["sync"]["home"]).to eq([{ "path" => ".zshenv" }])
+        expect(result["sync"]["xdg_config"]).to eq([{ "path" => "nvim" }])
+      end
+    end
+
+    context "source with env var expansion" do
+      before do
+        File.write(source_config_path, <<~TOML)
+          [[sync.home]]
+          path = ".zshenv"
+        TOML
+        ENV["DOTSYNC_TEST_SOURCE_DIR"] = File.join(source_dir, "remote")
+        File.write(pointer_path, <<~TOML)
+          source = "$DOTSYNC_TEST_SOURCE_DIR/dotsync.mbp_personal.toml"
+        TOML
+      end
+
+      after do
+        ENV.delete("DOTSYNC_TEST_SOURCE_DIR")
+      end
+
+      it "expands environment variables in source path" do
+        cache = described_class.new(pointer_path)
+        result = cache.load
+
+        expect(result["sync"]["home"]).to eq([{ "path" => ".zshenv" }])
+      end
+    end
+
+    context "validation errors" do
+      it "raises error when source value is not a string" do
+        File.write(pointer_path, <<~TOML)
+          source = 42
+        TOML
+
+        cache = described_class.new(pointer_path)
+        expect { cache.load }.to raise_error(Dotsync::ConfigError, /must be a string path/)
+      end
+
+      it "raises error when source is combined with other keys" do
+        File.write(source_config_path, <<~TOML)
+          [[sync.home]]
+          path = ".zshenv"
+        TOML
+        File.write(pointer_path, <<~TOML)
+          source = "#{source_config_path}"
+
+          [[sync.xdg_config]]
+          path = "nvim"
+        TOML
+
+        cache = described_class.new(pointer_path)
+        expect { cache.load }.to raise_error(Dotsync::ConfigError, /cannot be combined/)
+      end
+
+      it "raises error when source file does not exist" do
+        File.write(pointer_path, <<~TOML)
+          source = "/nonexistent/path/config.toml"
+        TOML
+
+        cache = described_class.new(pointer_path)
+        expect { cache.load }.to raise_error(Dotsync::ConfigError, /Source file not found/)
+      end
+
+      it "raises error for chained sources" do
+        chained_path = File.join(source_dir, "remote", "chained.toml")
+        File.write(chained_path, <<~TOML)
+          [[sync.home]]
+          path = ".zshenv"
+        TOML
+        File.write(source_config_path, <<~TOML)
+          source = "#{chained_path}"
+        TOML
+        File.write(pointer_path, <<~TOML)
+          source = "#{source_config_path}"
+        TOML
+
+        cache = described_class.new(pointer_path)
+        expect { cache.load }.to raise_error(Dotsync::ConfigError, /Chained sources are not supported/)
+      end
+    end
+
+    context "cache invalidation" do
+      before do
+        File.write(source_config_path, <<~TOML)
+          [[sync.home]]
+          path = ".zshenv"
+        TOML
+        File.write(pointer_path, <<~TOML)
+          source = "#{source_config_path}"
+        TOML
+      end
+
+      it "invalidates cache when source file mtime changes" do
+        cache = described_class.new(pointer_path)
+        cache.load
+
+        sleep 0.1
+        FileUtils.touch(source_config_path)
+
+        expect(cache).to receive(:parse_and_cache).and_call_original
+        cache.load
+      end
+
+      it "invalidates cache when source file size changes" do
+        cache = described_class.new(pointer_path)
+        cache.load
+
+        File.write(source_config_path, <<~TOML)
+          [[sync.home]]
+          path = ".zshenv"
+
+          [[sync.xdg_config]]
+          path = "nvim"
+        TOML
+
+        expect(cache).to receive(:parse_and_cache).and_call_original
+        cache.load
+      end
+
+      it "invalidates cache when source file is deleted" do
+        cache = described_class.new(pointer_path)
+        cache.load
+
+        File.delete(source_config_path)
+
+        expect(cache.send(:valid_cache?)).to be false
+      end
+
+      it "stores source file stats in metadata" do
+        cache = described_class.new(pointer_path)
+        cache.load
+
+        meta_file = cache.instance_variable_get(:@meta_file)
+        metadata = JSON.parse(File.read(meta_file))
+
+        expect(metadata).to have_key("source_file_path")
+        expect(metadata).to have_key("source_file_mtime")
+        expect(metadata).to have_key("source_file_size")
+        expect(metadata["source_file_path"]).to eq(source_config_path)
+      end
+
+      it "does not store source file metadata when no source" do
+        cache = described_class.new(temp_config_path)
+        cache.load
+
+        meta_file = cache.instance_variable_get(:@meta_file)
+        metadata = JSON.parse(File.read(meta_file))
+
+        expect(metadata).not_to have_key("source_file_path")
+      end
+    end
+
+    context "no-cache mode with source" do
+      before do
+        File.write(source_config_path, <<~TOML)
+          [[sync.home]]
+          path = ".zshenv"
+        TOML
+        File.write(pointer_path, <<~TOML)
+          source = "#{source_config_path}"
+        TOML
+      end
+
+      it "works in no-cache mode" do
+        ENV["DOTSYNC_NO_CACHE"] = "1"
+        cache = described_class.new(pointer_path)
+
+        result = cache.load
+        expect(result["sync"]["home"]).to eq([{ "path" => ".zshenv" }])
+
+        ENV.delete("DOTSYNC_NO_CACHE")
+      end
+    end
+  end
+
   describe "include-aware caching" do
     let(:include_dir) { File.join("/tmp", "dotsync_include_cache_spec") }
     let(:base_path) { File.join(include_dir, "base.toml") }
