@@ -1,3 +1,27 @@
+## [0.4.0] - 2026-02-28
+
+### Added
+
+- Add `source` directive for config file indirection (#29)
+  - Local config becomes a thin pointer: `source = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.mbp_personal.toml"`
+  - Reads config directly from dotfiles repo — changes are visible immediately without syncing
+  - Eliminates the two-pass problem where config updates require `ds pull` twice
+  - Environment variables are expanded in the `source` path
+  - The source file can use `include` to compose with a base config
+  - Chained sources are rejected to keep behavior predictable
+  - Cache invalidation tracks pointer file, source file, and any included file
+  - `source` must be the only key in the pointer file (cannot be combined with other config)
+
+### Documentation
+
+- Add "Config Source" section to README with setup examples and per-machine workflow
+- Update Key Features and Table of Contents
+
+### Testing
+
+- Add source-aware ConfigCache specs: basic resolution, include composition, env var expansion, validation errors, cache invalidation, metadata tracking, no-cache mode
+- Total: 512 examples, 0 failures | Line: 96.4% | Branch: 82.34%
+
 ## [0.3.3] - 2026-02-16
 
 ### Added
@@ -461,6 +485,7 @@ Add gem executables
 
 Initial version
 
+[0.4.0]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.0...v0.3.1
