@@ -1,3 +1,15 @@
+## [0.4.0] - 2026-03-01
+
+### Added
+
+- Add manifest-based orphan cleanup for non-force sync mappings (#32)
+- Add `source` directive for config file indirection (#29) (#30)
+
+### Changed
+
+- CHANGELOG: remove manual version
+- Decouple Terminal::Table from domain logic via TableRenderer (#28)
+
 ## [0.3.3] - 2026-02-16
 
 ### Added
@@ -461,6 +473,7 @@ Add gem executables
 
 Initial version
 
+[0.4.0]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.0...v0.3.1
