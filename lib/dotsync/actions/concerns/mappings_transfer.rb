@@ -93,6 +93,8 @@ module Dotsync
       logger.log("")
 
       show_content_diffs if diff_content && has_modifications?
+
+      show_orphan_preview if respond_to?(:manifests_xdg_data_home, true)
     end
 
     def show_content_diffs
@@ -131,6 +133,28 @@ module Dotsync
       errors.each do |error_msg, info_msg|
         logger.error(error_msg)
         logger.info(info_msg) if info_msg
+      end
+    end
+
+    def cleanup_orphans
+      valid_mappings.each do |mapping|
+        next unless mapping.has_inclusions? && !mapping.force? && mapping.manifest_key
+
+        current_files = dest_files_matching_inclusions(mapping)
+        manifest = Dotsync::Manifest.new(
+          dest_dir: mapping.dest,
+          key: mapping.manifest_key,
+          xdg_data_home: manifests_xdg_data_home
+        )
+
+        manifest.orphans(current_files).each do |orphan_path|
+          next unless File.exist?(orphan_path)
+
+          FileUtils.rm(orphan_path)
+          logger.log("#{Icons.diff_removed}#{orphan_path}", color: Colors.diff_removals)
+        end
+
+        manifest.write(current_files)
       end
     end
 
@@ -224,6 +248,43 @@ module Dotsync
 
       def valid_mappings
         mappings.select(&:valid?)
+      end
+
+      def show_orphan_preview
+        orphans = []
+        valid_mappings.each do |mapping|
+          next unless mapping.has_inclusions? && !mapping.force? && mapping.manifest_key
+
+          current_files = dest_files_matching_inclusions(mapping)
+          manifest = Dotsync::Manifest.new(
+            dest_dir: mapping.dest,
+            key: mapping.manifest_key,
+            xdg_data_home: manifests_xdg_data_home
+          )
+          orphans.concat(manifest.orphans(current_files).select { |p| File.exist?(p) })
+        end
+
+        return if orphans.empty?
+
+        info("Orphans to remove:", icon: :diff)
+        orphans.sort.each do |path|
+          logger.log("#{Icons.diff_removed}#{path}", color: Colors.diff_removals)
+        end
+        logger.log("")
+      end
+
+      def dest_files_matching_inclusions(mapping)
+        return [] unless File.directory?(mapping.dest)
+
+        files = []
+        Find.find(mapping.dest) do |path|
+          next if path == mapping.dest
+          next if File.directory?(path)
+          next unless mapping.include?(path)
+
+          files << Pathname.new(path).relative_path_from(Pathname.new(mapping.dest)).to_s
+        end
+        files
       end
 
       def all_dest_files(mapping)

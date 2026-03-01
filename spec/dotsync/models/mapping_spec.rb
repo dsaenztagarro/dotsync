@@ -57,6 +57,104 @@ RSpec.describe Dotsync::Mapping do
     end
   end
 
+  describe "#sync_type" do
+    context "without sync_type attribute" do
+      it "returns nil" do
+        expect(mapping_entry.sync_type).to be_nil
+      end
+    end
+
+    context "with sync_type attribute" do
+      let(:attributes) do
+        {
+          "src" => src,
+          "dest" => dest,
+          "sync_type" => "xdg_bin"
+        }
+      end
+
+      it "returns the sync_type" do
+        expect(mapping_entry.sync_type).to eq("xdg_bin")
+      end
+    end
+  end
+
+  describe "#manifest_key" do
+    context "without sync_type" do
+      it "returns nil" do
+        expect(mapping_entry.manifest_key).to be_nil
+      end
+    end
+
+    context "with sync_type and no subpath" do
+      before do
+        ENV["XDG_BIN_HOME"] = File.join(root, "bin")
+        ENV["XDG_BIN_HOME_MIRROR"] = File.join(root, "bin_mirror")
+        FileUtils.mkdir_p(ENV["XDG_BIN_HOME"])
+        FileUtils.mkdir_p(ENV["XDG_BIN_HOME_MIRROR"])
+      end
+
+      after do
+        ENV.delete("XDG_BIN_HOME")
+        ENV.delete("XDG_BIN_HOME_MIRROR")
+      end
+
+      let(:attributes) do
+        {
+          "src" => "$XDG_BIN_HOME_MIRROR",
+          "dest" => "$XDG_BIN_HOME",
+          "sync_type" => "xdg_bin"
+        }
+      end
+
+      it "returns the sync_type as key" do
+        expect(mapping_entry.manifest_key).to eq("xdg_bin")
+      end
+    end
+
+    context "with sync_type and subpath" do
+      before do
+        ENV["XDG_CONFIG_HOME"] = File.join(root, "config")
+        ENV["XDG_CONFIG_HOME_MIRROR"] = File.join(root, "config_mirror")
+        FileUtils.mkdir_p(File.join(ENV["XDG_CONFIG_HOME"], "nvim"))
+        FileUtils.mkdir_p(File.join(ENV["XDG_CONFIG_HOME_MIRROR"], "nvim"))
+      end
+
+      after do
+        ENV.delete("XDG_CONFIG_HOME")
+        ENV.delete("XDG_CONFIG_HOME_MIRROR")
+      end
+
+      let(:attributes) do
+        {
+          "src" => "$XDG_CONFIG_HOME_MIRROR/nvim",
+          "dest" => "$XDG_CONFIG_HOME/nvim",
+          "sync_type" => "xdg_config"
+        }
+      end
+
+      it "returns sync_type with subpath" do
+        expect(mapping_entry.manifest_key).to eq("xdg_config--nvim")
+      end
+    end
+  end
+
+  describe "#has_inclusions?" do
+    context "without only attribute" do
+      it "returns false" do
+        expect(mapping_entry.has_inclusions?).to be false
+      end
+    end
+
+    context "with only attribute" do
+      let(:only) { ["file_a", "file_b"] }
+
+      it "returns true" do
+        expect(mapping_entry.has_inclusions?).to be true
+      end
+    end
+  end
+
   describe "#ignores" do
     context "without ignore attribute" do
       let(:attributes) { { "src" => src, "dest" => dest } }

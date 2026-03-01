@@ -147,6 +147,7 @@ module Dotsync
         base["force"] = mapping["force"] if mapping.key?("force")
         base["ignore"] = mapping["ignore"] if mapping.key?("ignore")
         base["only"] = only if only
+        base["sync_type"] = shorthand_type
 
         # Resolve hooks for direction
         if mapping.key?("hooks")

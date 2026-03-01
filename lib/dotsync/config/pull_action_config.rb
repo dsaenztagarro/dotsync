@@ -13,6 +13,10 @@ module Dotsync
       File.join(xdg_data_home, "dotsync", "backups")
     end
 
+    def manifests_xdg_data_home
+      xdg_data_home
+    end
+
     private
       SECTION_NAME = "pull"
 
