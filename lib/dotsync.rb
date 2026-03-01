@@ -34,6 +34,7 @@ require_relative "dotsync/utils/config_cache"
 require_relative "dotsync/utils/config_merger"
 require_relative "dotsync/utils/parallel"
 require_relative "dotsync/utils/hook_runner"
+require_relative "dotsync/utils/manifest"
 
 # Models
 require_relative "dotsync/models/mapping"

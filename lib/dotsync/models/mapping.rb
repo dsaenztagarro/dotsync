@@ -21,7 +21,7 @@ module Dotsync
   class Mapping
     include Dotsync::PathUtils
 
-    attr_reader :original_src, :original_dest, :original_ignores, :original_only
+    attr_reader :original_src, :original_dest, :original_ignores, :original_only, :sync_type
 
     def initialize(attributes)
       @original_src = attributes["src"]
@@ -30,6 +30,7 @@ module Dotsync
       @original_only = Array(attributes["only"])
       @force = attributes["force"] || false
       @hooks = Array(attributes["hooks"])
+      @sync_type = attributes["sync_type"]
 
       @sanitized_src, @sanitized_dest, @sanitized_ignores, @sanitized_only = process_paths(
         @original_src,
@@ -63,6 +64,27 @@ module Dotsync
 
     def has_hooks?
       @hooks.any?
+    end
+
+    def has_inclusions?
+      @original_only.any?
+    end
+
+    def manifest_key
+      return nil unless @sync_type
+
+      shorthand_base = SyncMappings::SHORTHANDS.dig(@sync_type, :local)
+      return @sync_type unless shorthand_base
+
+      expanded_base = sanitize_path(shorthand_base)
+      if dest == expanded_base
+        @sync_type
+      elsif dest.start_with?("#{expanded_base}/")
+        subpath = dest.delete_prefix("#{expanded_base}/")
+        "#{@sync_type}--#{subpath}"
+      else
+        @sync_type
+      end
     end
 
     def directories?
@@ -209,10 +231,6 @@ module Dotsync
 
       def has_ignores?
         @original_ignores.any?
-      end
-
-      def has_inclusions?
-        @original_only.any?
       end
 
       def process_paths(raw_src, raw_dest, raw_ignores, raw_only)

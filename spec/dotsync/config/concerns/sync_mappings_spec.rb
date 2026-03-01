@@ -374,6 +374,51 @@ RSpec.describe Dotsync::SyncMappings do
       ENV.delete("HOME_MIRROR")
     end
 
+    describe "sync_type preservation" do
+      let(:config) do
+        {
+          "sync" => {
+            "xdg_config" => [
+              { "path" => "nvim", "force" => true }
+            ]
+          }
+        }
+      end
+
+      it "preserves sync_type on shorthand mappings for pull" do
+        instance = test_class.new(config)
+        mappings = instance.sync_mappings_for_pull
+
+        expect(mappings.first.sync_type).to eq("xdg_config")
+      end
+
+      it "preserves sync_type on shorthand mappings for push" do
+        instance = test_class.new(config)
+        mappings = instance.sync_mappings_for_push
+
+        expect(mappings.first.sync_type).to eq("xdg_config")
+      end
+
+      context "with explicit mappings" do
+        let(:config) do
+          {
+            "sync" => {
+              "mappings" => [
+                { "local" => local_path, "remote" => remote_path }
+              ]
+            }
+          }
+        end
+
+        it "does not set sync_type on explicit mappings" do
+          instance = test_class.new(config)
+          mappings = instance.sync_mappings_for_pull
+
+          expect(mappings.first.sync_type).to be_nil
+        end
+      end
+    end
+
     describe "#sync_mappings_for_push with xdg_config shorthand" do
       let(:config) do
         {

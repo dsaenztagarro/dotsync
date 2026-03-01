@@ -30,11 +30,13 @@ RSpec.describe Dotsync::PullAction do
   end
   let(:mappings) { [mapping1, mapping2] }
   let(:backups_root) { File.join(root, "backups") }
+  let(:manifests_xdg_data_home) { File.join(root, "data") }
   let(:config) do
     instance_double(
       "Dotsync::PullActionConfig",
       mappings: mappings,
-      backups_root: backups_root
+      backups_root: backups_root,
+      manifests_xdg_data_home: manifests_xdg_data_home
     )
   end
   let(:logger) { instance_double("Dotsync::Logger") }
@@ -323,6 +325,100 @@ RSpec.describe Dotsync::PullAction do
                 expect(logger).to have_received(:log).with("  #{backup_path}")
               end
             end
+          end
+        end
+      end
+
+      context "orphan cleanup" do
+        let(:bin_src) { File.join(root, "bin_src") }
+        let(:bin_dest) { File.join(root, "bin_dest") }
+        let(:mapping_with_inclusions) do
+          Dotsync::Mapping.new(
+            "src" => bin_src,
+            "dest" => bin_dest,
+            "only" => ["grafanactl", "elasticctl"],
+            "sync_type" => "xdg_bin"
+          )
+        end
+        let(:mappings) { [mapping_with_inclusions] }
+        let(:manifest_path) { File.join(manifests_xdg_data_home, "dotsync/manifests/xdg_bin.json") }
+
+        before do
+          ENV["XDG_BIN_HOME"] = bin_dest
+          ENV["XDG_BIN_HOME_MIRROR"] = bin_src
+          FileUtils.mkdir_p(bin_src)
+          FileUtils.mkdir_p(bin_dest)
+          # Create files in both src and dest
+          File.write(File.join(bin_src, "grafanactl"), "new content")
+          File.write(File.join(bin_src, "elasticctl"), "new content")
+          File.write(File.join(bin_dest, "grafanactl"), "old content")
+          File.write(File.join(bin_dest, "elasticctl"), "old content")
+          # Create orphan in dest (was in old manifest, no longer in src)
+          File.write(File.join(bin_dest, "setup-grafana"), "orphan content")
+
+          # Write old manifest with the orphan file
+          FileUtils.mkdir_p(File.dirname(manifest_path))
+          File.write(manifest_path, '{"files": ["elasticctl", "grafanactl", "setup-grafana"]}')
+
+          allow(Dotsync::FileTransfer).to receive(:new).with(mapping_with_inclusions).and_return(
+            instance_double("Dotsync::FileTransfer", transfer: nil)
+          )
+        end
+
+        after do
+          ENV.delete("XDG_BIN_HOME")
+          ENV.delete("XDG_BIN_HOME_MIRROR")
+        end
+
+        it "removes orphan files after transfer" do
+          action.execute(apply: true, yes: true)
+
+          expect(File.exist?(File.join(bin_dest, "setup-grafana"))).to be false
+        end
+
+        it "updates the manifest after cleanup" do
+          action.execute(apply: true, yes: true)
+
+          data = JSON.parse(File.read(manifest_path))
+          expect(data["files"]).to contain_exactly("elasticctl", "grafanactl")
+        end
+
+        it "preserves non-orphan files" do
+          action.execute(apply: true, yes: true)
+
+          expect(File.exist?(File.join(bin_dest, "grafanactl"))).to be true
+          expect(File.exist?(File.join(bin_dest, "elasticctl"))).to be true
+        end
+
+        context "when no previous manifest exists" do
+          before do
+            FileUtils.rm(manifest_path)
+          end
+
+          it "writes a new manifest without removing any files" do
+            action.execute(apply: true, yes: true)
+
+            expect(File.exist?(File.join(bin_dest, "setup-grafana"))).to be true
+            data = JSON.parse(File.read(manifest_path))
+            expect(data["files"]).to contain_exactly("elasticctl", "grafanactl")
+          end
+        end
+
+        context "with force mapping" do
+          let(:mapping_with_inclusions) do
+            Dotsync::Mapping.new(
+              "src" => bin_src,
+              "dest" => bin_dest,
+              "only" => ["grafanactl", "elasticctl"],
+              "force" => true,
+              "sync_type" => "xdg_bin"
+            )
+          end
+
+          it "skips orphan cleanup for force mappings" do
+            action.execute(apply: true, yes: true)
+
+            expect(File.exist?(File.join(bin_dest, "setup-grafana"))).to be true
           end
         end
       end

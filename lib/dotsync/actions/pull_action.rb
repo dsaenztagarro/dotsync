@@ -6,6 +6,7 @@ module Dotsync
     include OutputSections
 
     def_delegator :@config, :backups_root
+    def_delegator :@config, :manifests_xdg_data_home
 
     def execute(options = {})
       output_sections = compute_output_sections(options)
@@ -33,6 +34,7 @@ module Dotsync
       end
 
       transfer_mappings
+      cleanup_orphans
       execute_hooks(force: options[:force_hooks])
       action("Mappings pulled", icon: :done)
     end
