@@ -307,6 +307,29 @@ RSpec.describe Dotsync::PullAction do
             expect(logger).to have_received(:log).with("  #{backup_dir}")
           end
 
+          context "when directory contains socket files" do
+            let(:socket_path) { File.join(mapping1.dest, "daemon.sock") }
+
+            before do
+              require "socket"
+              UNIXServer.new(socket_path)
+            end
+
+            after do
+              File.delete(socket_path) if File.exist?(socket_path)
+            end
+
+            it "skips socket files during backup" do
+              subject
+
+              timestamp = Time.now.strftime("%Y%m%d%H%M%S")
+              backup_dir = File.join(backups_root, timestamp)
+              expect(Dir.exist?(backup_dir)).to eq(true)
+              expect(File.exist?(File.join(backup_dir, "folder_dest", "daemon.sock"))).to eq(false)
+              expect(File.read(File.join(backup_dir, "folder_dest", "file1"))).to eq("#{file1_dest} content")
+            end
+          end
+
           context "when there are more than 10 backups" do
             before do
               1.upto(12) do |day|

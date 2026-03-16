@@ -1,3 +1,12 @@
+## [0.4.1] - 2026-03-17
+
+### Fixed
+
+- Fix backup crash on macOS when directories contain socket files (#33)
+  - Replace `FileUtils.cp_r` with custom `cp_r_regular_files` that skips sockets, FIFOs, and device files
+  - Socket paths exceeding macOS 104-byte limit no longer cause backup failures
+  - Symlinks are properly preserved during backup
+
 ## [0.4.0] - 2026-03-01
 
 ### Added
@@ -473,6 +482,7 @@ Add gem executables
 
 Initial version
 
+[0.4.1]: https://github.com/dsaenztagarro/dotsync/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.1...v0.3.2
