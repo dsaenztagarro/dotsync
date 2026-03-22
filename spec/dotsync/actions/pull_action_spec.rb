@@ -330,6 +330,28 @@ RSpec.describe Dotsync::PullAction do
             end
           end
 
+          context "when backup directory has pre-existing symlinks" do
+            it "overwrites the existing symlinks without crashing" do
+              timestamp = Time.now.strftime("%Y%m%d%H%M%S")
+              backup_dir = File.join(backups_root, timestamp)
+
+              # Simulate a partial backup from a previous failed run
+              FileUtils.mkdir_p(File.join(backup_dir, "folder_dest"))
+              FileUtils.ln_s("old_target", File.join(backup_dir, "folder_dest", "file1"))
+
+              # Create a symlink in the source to back up
+              symlink_src = File.join(mapping1.dest, "link1")
+              FileUtils.ln_s("some_target", symlink_src)
+
+              subject
+
+              expect(Dir.exist?(backup_dir)).to eq(true)
+              backed_up_link = File.join(backup_dir, "folder_dest", "link1")
+              expect(File.symlink?(backed_up_link)).to eq(true)
+              expect(File.readlink(backed_up_link)).to eq("some_target")
+            end
+          end
+
           context "when there are more than 10 backups" do
             before do
               1.upto(12) do |day|
