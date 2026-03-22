@@ -1,3 +1,12 @@
+## [0.4.3] - 2026-03-22
+
+### Fixed
+
+- Fix backup to respect `only`/`ignore` filters via FileTransfer reuse (#37)
+  - Backup no longer copies entire destination directories — only files matching sync filters are backed up
+  - Fixes `Permission denied` crash when destination contains restricted files (e.g. `.git/objects`) outside the filter
+  - Removes `cp_r_regular_files` in favor of reusing `FileTransfer` with a backup mapping
+
 ## [0.4.2] - 2026-03-22
 
 ### Fixed
