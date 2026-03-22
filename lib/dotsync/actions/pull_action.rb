@@ -76,6 +76,7 @@ module Dotsync
           src_entry = File.join(src, entry)
           dest_entry = File.join(dest, entry)
           if File.symlink?(src_entry)
+            FileUtils.rm_f(dest_entry)
             FileUtils.ln_s(File.readlink(src_entry), dest_entry)
           elsif File.directory?(src_entry)
             cp_r_regular_files(src_entry, dest_entry)

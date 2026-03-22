@@ -1,3 +1,10 @@
+## [0.4.2] - 2026-03-22
+
+### Fixed
+
+- Fix `cp_r_regular_files` crash on pre-existing symlinks during backup (#35)
+  - Add `FileUtils.rm_f` before `FileUtils.ln_s` to handle leftover symlinks from partial backup runs
+
 ## [0.4.1] - 2026-03-17
 
 ### Fixed
