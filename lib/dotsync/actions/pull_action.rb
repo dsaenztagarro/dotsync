@@ -62,28 +62,17 @@ module Dotsync
           if File.file?(mapping.src)
             FileUtils.cp(mapping.dest, backup_path)
           else
-            cp_r_regular_files(mapping.dest, backup_path)
+            backup_mapping = Dotsync::Mapping.new(
+              "src" => mapping.dest,
+              "dest" => backup_path,
+              "only" => mapping.original_only,
+              "ignore" => mapping.original_ignores,
+              "force" => false
+            )
+            Dotsync::FileTransfer.new(backup_mapping).transfer
           end
         end
         true
-      end
-
-      # Recursively copy a directory, skipping sockets, FIFOs, and device files.
-      # FileUtils.cp_r fails on macOS when socket paths exceed the 104-byte limit.
-      def cp_r_regular_files(src, dest)
-        FileUtils.mkdir_p(dest)
-        Dir.each_child(src) do |entry|
-          src_entry = File.join(src, entry)
-          dest_entry = File.join(dest, entry)
-          if File.symlink?(src_entry)
-            FileUtils.rm_f(dest_entry)
-            FileUtils.ln_s(File.readlink(src_entry), dest_entry)
-          elsif File.directory?(src_entry)
-            cp_r_regular_files(src_entry, dest_entry)
-          elsif File.file?(src_entry)
-            FileUtils.cp(src_entry, dest_entry, preserve: true)
-          end
-        end
       end
 
       def purge_old_backups
