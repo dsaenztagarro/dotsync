@@ -67,6 +67,7 @@ RSpec.describe Dotsync::PullAction do
     let(:color_diff_updated) { Dotsync::Colors.diff_modifications }
 
     before do
+      allow(Dotsync::FileTransfer).to receive(:new).and_call_original
       allow(Dotsync::FileTransfer).to receive(:new).with(mappings[0]).and_return(file_transfer1)
       allow(Dotsync::FileTransfer).to receive(:new).with(mappings[1]).and_return(file_transfer2)
       allow(file_transfer1).to receive(:transfer)
@@ -370,6 +371,132 @@ RSpec.describe Dotsync::PullAction do
                 expect(logger).to have_received(:log).with("  #{backup_path}")
               end
             end
+          end
+        end
+
+        context "with only filter" do
+          let(:filtered_src) { File.join(src, "filtered_src") }
+          let(:filtered_dest) { File.join(dest, "filtered_dest") }
+          let(:mapping1) do
+            Dotsync::Mapping.new(
+              "src" => filtered_src,
+              "dest" => filtered_dest,
+              "only" => ["settings.json", "commands"],
+              "force" => true
+            )
+          end
+          let(:mappings) { [mapping1] }
+
+          before do
+            require "timecop"
+            Timecop.freeze(2025, 2, 1)
+            FileUtils.mkdir_p(filtered_src)
+            FileUtils.mkdir_p(filtered_dest)
+            FileUtils.mkdir_p(backups_root)
+
+            # Create files matching the only filter
+            File.write(File.join(filtered_src, "settings.json"), "src settings")
+            File.write(File.join(filtered_dest, "settings.json"), "dest settings")
+            FileUtils.mkdir_p(File.join(filtered_src, "commands"))
+            FileUtils.mkdir_p(File.join(filtered_dest, "commands"))
+            File.write(File.join(filtered_src, "commands", "cmd1"), "src cmd1")
+            File.write(File.join(filtered_dest, "commands", "cmd1"), "dest cmd1")
+
+            # Create files NOT matching the only filter (should be excluded from backup)
+            FileUtils.mkdir_p(File.join(filtered_dest, "plugins", "marketplace", ".git", "objects"))
+            File.write(File.join(filtered_dest, "plugins", "marketplace", ".git", "objects", "abc123"), "git object")
+            File.write(File.join(filtered_dest, "workspace.json"), "workspace data")
+          end
+
+          it "only backs up files matching the only filter" do
+            subject
+
+            timestamp = Time.now.strftime("%Y%m%d%H%M%S")
+            backup_dir = File.join(backups_root, timestamp)
+            expect(Dir.exist?(backup_dir)).to eq(true)
+            expect(File.read(File.join(backup_dir, "filtered_dest", "settings.json"))).to eq("dest settings")
+            expect(File.read(File.join(backup_dir, "filtered_dest", "commands", "cmd1"))).to eq("dest cmd1")
+            expect(File.exist?(File.join(backup_dir, "filtered_dest", "plugins"))).to eq(false)
+            expect(File.exist?(File.join(backup_dir, "filtered_dest", "workspace.json"))).to eq(false)
+          end
+        end
+
+        context "with ignore filter" do
+          let(:ignored_src) { File.join(src, "ignored_src") }
+          let(:ignored_dest) { File.join(dest, "ignored_dest") }
+          let(:mapping1) do
+            Dotsync::Mapping.new(
+              "src" => ignored_src,
+              "dest" => ignored_dest,
+              "ignore" => ["lazy-lock.json"],
+              "force" => true
+            )
+          end
+          let(:mappings) { [mapping1] }
+
+          before do
+            require "timecop"
+            Timecop.freeze(2025, 2, 1)
+            FileUtils.mkdir_p(ignored_src)
+            FileUtils.mkdir_p(ignored_dest)
+            FileUtils.mkdir_p(backups_root)
+
+            File.write(File.join(ignored_src, "init.lua"), "src init")
+            File.write(File.join(ignored_dest, "init.lua"), "dest init")
+            File.write(File.join(ignored_dest, "lazy-lock.json"), "lock data")
+          end
+
+          it "excludes ignored files from backup" do
+            subject
+
+            timestamp = Time.now.strftime("%Y%m%d%H%M%S")
+            backup_dir = File.join(backups_root, timestamp)
+            expect(Dir.exist?(backup_dir)).to eq(true)
+            expect(File.read(File.join(backup_dir, "ignored_dest", "init.lua"))).to eq("dest init")
+            expect(File.exist?(File.join(backup_dir, "ignored_dest", "lazy-lock.json"))).to eq(false)
+          end
+        end
+
+        context "with only filter and permission-restricted files outside filter" do
+          let(:restricted_src) { File.join(src, "restricted_src") }
+          let(:restricted_dest) { File.join(dest, "restricted_dest") }
+          let(:mapping1) do
+            Dotsync::Mapping.new(
+              "src" => restricted_src,
+              "dest" => restricted_dest,
+              "only" => ["settings.json"]
+            )
+          end
+          let(:mappings) { [mapping1] }
+          let(:restricted_file) { File.join(restricted_dest, "plugins", ".git", "objects", "abc123") }
+
+          before do
+            require "timecop"
+            Timecop.freeze(2025, 2, 1)
+            FileUtils.mkdir_p(restricted_src)
+            FileUtils.mkdir_p(restricted_dest)
+            FileUtils.mkdir_p(backups_root)
+
+            File.write(File.join(restricted_src, "settings.json"), "src settings")
+            File.write(File.join(restricted_dest, "settings.json"), "dest settings")
+
+            # Create permission-restricted file outside the only filter
+            FileUtils.mkdir_p(File.dirname(restricted_file))
+            File.write(restricted_file, "restricted content")
+            File.chmod(0o000, restricted_file)
+          end
+
+          after do
+            File.chmod(0o644, restricted_file) if File.exist?(restricted_file)
+          end
+
+          it "does not crash and only backs up filtered files" do
+            expect { subject }.not_to raise_error
+
+            timestamp = Time.now.strftime("%Y%m%d%H%M%S")
+            backup_dir = File.join(backups_root, timestamp)
+            expect(File.read(File.join(backup_dir, "restricted_dest", "settings.json"))).to eq("dest settings")
+            expect(File.exist?(File.join(backup_dir, "restricted_dest", "plugins"))).to eq(false)
           end
         end
       end
