@@ -1,3 +1,12 @@
+## [0.4.4] - 2026-04-07
+
+### Fixed
+
+- Skip file transfer for mappings with no differences (#39)
+  - `transfer_mappings` now filters using cached diff results to only transfer mappings that have actual changes
+  - Prevents unnecessary file mtime updates that caused Neovim to reload all plugins on every `dotsync pull`
+  - No redundant file comparisons — leverages the already-computed `@differs` from the display phase
+
 ## [0.4.3] - 2026-03-22
 
 ### Fixed
@@ -13,7 +22,6 @@
 
 - Fix `cp_r_regular_files` crash on pre-existing symlinks during backup (#35)
   - Add `FileUtils.rm_f` before `FileUtils.ln_s` to handle leftover symlinks from partial backup runs
-
 ## [0.4.1] - 2026-03-17
 
 ### Fixed
@@ -498,6 +506,9 @@ Add gem executables
 
 Initial version
 
+[0.4.4]: https://github.com/dsaenztagarro/dotsync/compare/v0.4.3...v0.4.4
+[0.4.3]: https://github.com/dsaenztagarro/dotsync/compare/v0.4.2...v0.4.3
+[0.4.2]: https://github.com/dsaenztagarro/dotsync/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/dsaenztagarro/dotsync/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/dsaenztagarro/dotsync/compare/v0.3.2...v0.3.3
