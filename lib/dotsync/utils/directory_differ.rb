@@ -11,11 +11,11 @@ module Dotsync
   #
   # This class implements several optimizations to handle large directory trees efficiently:
   #
-  # 1. **Pre-indexed source tree** (see #build_source_index)
-  #    Instead of calling File.exist? for each destination file (disk I/O per file),
-  #    we build a Set of all source paths upfront. Checking Set#include? is O(1) in memory
-  #    vs O(1) disk I/O, which is orders of magnitude faster for large trees.
-  #    Impact: ~100x faster for directories with thousands of files.
+  # 1. **Source index built during first walk** (see #diff_mapping_directories)
+  #    The source tree walk that finds additions/modifications also builds a Set of all
+  #    source paths. In force mode, this Set enables O(1) lookups during the destination
+  #    walk — replacing per-file File.exist? calls (disk I/O) with hash lookups (memory).
+  #    Impact: ~100x faster for directories with thousands of files, single source traversal.
   #
   # 2. **Early directory pruning with Find.prune** (see #diff_mapping_directories)
   #    When an `only` filter is configured, we prune entire directory subtrees that
@@ -58,6 +58,12 @@ module Dotsync
         modification_pairs = []
         removals = []
 
+        # OPTIMIZATION: Build the source index during the first walk.
+        # This Set is used in force mode for O(1) lookups during the destination walk,
+        # replacing per-file File.exist? calls (disk I/O) with hash lookups (memory).
+        # Building it here avoids a second traversal of the source tree.
+        source_index = Set.new
+
         # Walk the source tree to find additions and modifications.
         # Uses bidirectional_include? with Find.prune to skip directories
         # that are outside the `only` filter, avoiding unnecessary traversal.
@@ -71,6 +77,8 @@ module Dotsync
             Find.prune
             next
           end
+
+          source_index << src_path
 
           dest_path = File.join(mapping_dest, rel_path)
 
@@ -86,11 +94,6 @@ module Dotsync
 
         # In force mode, also find files in destination that don't exist in source (removals).
         if force?
-          # OPTIMIZATION: Pre-index source tree into a Set for O(1) lookups.
-          # This replaces per-file File.exist? calls (disk I/O) with hash lookups (memory).
-          # For a destination with thousands of files, this is orders of magnitude faster.
-          source_index = build_source_index
-
           Find.find(mapping_dest) do |dest_path|
             rel_path = dest_path.sub(/^#{Regexp.escape(mapping_dest)}\/?/, "")
             next if rel_path.empty?
@@ -118,11 +121,16 @@ module Dotsync
         filtered_modifications = filter_ignores(modifications)
         modification_pairs = modification_pairs.select { |pair| filtered_modifications.include?(pair[:rel_path]) }
 
+        filtered_removals = filter_ignores(removals)
+
         additions = relative_to_absolute(filter_ignores(additions), mapping_original_dest)
         modifications = relative_to_absolute(filtered_modifications, mapping_original_dest)
-        removals = relative_to_absolute(filter_ignores(removals), mapping_original_dest)
+        removals = relative_to_absolute(filtered_removals, mapping_original_dest)
 
-        Dotsync::Diff.new(additions: additions, modifications: modifications, removals: removals, modification_pairs: modification_pairs)
+        Dotsync::Diff.new(
+          additions: additions, modifications: modifications, removals: removals,
+          modification_pairs: modification_pairs, removal_rel_paths: filtered_removals
+        )
       end
 
       def diff_mapping_files
@@ -138,26 +146,6 @@ module Dotsync
         end
 
         Dotsync::Diff.new(additions: additions, modifications: modifications, modification_pairs: modification_pairs)
-      end
-
-      # Builds a Set of all source paths for O(1) existence checks.
-      #
-      # This is used during the destination walk (force mode) to check if a destination
-      # file exists in the source. Using a Set avoids repeated File.exist? calls,
-      # replacing disk I/O with memory lookups.
-      #
-      # @return [Set<String>] Set of absolute source paths
-      def build_source_index
-        index = Set.new
-        Find.find(mapping_src) do |src_path|
-          # Apply the same pruning logic as the main source walk
-          unless @mapping.bidirectional_include?(src_path)
-            Find.prune
-            next
-          end
-          index << src_path
-        end
-        index
       end
 
       def filter_ignores(all_paths)

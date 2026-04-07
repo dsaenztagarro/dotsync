@@ -3,13 +3,14 @@
 module Dotsync
   # Represents the differences between two directories
   class Diff
-    attr_reader :additions, :modifications, :removals, :modification_pairs
+    attr_reader :additions, :modifications, :removals, :modification_pairs, :removal_rel_paths
 
-    def initialize(additions: [], modifications: [], removals: [], modification_pairs: [])
+    def initialize(additions: [], modifications: [], removals: [], modification_pairs: [], removal_rel_paths: [])
       @additions = additions
       @modifications = modifications
       @removals = removals
       @modification_pairs = modification_pairs
+      @removal_rel_paths = removal_rel_paths
     end
 
     def any?

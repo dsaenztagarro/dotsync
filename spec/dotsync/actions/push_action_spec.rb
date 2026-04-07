@@ -60,8 +60,8 @@ RSpec.describe Dotsync::PushAction do
     let(:color_diff_updated) { Dotsync::Colors.diff_modifications }
 
     before do
-      allow(Dotsync::FileTransfer).to receive(:new).with(mappings[0]).and_return(file_transfer1)
-      allow(Dotsync::FileTransfer).to receive(:new).with(mappings[1]).and_return(file_transfer2)
+      allow(Dotsync::FileTransfer).to receive(:new).with(mappings[0], any_args).and_return(file_transfer1)
+      allow(Dotsync::FileTransfer).to receive(:new).with(mappings[1], any_args).and_return(file_transfer2)
       allow(file_transfer1).to receive(:transfer)
       allow(file_transfer2).to receive(:transfer)
     end
@@ -230,7 +230,7 @@ RSpec.describe Dotsync::PushAction do
         before do
           File.write(mapping_with_hooks.src, "#{mapping_with_hooks.src} content")
           File.write(mapping_with_hooks.dest, "#{mapping_with_hooks.dest} content")
-          allow(Dotsync::FileTransfer).to receive(:new).with(mappings[1]).and_return(file_transfer2)
+          allow(Dotsync::FileTransfer).to receive(:new).with(mappings[1], any_args).and_return(file_transfer2)
         end
 
         it "executes hooks after transfer when files changed" do

@@ -70,8 +70,8 @@ RSpec.describe Dotsync::PullAction do
 
     before do
       allow(Dotsync::FileTransfer).to receive(:new).and_call_original
-      allow(Dotsync::FileTransfer).to receive(:new).with(mappings[0]).and_return(file_transfer1)
-      allow(Dotsync::FileTransfer).to receive(:new).with(mappings[1]).and_return(file_transfer2)
+      allow(Dotsync::FileTransfer).to receive(:new).with(mappings[0], any_args).and_return(file_transfer1)
+      allow(Dotsync::FileTransfer).to receive(:new).with(mappings[1], any_args).and_return(file_transfer2)
       allow(file_transfer1).to receive(:transfer)
       allow(file_transfer2).to receive(:transfer)
     end
@@ -101,6 +101,12 @@ RSpec.describe Dotsync::PullAction do
 
       it "shows no differences" do
         expect_show_no_differences
+
+        action.execute
+      end
+
+      it "skips orphan preview scan" do
+        expect(action).not_to receive(:dest_files_matching_inclusions)
 
         action.execute
       end
@@ -228,7 +234,7 @@ RSpec.describe Dotsync::PullAction do
         let(:mappings) { [mapping1, mapping_with_hooks] }
 
         before do
-          allow(Dotsync::FileTransfer).to receive(:new).with(mappings[1]).and_return(file_transfer2)
+          allow(Dotsync::FileTransfer).to receive(:new).with(mappings[1], any_args).and_return(file_transfer2)
         end
 
         it "executes hooks after transfer when files changed" do
@@ -581,7 +587,7 @@ RSpec.describe Dotsync::PullAction do
           FileUtils.mkdir_p(File.dirname(manifest_path))
           File.write(manifest_path, '{"files": ["elasticctl", "grafanactl", "setup-grafana"]}')
 
-          allow(Dotsync::FileTransfer).to receive(:new).with(mapping_with_inclusions).and_return(
+          allow(Dotsync::FileTransfer).to receive(:new).with(mapping_with_inclusions, any_args).and_return(
             instance_double("Dotsync::FileTransfer", transfer: nil)
           )
         end

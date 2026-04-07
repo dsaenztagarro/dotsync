@@ -499,6 +499,53 @@ RSpec.describe Dotsync::FileTransfer do
           end
         end
       end
+
+      context "with pre-computed removals" do
+        let(:force) { true }
+        let(:sanitized_dest) { config.dest }
+
+        before do
+          FileUtils.mkdir_p(File.join(src, "fold"))
+          File.write(File.join(src, "fold", "kept.txt"), "kept content")
+
+          FileUtils.mkdir_p(File.join(dest, "fold"))
+          File.write(File.join(dest, "fold", "kept.txt"), "old content")
+          File.write(File.join(dest, "fold", "removed.txt"), "to remove")
+          File.write(File.join(dest, "other.txt"), "other content")
+        end
+
+        it "uses pre-computed removals instead of scanning destination" do
+          removals = [File.join(sanitized_dest, "fold", "removed.txt"), File.join(sanitized_dest, "other.txt")]
+          transfer = described_class.new(config, removals: removals)
+          transfer.transfer
+
+          expect(File.exist?(File.join(dest, "fold", "removed.txt"))).to be false
+          expect(File.exist?(File.join(dest, "other.txt"))).to be false
+          expect(File.read(File.join(dest, "fold", "kept.txt"))).to eq("kept content")
+        end
+
+        it "cleans up empty parent directories after removal" do
+          FileUtils.mkdir_p(File.join(dest, "empty_parent"))
+          File.write(File.join(dest, "empty_parent", "only_file.txt"), "content")
+
+          removals = [File.join(sanitized_dest, "empty_parent", "only_file.txt")]
+          transfer = described_class.new(config, removals: removals)
+          transfer.transfer
+
+          expect(File.exist?(File.join(dest, "empty_parent", "only_file.txt"))).to be false
+          expect(Dir.exist?(File.join(dest, "empty_parent"))).to be false
+        end
+
+        it "preserves non-empty parent directories" do
+          removals = [File.join(sanitized_dest, "fold", "removed.txt")]
+          transfer = described_class.new(config, removals: removals)
+          transfer.transfer
+
+          expect(File.exist?(File.join(dest, "fold", "removed.txt"))).to be false
+          expect(Dir.exist?(File.join(dest, "fold"))).to be true
+          expect(File.exist?(File.join(dest, "fold", "kept.txt"))).to be true
+        end
+      end
     end
   end
 

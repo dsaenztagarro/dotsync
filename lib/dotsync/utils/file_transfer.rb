@@ -5,17 +5,17 @@ module Dotsync
     # Initializes a new FileTransfer instance
     #
     # @param mapping [Dotsync::Mapping] the mapping object containing source, destination, force, and ignore details
-    # @option mapping [String] :src the source directory path
-    # @option mapping [String] :dest the destination directory path
-    # @option mapping [Boolean] :force? optional flag to force actions
-    # @option mapping [Array<String>] :ignores optional list of files/directories to ignore
-    def initialize(mapping)
+    # @param removals [Array<String>, nil] pre-computed absolute paths to remove in force mode.
+    #   When provided (from cached diff), skips the destination tree traversal in cleanup_folder.
+    #   When nil, falls back to scanning the destination tree (used by backup transfers).
+    def initialize(mapping, removals: nil)
       @mapping = mapping
       @src = mapping.src
       @dest = mapping.dest
       @force = mapping.force?
       @inclusions = mapping.inclusions || []
       @ignores = mapping.ignores || []
+      @removals = removals
     end
 
     def transfer
@@ -43,7 +43,13 @@ module Dotsync
         end
         transfer_file(@src, target_dest)
       else
-        cleanup_folder(@dest) if @force
+        if @force
+          if @removals
+            remove_precomputed_files
+          else
+            cleanup_folder(@dest)
+          end
+        end
         transfer_folder(@src, @dest)
       end
     end
@@ -128,6 +134,28 @@ module Dotsync
           raise Dotsync::PermissionError, "Permission denied creating symlink: #{e.message}"
         rescue StandardError => e
           raise Dotsync::SymlinkError, "Failed to create symlink: #{e.message}"
+        end
+      end
+
+      # Removes files using pre-computed removal paths from the cached diff,
+      # avoiding a full destination tree traversal. After deleting files, walks
+      # up to clean empty parent directories.
+      def remove_precomputed_files
+        dest_expanded = File.expand_path(@dest)
+
+        @removals.each do |path|
+          next unless File.file?(path)
+
+          FileUtils.rm(path)
+
+          # Clean up empty parent directories up to the destination root
+          dir = File.dirname(path)
+          while dir != dest_expanded && dir.start_with?(dest_expanded)
+            break unless Dir.empty?(dir)
+
+            FileUtils.rmdir(dir)
+            dir = File.dirname(dir)
+          end
         end
       end
 

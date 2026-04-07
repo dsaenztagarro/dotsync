@@ -1,3 +1,13 @@
+## [0.4.6] - 2026-04-07
+
+### Changed
+
+- Maximize cached diff reuse to eliminate redundant directory traversals (#43)
+  - Build source index during first source walk in `DirectoryDiffer`, removing duplicate `build_source_index` traversal
+  - Pass pre-computed removal paths from diff to `FileTransfer`, skipping second destination scan in force mode
+  - Add `removal_rel_paths` field to `Diff` model to carry relative paths for `FileTransfer`
+  - Skip `show_orphan_preview` directory scan in display phase when no differences exist
+
 ## [0.4.5] - 2026-04-07
 
 ### Fixed
