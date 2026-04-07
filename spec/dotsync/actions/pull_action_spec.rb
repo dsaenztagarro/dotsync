@@ -116,6 +116,26 @@ RSpec.describe Dotsync::PullAction do
         expect(file_transfer2).to have_received(:transfer)
       end
 
+      context "without differences" do
+        before do
+          File.write(File.join(mapping1.dest, "file1"), "src content")
+          File.write(mapping2.dest, "#{mapping2.src} content")
+        end
+
+        it "skips transfer, orphan cleanup, and hooks" do
+          subject
+
+          expect(file_transfer1).not_to have_received(:transfer)
+          expect(file_transfer2).not_to have_received(:transfer)
+        end
+
+        it "still shows mappings pulled message" do
+          expect(logger).to receive(:action).with("Mappings pulled", icon: :done)
+
+          subject
+        end
+      end
+
       context "with user confirmation" do
         context "when user accepts" do
           before do
@@ -240,6 +260,30 @@ RSpec.describe Dotsync::PullAction do
 
               action.execute(force_hooks: true)
             end
+          end
+        end
+      end
+
+      context "with hooks and no differences" do
+        let(:mapping_with_hooks) do
+          Dotsync::Mapping.new(
+            "src" => file2_src,
+            "dest" => file2_dest,
+            "hooks" => ["echo hook_ran"]
+          )
+        end
+        let(:mappings) { [mapping1, mapping_with_hooks] }
+
+        before do
+          File.write(File.join(mapping1.dest, "file1"), "src content")
+          File.write(mapping_with_hooks.dest, "#{mapping_with_hooks.src} content")
+        end
+
+        context "with force_hooks option" do
+          it "executes hooks even without differences" do
+            expect_any_instance_of(Dotsync::HookRunner).to receive(:execute).and_return([])
+
+            action.execute(apply: true, yes: true, force_hooks: true)
           end
         end
       end
