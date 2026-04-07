@@ -94,7 +94,7 @@ module Dotsync
 
       show_content_diffs if diff_content && has_modifications?
 
-      show_orphan_preview if respond_to?(:manifests_xdg_data_home, true)
+      show_orphan_preview if has_differences? && respond_to?(:manifests_xdg_data_home, true)
     end
 
     def show_content_diffs
@@ -115,13 +115,14 @@ module Dotsync
       mutex = Mutex.new
 
       # Only transfer mappings that have actual differences (uses cached diffs)
-      changed_mappings = valid_mappings.each_with_index.filter_map do |mapping, idx|
-        mapping if differs[idx].any?
+      changed_pairs = valid_mappings.each_with_index.filter_map do |mapping, idx|
+        [mapping, differs[idx]] if differs[idx].any?
       end
 
       # Process mappings in parallel - each mapping is independent
-      Dotsync::Parallel.each(changed_mappings) do |mapping|
-        Dotsync::FileTransfer.new(mapping).transfer
+      Dotsync::Parallel.each(changed_pairs) do |mapping, diff|
+        removals = diff.removal_rel_paths.map { |rel| File.join(mapping.dest, rel) }
+        Dotsync::FileTransfer.new(mapping, removals: removals).transfer
       rescue Dotsync::PermissionError => e
         mutex.synchronize { errors << ["Permission denied: #{e.message}", "Try: chmod +w <path> or check file permissions"] }
       rescue Dotsync::DiskFullError => e

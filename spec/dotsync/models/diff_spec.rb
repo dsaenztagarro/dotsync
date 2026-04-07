@@ -10,6 +10,7 @@ RSpec.describe Dotsync::Diff do
         expect(diff.additions).to eq([])
         expect(diff.modifications).to eq([])
         expect(diff.removals).to eq([])
+        expect(diff.removal_rel_paths).to eq([])
       end
     end
 
@@ -50,6 +51,16 @@ RSpec.describe Dotsync::Diff do
         expect(diff.additions).to eq(["new.txt"])
         expect(diff.modifications).to eq(["updated.txt"])
         expect(diff.removals).to eq(["deleted.txt"])
+      end
+    end
+
+    context "with removal_rel_paths" do
+      it "stores relative removal paths for FileTransfer" do
+        diff = described_class.new(
+          removals: ["/dest/fold/file.txt"],
+          removal_rel_paths: ["fold/file.txt"]
+        )
+        expect(diff.removal_rel_paths).to eq(["fold/file.txt"])
       end
     end
   end
