@@ -10,4 +10,4 @@
 # rspec failure tracking
 .rspec_status
 
-.claude/
+.claude/settings.local.json
