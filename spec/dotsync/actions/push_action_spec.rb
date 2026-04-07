@@ -43,8 +43,8 @@ RSpec.describe Dotsync::PushAction do
     allow(logger).to receive(:log)
     allow(logger).to receive(:action)
     FileUtils.mkdir_p(root)
-    FileUtils.touch(mapping1.src)
-    FileUtils.touch(mapping1.dest)
+    File.write(mapping1.src, "src1 content")
+    File.write(mapping1.dest, "dest1 content")
     File.write(mapping2.src, "#{mapping2.src} content")
     File.write(mapping2.dest, "#{mapping2.dest} content")
   end
@@ -75,6 +75,7 @@ RSpec.describe Dotsync::PushAction do
       ])
       expect_show_differences_legend
       expect_show_differences([
+        { text: "#{icon_diff_updated}/tmp/dotsync/dest1", color: color_diff_updated },
         { text: "#{icon_diff_updated}/tmp/dotsync/dest2", color: color_diff_updated }
       ])
 
@@ -83,6 +84,7 @@ RSpec.describe Dotsync::PushAction do
 
     context "without differences" do
       before do
+        File.write(mapping1.dest, "src1 content")
         File.write(mapping2.dest, "#{mapping2.src} content")
       end
 
@@ -126,7 +128,7 @@ RSpec.describe Dotsync::PushAction do
           end
 
           it "displays confirmation prompt" do
-            expect(logger).to receive(:info).with("About to modify 1 file(s).", icon: :warning)
+            expect(logger).to receive(:info).with("About to modify 2 file(s).", icon: :warning)
 
             action.execute(apply: true)
           end

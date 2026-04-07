@@ -51,6 +51,8 @@ RSpec.describe Dotsync::PullAction do
     allow(logger).to receive(:action)
     FileUtils.mkdir_p(mapping1.src)
     FileUtils.mkdir_p(mapping1.dest)
+    File.write(File.join(mapping1.src, "file1"), "src content")
+    File.write(File.join(mapping1.dest, "file1"), "dest content")
     File.write(mapping2.src, "#{mapping2.src} content")
     File.write(mapping2.dest, "#{mapping2.dest} content")
   end
@@ -84,7 +86,8 @@ RSpec.describe Dotsync::PullAction do
       ])
       expect_show_differences_legend
       expect_show_differences([
-        { text: "#{icon_diff_updated}/tmp/dotsync/dest/file2", color: color_diff_updated }
+        { text: "#{icon_diff_updated}/tmp/dotsync/dest/file2", color: color_diff_updated },
+        { text: "#{icon_diff_updated}/tmp/dotsync/dest/folder_dest/file1", color: color_diff_updated }
       ])
 
       action.execute
@@ -92,6 +95,7 @@ RSpec.describe Dotsync::PullAction do
 
     context "without differences" do
       before do
+        File.write(File.join(mapping1.dest, "file1"), "src content")
         File.write(mapping2.dest, "#{mapping2.src} content")
       end
 
@@ -126,7 +130,7 @@ RSpec.describe Dotsync::PullAction do
           end
 
           it "displays confirmation prompt" do
-            expect(logger).to receive(:info).with("About to modify 1 file(s).", icon: :warning)
+            expect(logger).to receive(:info).with("About to modify 2 file(s).", icon: :warning)
 
             action.execute(apply: true)
           end
@@ -260,6 +264,7 @@ RSpec.describe Dotsync::PullAction do
       context "backup" do
         context "without differences" do
           before do
+            File.write(File.join(mapping1.dest, "file1"), "src content")
             File.write(mapping2.src, "#{mapping2.src} content")
             File.write(mapping2.dest, "#{mapping2.src} content")
           end

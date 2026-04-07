@@ -114,8 +114,13 @@ module Dotsync
       errors = []
       mutex = Mutex.new
 
+      # Only transfer mappings that have actual differences (uses cached diffs)
+      changed_mappings = valid_mappings.each_with_index.filter_map do |mapping, idx|
+        mapping if differs[idx].any?
+      end
+
       # Process mappings in parallel - each mapping is independent
-      Dotsync::Parallel.each(valid_mappings) do |mapping|
+      Dotsync::Parallel.each(changed_mappings) do |mapping|
         Dotsync::FileTransfer.new(mapping).transfer
       rescue Dotsync::PermissionError => e
         mutex.synchronize { errors << ["Permission denied: #{e.message}", "Try: chmod +w <path> or check file permissions"] }
