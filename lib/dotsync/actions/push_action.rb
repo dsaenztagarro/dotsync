@@ -23,8 +23,13 @@ module Dotsync
         return unless confirm_action
       end
 
-      transfer_mappings
-      execute_hooks(force: options[:force_hooks])
+      if has_differences?
+        transfer_mappings
+        execute_hooks(force: options[:force_hooks])
+      elsif options[:force_hooks]
+        execute_hooks(force: true)
+      end
+
       action("Mappings pushed", icon: :done)
     end
   end

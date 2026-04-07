@@ -1,3 +1,12 @@
+## [0.4.5] - 2026-04-07
+
+### Fixed
+
+- Skip transfer, orphan cleanup, and hooks when no differences detected (#42)
+  - `pull` and `push` actions now early-exit the apply phase when no differences exist
+  - Eliminates expensive `Find.find` directory scans from `cleanup_orphans` on every run
+  - `force_hooks` option still executes hooks even without differences
+
 ## [0.4.4] - 2026-04-07
 
 ### Fixed
