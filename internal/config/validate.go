@@ -23,10 +23,10 @@ func (c *Config) validate() error {
 }
 
 func (c *Config) validateSectionOrSyncPresent() error {
-	sec, _ := c.raw[c.dir.sectionName()].(map[string]any)
+	sec, _ := c.raw[c.sectionName].(map[string]any)
 	hasSection := sec != nil && len(asMapSlice(sec["mappings"])) > 0
 	if !hasSection && !c.hasSyncMappings() {
-		return cfgErr("No [%s] mappings or [sync] mappings found in config file", c.dir.sectionName())
+		return cfgErr("No [%s] mappings or [sync] mappings found in config file", c.sectionName)
 	}
 	return nil
 }
@@ -48,14 +48,14 @@ func (c *Config) hasSyncMappings() bool {
 }
 
 func (c *Config) validateSectionMappings() error {
-	sec, ok := c.raw[c.dir.sectionName()].(map[string]any)
+	sec, ok := c.raw[c.sectionName].(map[string]any)
 	if !ok {
 		return nil
 	}
 	allowed := c.dir.sectionHookKey()
 	for i, m := range asMapSlice(sec["mappings"]) {
 		if !hasKey(m, "src") || !hasKey(m, "dest") {
-			return cfgErr("Configuration error in %s mapping #%d: Each mapping must have 'src' and 'dest' keys.", c.dir.sectionName(), i+1)
+			return cfgErr("Configuration error in %s mapping #%d: Each mapping must have 'src' and 'dest' keys.", c.sectionName, i+1)
 		}
 		if hm, ok := m["hooks"].(map[string]any); ok {
 			var invalid []string
@@ -66,7 +66,7 @@ func (c *Config) validateSectionMappings() error {
 			}
 			if len(invalid) > 0 {
 				return cfgErr("Configuration error in %s mapping #%d: Only '%s' hooks are allowed in [%s] mappings. Invalid key(s): %s",
-					c.dir.sectionName(), i+1, allowed, c.dir.sectionName(), strings.Join(invalid, ", "))
+					c.sectionName, i+1, allowed, c.sectionName, strings.Join(invalid, ", "))
 			}
 		}
 	}

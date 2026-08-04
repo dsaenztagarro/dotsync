@@ -47,8 +47,9 @@ var shorthands = map[string][2]string{ // [local, remote]
 
 // Config is a resolved, validated configuration for one sync direction.
 type Config struct {
-	raw map[string]any
-	dir Direction
+	raw         map[string]any
+	dir         Direction
+	sectionName string // the [<section>.mappings] table to read (push/pull/watch)
 }
 
 // DefaultConfigPath mirrors ENV["DOTSYNC_CONFIG"] || "~/.config/dotsync.toml".
@@ -62,6 +63,16 @@ func DefaultConfigPath() string {
 // Load resolves and validates the config for a direction. Mirrors
 // BaseConfig#initialize, including the missing-file "run dotsync setup" hint.
 func Load(path string, dir Direction) (*Config, error) {
+	return load(path, dir, dir.sectionName())
+}
+
+// LoadWatch loads the config for the watch daemon: push orientation, but the
+// [watch] section supplies the section mappings (mirrors WatchActionConfig).
+func LoadWatch(path string) (*Config, error) {
+	return load(path, Push, "watch")
+}
+
+func load(path string, dir Direction, sectionName string) (*Config, error) {
 	abs := paths.ExpandPath(path)
 	if !fileExists(abs) {
 		return nil, &derr.ConfigError{Msg: fmt.Sprintf(
@@ -71,7 +82,7 @@ func Load(path string, dir Direction) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	c := &Config{raw: raw, dir: dir}
+	c := &Config{raw: raw, dir: dir, sectionName: sectionName}
 	if err := c.validate(); err != nil {
 		return nil, err
 	}
@@ -88,7 +99,7 @@ func (c *Config) Mappings() []*model.Mapping {
 }
 
 func (c *Config) sectionMappings() []*model.Mapping {
-	sec, ok := c.raw[c.dir.sectionName()].(map[string]any)
+	sec, ok := c.raw[c.sectionName].(map[string]any)
 	if !ok {
 		return nil
 	}

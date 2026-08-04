@@ -60,6 +60,7 @@ func Execute() error {
 			o.OnlyConfig = true
 			o.OnlyMappings = true
 		}),
+		watchCommand(),
 		setupCommand(),
 	)
 	return root.Execute()
@@ -139,6 +140,40 @@ func run(dir config.Direction, f *flags, preset func(*action.Options)) error {
 	}
 	a := action.New(cfg, dir, log, render.LoadColors(raw), render.LoadIcons(raw), opts, os.Stdin)
 	return a.Execute()
+}
+
+func watchCommand() *cobra.Command {
+	f := &flags{}
+	cmd := &cobra.Command{
+		Use:   "watch",
+		Short: "Watch sources and sync changes live (Ctrl+C to exit)",
+		Args:  cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			cfgPath := f.config
+			if cfgPath == "" {
+				cfgPath = config.DefaultConfigPath()
+			}
+			cfg, err := config.LoadWatch(cfgPath)
+			if err != nil {
+				return err
+			}
+			raw := cfg.Raw()
+			log := render.NewLogger(os.Stdout, render.ColorEnabled(os.Stdout))
+			opts := action.Options{
+				Quiet:        f.quiet,
+				Verbose:      f.verbose,
+				CreateDest:   f.createDest,
+				Legend:       f.legend,
+				ShowMappings: f.showMappings,
+				ShowEnv:      f.showEnv,
+				ShowOptions:  f.showOptions,
+			}
+			a := action.New(cfg, config.Push, log, render.LoadColors(raw), render.LoadIcons(raw), opts, os.Stdin)
+			return a.Watch()
+		},
+	}
+	addCommonFlags(cmd, f)
+	return cmd
 }
 
 func setupCommand() *cobra.Command {
