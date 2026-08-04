@@ -1,0 +1,23 @@
+# Build artifacts
+/dotsync
+/dist/
+*.test
+*.out
+
+# Go
+/vendor/
+
+# Local Claude Code settings (copy settings.local.json.example to start)
+.claude/settings.local.json
+
+# Local environment / secrets — never commit
+.env
+.env.*
+*.local
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
