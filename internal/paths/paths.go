@@ -102,6 +102,12 @@ func ensureTrailingSep(p string) string {
 	return p + string(filepath.Separator)
 }
 
+// ExpandPath is the exported form of Ruby's File.expand_path: it expands a
+// leading ~/~user and resolves CWD-relative paths to a cleaned absolute path,
+// WITHOUT environment-variable or /tmp translation. Used for XDG base-directory
+// resolution, which mirrors `File.expand_path(ENV[...] || "~/...")`.
+func ExpandPath(p string) string { return expandPath(p) }
+
 // expandPath reproduces Ruby's File.expand_path: it expands a leading ~ or
 // ~user to the corresponding home directory, resolves CWD-relative paths to
 // absolute, and cleans the result (collapsing ., .., and duplicate
