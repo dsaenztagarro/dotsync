@@ -29,3 +29,4 @@ ADRs record **decisions and their rationale.** They do not replace **how-to guid
 | ADR | Title | Status |
 |-----|-------|--------|
 | [0001](0001-record-decisions-as-adrs.md) | Record architecture decisions as ADRs | Accepted |
+| [0002](0002-rewrite-in-go-as-a-single-binary.md) | Rewrite dotsync in Go as a single binary | Accepted |
