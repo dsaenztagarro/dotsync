@@ -112,6 +112,7 @@ func (m *Mapping) SyncType() string     { return m.syncType }
 func (m *Mapping) OriginalSrc() string       { return m.originalSrc }
 func (m *Mapping) OriginalDest() string      { return m.originalDest }
 func (m *Mapping) OriginalIgnores() []string { return m.originalIgnores }
+func (m *Mapping) OriginalOnly() []string    { return m.originalOnly }
 
 func (m *Mapping) HasHooks() bool      { return len(m.hooks) > 0 }
 func (m *Mapping) HasInclusions() bool { return len(m.originalOnly) > 0 }
