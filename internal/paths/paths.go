@@ -51,6 +51,14 @@ func ColorizeEnvVars(path string) string {
 	})
 }
 
+// EnvVarSpans returns the [start, end) byte ranges of every `$NAME` segment in
+// path. It exists for renderers that highlight those segments themselves
+// (the TUI styles them with lipgloss) instead of embedding the escapes
+// ColorizeEnvVars writes, so both share one definition of what a variable is.
+func EnvVarSpans(path string) [][]int {
+	return envVarPattern.FindAllStringIndex(path, -1)
+}
+
 // RelativeToAbsolute joins each relative path onto base. Mirrors
 // `paths.map { |p| File.join(base, p) }`.
 func RelativeToAbsolute(rels []string, base string) []string {

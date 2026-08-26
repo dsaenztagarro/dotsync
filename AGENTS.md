@@ -23,10 +23,10 @@ This is the **Go rewrite** of the original Ruby gem (now at [`dsaenztagarro/dots
 ## Tech Stack
 
 - **Language:** Go (1.25+). Standard library first; zero runtime prerequisites in the shipped binary.
-- **CLI:** cobra (planned) — currently stdlib during the port.
-- **TUI:** bubbletea / lipgloss / bubbles (Charm) — the full-screen cockpit (planned).
-- **Config:** BurntSushi/toml (planned) — parsed to a dynamic tree for deep-merge, then decoded.
-- **Filesystem watch:** rjeczalik/notify (planned) — recursive, native FSEvents/inotify (the analog of Ruby's `listen`).
+- **CLI:** cobra — the command tree, flag surface, and exit-code contract.
+- **TUI:** bubbletea / lipgloss / bubbles (Charm) — the full-screen cockpit, shipped for `status` and the preview commands ([ADR 0003](docs/architecture/decisions/0003-interactive-tui-as-an-additive-tty-only-layer.md)).
+- **Config:** BurntSushi/toml — parsed to a dynamic tree for deep-merge, then decoded.
+- **Filesystem watch:** fsnotify/fsnotify — native FSEvents/inotify, walked recursively by `internal/action/watch.go` (the analog of Ruby's `listen`).
 - **Release:** GoReleaser (planned) — cross-compiled archives, checksums, Homebrew tap, `curl | sh` installer.
 
 ## Common Commands
@@ -58,11 +58,13 @@ Key files (packages under `internal/`):
 - `internal/fsutil` — size-first content comparison and symlink-following stat helpers (`Exists`/`IsFile`/`IsDir`).
 - `internal/model` — the domain: `Mapping` (include/ignore/skip/prune matching, validity, `manifest_key`, `apply_to`) and a Ruby-compatible `fnmatch` (default flags — no `FNM_PATHNAME`).
 - `internal/engine` — `DirectoryDiffer`: source-index Set, subtree pruning, force-mode removals, ignore filtering; returns a `Diff`.
-- `internal/transfer` — `FileTransfer`: atomic temp-write + rename, symlink preservation, type-conflict handling, empty-dir pruning. *(planned)*
-- `internal/config` — TOML load, deep-merge (`include`), `source` indirection, `[sync.*]` shorthands. *(planned)*
-- `internal/cli` — cobra command tree and the flag/exit-code contract. *(planned)*
-- `internal/render` — classic line renderer and the bubbletea TUI. *(planned)*
-- `cmd/dotsync` — the binary entrypoint. *(planned)*
+- `internal/transfer` — `FileTransfer`: atomic temp-write + rename, symlink preservation, type-conflict handling, empty-dir pruning.
+- `internal/config` — TOML load, deep-merge (`include`), `source` indirection, `[sync.*]` shorthands.
+- `internal/action` — orchestrates a run: sections, diffs, confirmation, backups, transfer, hooks; and builds the TUI's view-model (`tui.go`).
+- `internal/cli` — cobra command tree, the flag/exit-code contract, and the TTY gate that picks the renderer.
+- `internal/render` — the classic line renderer (palette, icons, `Logger`).
+- `internal/render/tui` — the bubbletea cockpit: view-model, lipgloss theme, layout. Additive and TTY-only, so the classic output contract is untouched — see the [explainer](docs/architecture/tui-cockpit.md).
+- `cmd/dotsync` — the binary entrypoint.
 
 **Parity harness:** behavioral parity is verified by a golden/differential harness that runs the Ruby oracle and the Go binary against a shared fixture corpus and diffs filesystem state, exit codes, and (ANSI-stripped) output. See its explainer under `docs/architecture/` once built.
 

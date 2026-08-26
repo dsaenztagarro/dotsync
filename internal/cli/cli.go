@@ -13,10 +13,11 @@ import (
 	"github.com/dsaenztagarro/dotsync/internal/action"
 	"github.com/dsaenztagarro/dotsync/internal/config"
 	"github.com/dsaenztagarro/dotsync/internal/render"
+	"github.com/dsaenztagarro/dotsync/internal/render/tui"
 )
 
 // version is the binary version, overridable at build time via -ldflags.
-var version = "0.0.0-dev"
+var version = "0.5.0"
 
 type flags struct {
 	config       string
@@ -36,6 +37,7 @@ type flags struct {
 	onlyMappings bool
 	diffContent  bool
 	trace        bool
+	noTUI        bool
 }
 
 // Execute builds and runs the root command, returning any error for main to
@@ -73,7 +75,7 @@ func syncCommand(use, short string, dir config.Direction, preset func(*action.Op
 		Short: short,
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return run(dir, f, preset)
+			return run(use, dir, f, preset)
 		},
 	}
 	addCommonFlags(cmd, f)
@@ -99,6 +101,7 @@ func addCommonFlags(cmd *cobra.Command, f *flags) {
 	fl.BoolVar(&f.onlyMappings, "only-mappings", false, "show only the mappings table")
 	fl.BoolVar(&f.diffContent, "diff-content", false, "show unified content diffs for modified files")
 	fl.BoolVar(&f.trace, "trace", false, "print full error traces")
+	fl.BoolVar(&f.noTUI, "no-tui", false, "print classic line output instead of the interactive screen")
 
 	// Deprecated no-op flags, accepted silently for backward compatibility.
 	for _, name := range []string{"no-legend", "no-config", "no-mappings", "no-diff-legend", "no-diff"} {
@@ -108,7 +111,7 @@ func addCommonFlags(cmd *cobra.Command, f *flags) {
 	}
 }
 
-func run(dir config.Direction, f *flags, preset func(*action.Options)) error {
+func run(command string, dir config.Direction, f *flags, preset func(*action.Options)) error {
 	cfgPath := f.config
 	if cfgPath == "" {
 		cfgPath = config.DefaultConfigPath()
@@ -120,6 +123,7 @@ func run(dir config.Direction, f *flags, preset func(*action.Options)) error {
 	raw := cfg.Raw()
 	log := render.NewLogger(os.Stdout, render.ColorEnabled(os.Stdout))
 	opts := action.Options{
+		Command:      command,
 		Apply:        f.apply && !f.dryRun,
 		Yes:          f.yes,
 		Quiet:        f.quiet,
@@ -138,8 +142,16 @@ func run(dir config.Direction, f *flags, preset func(*action.Options)) error {
 	if preset != nil {
 		preset(&opts)
 	}
+	opts.TUI = interactivePreview(opts) && tui.Enabled(os.Stdin, os.Stdout, f.noTUI)
 	a := action.New(cfg, dir, log, render.LoadColors(raw), render.LoadIcons(raw), opts, os.Stdin)
 	return a.Execute()
+}
+
+// interactivePreview reports whether this invocation is a read-only preview a
+// human is watching. The cockpit never applies changes, and never replaces the
+// output of a run that was asked to be quiet or unattended.
+func interactivePreview(o action.Options) bool {
+	return !o.Apply && !o.Quiet && !o.Yes
 }
 
 func watchCommand() *cobra.Command {

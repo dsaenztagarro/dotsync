@@ -21,6 +21,7 @@ This is the **Go rewrite** of dotsync. The original Ruby gem lives at [`dsaenzta
 - **Config Includes**: Compose configs from a shared base + machine-specific overlays with `include`.
 - **Config Source**: Point local config to your dotfiles repo with `source` — changes are visible immediately without syncing.
 - **Post-Sync Hooks**: Run commands automatically after files change (e.g. codesigning, chmod, service reload).
+- **Interactive Screen**: On a terminal, `status` and the preview commands open a full-screen cockpit — aligned mappings, filtering, per-row detail, and a legend — that reflows to any window size, and falls back to plain line output whenever the output is piped, quiet, or unattended.
 - **Quiet by Default**: Minimal output by default — legends, mappings tables, and env vars are opt-in via `-v` or `--show-*` flags.
 - **Invalid Paths Surface**: Broken mappings are reported in a dedicated, always-visible section with a clear reason and fix hint.
 - **Auto-Create Destinations**: Missing destination directories can be created with `--create-dest`, or interactively per-mapping during `--apply`.
@@ -37,6 +38,7 @@ This is the **Go rewrite** of dotsync. The original Ruby gem lives at [`dsaenzta
 - [Usage](#usage)
   - [Commands](#commands)
   - [Command Options](#command-options)
+  - [Interactive Screen](#interactive-screen)
   - [Examples](#examples)
   - [Configuration](#configuration)
     - [Bidirectional Sync Mappings (Recommended)](#bidirectional-sync-mappings-recommended)
@@ -65,14 +67,15 @@ This is the **Go rewrite** of dotsync. The original Ruby gem lives at [`dsaenzta
 
 ## Status
 
-Under active migration from the Ruby implementation. The engine (path matching, directory diffing, file transfer), the configuration pipeline (`include`/`source`/deep-merge), and the `push`/`pull`/`diff`/`status`/`watch`/`setup` commands are ported and verified against the Ruby version by a differential parity harness.
+Under active migration from the Ruby implementation. The engine (path matching, directory diffing, file transfer), the configuration pipeline (`include`/`source`/deep-merge), and the `push`/`pull`/`diff`/`status`/`watch`/`setup` commands are ported and verified against the Ruby version by a differential parity harness. On top of that parity surface, `status` and the preview commands now render an [interactive screen](#interactive-screen) when you run them at a terminal.
 
 Deliberately **not yet ported** (tracked for later phases):
 
 - **Automatic update checks** — the Ruby gem's once-a-day "new version available" notice is not implemented in the Go binary.
 - **Prebuilt binaries & installers** — GoReleaser archives, a Homebrew tap, and a `curl | sh` installer are planned; for now, build from source (see [Installation](#installation)).
 - **`--diff-content`** — the flag is accepted for forward compatibility but does not yet render unified content diffs.
-- **The full-screen TUI cockpit** — the classic line renderer is the shipped surface today.
+- **Applying from the interactive screen** — the cockpit is read-only by design; `--apply` runs the classic prompt-driven path (see [ADR 0003](docs/architecture/decisions/0003-interactive-tui-as-an-additive-tty-only-layer.md)).
+- **An interactive surface for `watch`** — the live-sync daemon still streams classic lines.
 
 ## Requirements
 
@@ -179,12 +182,12 @@ Nothing is written until you pass `--apply`. When you are ready to switch over, 
   dotsync init
   ```
 
-- **status** — Show the resolved configuration and mappings without diffing or touching the filesystem.
+- **status** — Show the resolved configuration and mappings without diffing or touching the filesystem. On a terminal this opens the [interactive screen](#interactive-screen).
   ```sh
   dotsync status
   ```
 
-- **diff** — Preview local -> mirror changes (a convenient alias for `push` in preview mode).
+- **diff** — Preview local -> mirror changes (a convenient alias for `push` in preview mode). On a terminal this opens the [interactive screen](#interactive-screen) on its **Changes** tab.
   ```sh
   dotsync diff
   ```
@@ -213,6 +216,7 @@ Nothing is written until you pass `--apply`. When you are ready to switch over, 
 - `--only-config` — Show only the config/options and mappings (no differences).
 - `--only-mappings` — Show only the mappings table.
 - `--only-diff` — Show only the differences section (this is the default view).
+- `--no-tui` — Print classic line output instead of the [interactive screen](#interactive-screen).
 
 **General:**
 
@@ -222,6 +226,58 @@ Nothing is written until you pass `--apply`. When you are ready to switch over, 
 
 > [!NOTE]
 > The pre-migration `--no-legend`, `--no-config`, `--no-mappings`, `--no-diff-legend`, and `--no-diff` flags are accepted as silent no-ops for backwards compatibility — those sections are hidden by default now, so the flags no longer do anything. `--diff-content` is likewise accepted but not yet implemented (see [Status](#status)).
+
+### Interactive Screen
+
+On an interactive terminal, `status`, `diff`, `push`, and `pull` (in preview mode) open a full-screen cockpit instead of printing lines: mappings in aligned columns, one column per flag, counts in the header, and a detail pane for whatever is selected.
+
+```
+dotsync status ~/.config/dotsync.toml                                        PUSH
+27 mappings · 26 valid · 1 invalid
+────────────────────────────────────────────────────────────────────────────────
+ Mappings │ Config
+  FLAGS     SOURCE                             DESTINATION
+▸ !   x     $XDG_CONFIG_HOME/nvim            → $XDG_CONFIG_HOME_MIRROR/nvim
+    >       $HOME/.ssh                       → $HOME_MIRROR/.ssh
+          ? $XDG_CONFIG_HOME/cabal/config    → $XDG_CONFIG_HOME_MIRROR/cabal/…
+            $HOME/.zshenv                    → $HOME_MIRROR/.zshenv
+  row 1 of 27
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ src      /home/you/.config/nvim                                              │
+│ dest     /home/you/dotfiles/xdg_config_home/nvim                             │
+│ force    the destination is overwritten from the source                      │
+│ ignore   lazy-lock.json                                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+j/k move · / filter · l legend · d detail · tab switch · q quit
+```
+
+The frame **reflows to your terminal**: columns are sized to the paths they hold (never to the viewport, so the arrow stays next to its source on a 32" screen), the detail pane moves beside the list when there is room for it and stacks underneath when there is not, and on a narrow terminal each row folds onto two lines rather than truncating both paths to nothing. Short terminals drop decoration before content.
+
+`status` opens on **Mappings** (tabs: Mappings, Config). `diff`, `push`, and `pull` open on **Changes** — every pending addition, modification, and removal, grouped and colored like the classic output, with the owning mapping in the detail pane.
+
+**Keys**
+
+| Key | Action |
+| --- | --- |
+| `j` / `k`, `↓` / `↑` | move the cursor |
+| `pgdn` / `pgup`, `ctrl+d` / `ctrl+u` | page |
+| `g` / `G`, `home` / `end` | first / last row |
+| `tab` / `shift+tab` | next / previous tab |
+| `/` | filter rows; `esc` clears and closes |
+| `l` or `?` | toggle the legend |
+| `d` or `enter` | toggle the detail pane |
+| `q`, `esc`, `ctrl+c` | quit (a one-line summary is printed on exit) |
+
+The screen is **read-only** — it never writes to disk. When there are changes to apply, re-run with `--apply`, which always uses the classic prompt-driven output.
+
+**When it does *not* open** (classic line output is used instead, unchanged):
+
+- stdout or stdin is not a terminal — a pipe, a redirect, a subshell capture;
+- `--apply`, `--quiet`, or `--yes` was passed;
+- `--no-tui` or `DOTSYNC_NO_TUI=1`;
+- `CI` is set, or `TERM` is unset or `dumb`.
+
+Your `[icons]` and `[colors]` overrides apply to this screen too — see [Customizing Icons](#customizing-icons) and [Customizing Colors](#customizing-colors).
 
 ### Examples
 
@@ -560,6 +616,7 @@ dotfiles/xdg_config_home/dotsync/
 - `DOTSYNC_CONFIG` — overrides the default config path (`~/.config/dotsync.toml`).
 - `NO_COLOR` — disables ANSI color in output (color is also disabled automatically when stdout is not a TTY).
 - Mirror variables such as `$HOME_MIRROR`, `$XDG_CONFIG_HOME_MIRROR`, etc. — referenced from your mappings and expanded at load time.
+- `DOTSYNC_NO_TUI` — set to any value to disable the [interactive screen](#interactive-screen) everywhere, the same as passing `--no-tui`.
 - `DOTSYNC_NO_CACHE` — accepted as a no-op for compatibility; the Go binary parses TOML directly and keeps no on-disk config cache.
 
 ### Safety Features
