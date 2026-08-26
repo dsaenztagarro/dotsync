@@ -33,7 +33,7 @@ func (a *Action) Watch() error {
 	a.mappings = a.cfg.Mappings()
 	sec := computeSections(a.opts)
 
-	a.ensureDestinations()
+	a.reportCreatedDestinations(a.ensureDestinations())
 	if sec.mappingsLegend {
 		a.showMappingsLegend()
 	}

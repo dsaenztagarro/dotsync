@@ -45,6 +45,9 @@ type Options struct {
 	OnlyMappings   bool
 	DiffContent    bool
 	NonInteractive bool // watch: honor --create-dest but never prompt
+
+	Command string // the invoked command name, for the cockpit's header
+	TUI     bool   // render the interactive cockpit instead of classic lines
 }
 
 // Action runs one direction end-to-end.
@@ -81,6 +84,9 @@ var invalidityMessages = map[model.InvalidityReason][2]string{
 // Execute mirrors PushAction/PullAction#execute.
 func (a *Action) Execute() error {
 	a.mappings = a.cfg.Mappings()
+	if a.opts.TUI {
+		return a.executeTUI()
+	}
 	sec := computeSections(a.opts)
 
 	if sec.options {
@@ -89,7 +95,7 @@ func (a *Action) Execute() error {
 	if sec.envVars {
 		a.showEnvVars()
 	}
-	a.ensureDestinations()
+	a.reportCreatedDestinations(a.ensureDestinations())
 	if sec.mappingsLegend {
 		a.showMappingsLegend()
 	}
@@ -304,7 +310,8 @@ func (a *Action) showDifferences() {
 	}
 }
 
-func (a *Action) showHooksPreview(force bool) {
+// hookPreviewCommands returns the templated hook commands this run would fire.
+func (a *Action) hookPreviewCommands(force bool) []string {
 	var toRun []string
 	for i, m := range a.valid {
 		if !m.HasHooks() {
@@ -316,6 +323,11 @@ func (a *Action) showHooksPreview(force bool) {
 		}
 		toRun = append(toRun, hook.NewRunner(m, changed, a.log, a.icons.Hook).Preview()...)
 	}
+	return toRun
+}
+
+func (a *Action) showHooksPreview(force bool) {
+	toRun := a.hookPreviewCommands(force)
 	if len(toRun) == 0 {
 		return
 	}
@@ -328,7 +340,10 @@ func (a *Action) showHooksPreview(force bool) {
 
 // --- destination creation ---
 
-func (a *Action) ensureDestinations() {
+// ensureDestinations creates the missing destination directories this run is
+// allowed to create — every fixable one under --create-dest, or the ones the
+// user picks at the prompt — and returns them for the caller to report.
+func (a *Action) ensureDestinations() []*model.Mapping {
 	var fixable []*model.Mapping
 	for _, m := range a.mappings {
 		if m.DestCreatable() {
@@ -336,7 +351,7 @@ func (a *Action) ensureDestinations() {
 		}
 	}
 	if len(fixable) == 0 {
-		return
+		return nil
 	}
 	var toCreate []*model.Mapping
 	switch {
@@ -345,14 +360,20 @@ func (a *Action) ensureDestinations() {
 	case a.opts.Apply && !a.opts.Yes && !a.opts.NonInteractive:
 		toCreate = a.promptDestCreation(fixable)
 	}
-	if len(toCreate) == 0 {
-		return
-	}
 	for _, m := range toCreate {
 		_ = m.CreateDest()
 	}
-	a.log.Info(fmt.Sprintf("Created %d destination %s:", len(toCreate), pluralDir(len(toCreate))), "")
-	for _, m := range toCreate {
+	return toCreate
+}
+
+// reportCreatedDestinations prints the classic renderer's created-directories
+// section. The cockpit shows the same list as a notice instead.
+func (a *Action) reportCreatedDestinations(created []*model.Mapping) {
+	if len(created) == 0 {
+		return
+	}
+	a.log.Info(fmt.Sprintf("Created %d destination %s:", len(created), pluralDir(len(created))), "")
+	for _, m := range created {
 		a.log.Plain("  " + paths.ColorizeEnvVars(m.OriginalDest()))
 	}
 	a.log.Plain("")
@@ -519,8 +540,17 @@ func (a *Action) cleanupOrphans() {
 	}
 }
 
-func (a *Action) showOrphanPreview() {
-	var orphans []string
+// orphanEntry is a destination file a pull would delete, paired with the
+// mapping whose inclusions no longer match it.
+type orphanEntry struct {
+	path    string
+	mapping *model.Mapping
+}
+
+// orphans returns the destination files a pull would delete: files a previous
+// pull recorded in the manifest that the current inclusions no longer match.
+func (a *Action) orphans() []orphanEntry {
+	var out []orphanEntry
 	for _, m := range a.valid {
 		if !(m.HasInclusions() && !m.Force() && m.ManifestKey() != "") {
 			continue
@@ -529,9 +559,17 @@ func (a *Action) showOrphanPreview() {
 		man := manifest.New(m.Dest(), m.ManifestKey(), a.cfg.ManifestsRoot())
 		for _, o := range man.Orphans(current) {
 			if fsutil.Exists(o) {
-				orphans = append(orphans, o)
+				out = append(out, orphanEntry{path: o, mapping: m})
 			}
 		}
+	}
+	return out
+}
+
+func (a *Action) showOrphanPreview() {
+	var orphans []string
+	for _, o := range a.orphans() {
+		orphans = append(orphans, o.path)
 	}
 	if len(orphans) == 0 {
 		return

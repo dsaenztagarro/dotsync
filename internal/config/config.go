@@ -18,6 +18,14 @@ const (
 	Pull
 )
 
+// String names the direction the way the CLI and the cockpit refer to it.
+func (d Direction) String() string {
+	if d == Push {
+		return "push"
+	}
+	return "pull"
+}
+
 func (d Direction) sectionName() string {
 	if d == Push {
 		return "push"
@@ -50,6 +58,7 @@ type Config struct {
 	raw         map[string]any
 	dir         Direction
 	sectionName string // the [<section>.mappings] table to read (push/pull/watch)
+	path        string // the resolved, absolute config file path
 }
 
 // DefaultConfigPath mirrors ENV["DOTSYNC_CONFIG"] || "~/.config/dotsync.toml".
@@ -82,7 +91,7 @@ func load(path string, dir Direction, sectionName string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	c := &Config{raw: raw, dir: dir, sectionName: sectionName}
+	c := &Config{raw: raw, dir: dir, sectionName: sectionName, path: abs}
 	if err := c.validate(); err != nil {
 		return nil, err
 	}
@@ -91,6 +100,9 @@ func load(path string, dir Direction, sectionName string) (*Config, error) {
 
 // Raw exposes the resolved tree (for [icons]/[colors] overrides).
 func (c *Config) Raw() map[string]any { return c.raw }
+
+// Path is the resolved config file this configuration was read from.
+func (c *Config) Path() string { return c.path }
 
 // Mappings returns the direction's mappings: the [[push|pull.mappings]] section
 // mappings first, then the [sync] mappings (explicit, then shorthands in order).
