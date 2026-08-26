@@ -31,3 +31,4 @@ ADRs record **decisions and their rationale.** They do not replace **how-to guid
 | [0001](0001-record-decisions-as-adrs.md) | Record architecture decisions as ADRs | Accepted |
 | [0002](0002-rewrite-in-go-as-a-single-binary.md) | Rewrite dotsync in Go as a single binary | Accepted |
 | [0003](0003-interactive-tui-as-an-additive-tty-only-layer.md) | The interactive TUI is an additive, TTY-only, read-only layer | Accepted |
+| [0004](0004-resolve-the-layout-per-frame-from-content-and-viewport.md) | Resolve the cockpit's layout per frame from content and viewport | Accepted |

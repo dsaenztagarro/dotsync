@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // tab identifies one of the cockpit's screens.
@@ -212,9 +213,9 @@ func (m Model) clamped() Model {
 	return m
 }
 
-// page is the number of rows a page key moves, derived from the window height
-// minus the fixed chrome.
-func (m Model) page() int { return max(m.height-9, 1) }
+// page is how far a page key moves: one screenful of the list as the current
+// layout resolved it.
+func (m Model) page() int { return m.resolve().items() }
 
 func (m Model) tab() tab { return m.tabs[m.active] }
 
@@ -293,74 +294,170 @@ func (m Model) configLines() []configLine {
 	return out
 }
 
-// --- view ------------------------------------------------------------------
+// --- measurement ------------------------------------------------------------
 
-// minRows is the number of rows the list keeps for itself. On a short terminal
-// the detail pane gives way rather than squeezing the list out of the screen;
-// the legend, which the user asked for explicitly, does not.
-const minRows = 4
+// flagsWidth is the width of a flag gutter: one column per glyph, single-space
+// separated, so each flag keeps its own column.
+func flagsWidth(slots []flagSlot) int {
+	w := 0
+	for i, s := range slots {
+		if i > 0 {
+			w++
+		}
+		w += s.width
+	}
+	return w
+}
 
-// View renders the whole screen: header, tab bar, the active tab's rows, an
-// optional detail or legend panel, and the footer.
+// contentNeeds is the natural width of the active tab's two columns: source and
+// destination on Mappings, the path on Changes, key and value on Config. This
+// is what makes the table size to its content instead of to the viewport.
+func (m Model) contentNeeds() (primary, second int) {
+	switch m.tab() {
+	case tabChanges:
+		for _, i := range m.visible() {
+			c := m.data.Changes[i]
+			w := lipgloss.Width(c.Path)
+			if c.Orphan {
+				w += lipgloss.Width(orphanTag)
+			}
+			primary = max(primary, w)
+		}
+	case tabMappings:
+		primary, second = lipgloss.Width(colSource), lipgloss.Width(colDest)
+		for _, i := range m.visible() {
+			r := m.data.Mappings[i]
+			primary = max(primary, lipgloss.Width(r.Src))
+			second = max(second, lipgloss.Width(r.Dest))
+		}
+	default:
+		for _, l := range m.configLines() {
+			primary = max(primary, lipgloss.Width(l.key))
+			second = max(second, lipgloss.Width(l.value))
+		}
+	}
+	return primary, second
+}
+
+// headerWidth is the natural width of the two header lines, so the rule under
+// them spans the header even when the table is narrower.
+func (m Model) headerWidth() int {
+	return max(lipgloss.Width(plainJoin(m.titleSegments(), sep)),
+		lipgloss.Width(plainJoin(m.countSegments(), sep)))
+}
+
+// --- view -------------------------------------------------------------------
+
+const (
+	sep       = " · "
+	orphanTag = "  (orphan)"
+	colSource = "SOURCE"
+	colDest   = "DESTINATION"
+)
+
+// segment is one styled piece of a composed line. Lines are built as segments
+// so their width can be measured before they are styled.
+type segment struct {
+	text  string
+	style lipgloss.Style
+}
+
+func plainJoin(segs []segment, sep string) string {
+	parts := make([]string, len(segs))
+	for i, s := range segs {
+		parts[i] = s.text
+	}
+	return strings.Join(parts, sep)
+}
+
+func (m Model) renderSegments(segs []segment, width int) string {
+	parts := make([]string, len(segs))
+	for i, s := range segs {
+		parts[i] = s.style.Render(s.text)
+	}
+	line := strings.Join(parts, m.th.subtle.Render(sep))
+	if lipgloss.Width(line) > width {
+		return m.th.subtle.Render(fit(plainJoin(segs, sep), width))
+	}
+	return line
+}
+
+// View renders the frame the layout plan describes: header, tab bar, the active
+// tab's rows, the detail or legend panel beside or below them, and the footer.
 func (m Model) View() string {
 	if m.quitting {
 		return ""
 	}
-	w := max(m.width, 20)
-	header := m.headerView(w)
-	tabs := m.tabsView(w)
-	footer := m.footerView(w)
-	panel := m.panelView(w)
+	p := m.resolve()
 
-	chrome := lipgloss.Height(header) + lipgloss.Height(tabs) + lipgloss.Height(footer)
-	if m.tab() == tabMappings {
-		chrome++ // column header
+	out := []string{m.headerView(p), m.tabsView(p)}
+	if p.colHeader {
+		out = append(out, m.columnHeader(p))
 	}
-	avail := max(m.height-chrome, 1)
-	if panel != "" && avail-lipgloss.Height(panel) < minRows && !m.showLegend {
-		panel = ""
-	}
-	rowsH := avail
-	if panel != "" {
-		rowsH = max(avail-lipgloss.Height(panel), 1)
-	}
+	list := m.rowsView(p)
 
-	parts := []string{header, tabs}
-	if m.tab() == tabMappings {
-		parts = append(parts, m.columnHeader(w))
+	switch p.panel {
+	case panelBeside:
+		// The panel sits next to the selection; the list is padded to the full
+		// row area so the footer stays at the bottom edge.
+		left := lipgloss.NewStyle().Width(p.table.total()).Render(padLines(list, p.rows))
+		panel := clipLines(m.panelView(p), p.rows)
+		out = append(out, lipgloss.JoinHorizontal(lipgloss.Top, left, " ", panel))
+	case panelBelow:
+		// The panel hugs the last row rather than floating at the bottom of a
+		// tall screen; the padding goes underneath it.
+		out = append(out, padLines(list+"\n"+clipLines(m.panelView(p), p.panelHeight), p.rows+p.panelHeight))
+	default:
+		out = append(out, padLines(list, p.rows))
 	}
-	parts = append(parts, padLines(m.rowsView(w, rowsH), rowsH))
-	if panel != "" {
-		parts = append(parts, panel)
-	}
-	parts = append(parts, footer)
-	return strings.Join(parts, "\n")
+	// Last-resort guard: whatever the arithmetic, the frame never exceeds the
+	// terminal in either direction.
+	return clipLines(clipWidth(strings.Join(append(out, m.footerView(p)), "\n"), p.width), p.height)
 }
 
-func (m Model) headerView(w int) string {
-	left := m.th.title.Render("dotsync "+m.data.Command) + " " + m.th.subtle.Render(m.data.ConfigPath)
-	right := m.th.accent.Render(strings.ToUpper(m.data.Direction))
-	line1 := spread(left, right, w)
+// titleSegments is the header's first line: what ran, in which direction, and
+// against which config. They are kept inline — pinning the direction to the far
+// right of a wide screen separates it from the thing it describes.
+func (m Model) titleSegments() []segment {
+	return []segment{
+		{"dotsync " + m.data.Command, m.th.title},
+		{strings.ToUpper(m.data.Direction), m.th.accent},
+		{m.data.ConfigPath, m.th.subtle},
+	}
+}
 
-	counts := []string{
-		fmt.Sprintf("%d mapping%s", len(m.data.Mappings), plural(len(m.data.Mappings))),
-		m.th.subtle.Render(fmt.Sprintf("%d valid", m.data.ValidCount())),
+func (m Model) countSegments() []segment {
+	segs := []segment{
+		{fmt.Sprintf("%d mapping%s", len(m.data.Mappings), plural(len(m.data.Mappings))), m.th.path},
+		{fmt.Sprintf("%d valid", m.data.ValidCount()), m.th.subtle},
 	}
 	if n := m.data.InvalidCount(); n > 0 {
-		counts = append(counts, m.th.invalid.Render(fmt.Sprintf("%d invalid", n)))
+		segs = append(segs, segment{fmt.Sprintf("%d invalid", n), m.th.invalid})
 	}
 	if m.data.ShowChanges {
-		counts = append(counts,
-			m.th.added.Render(fmt.Sprintf("%d added", m.data.CountByKind(KindAdded))),
-			m.th.modified.Render(fmt.Sprintf("%d modified", m.data.CountByKind(KindModified))),
-			m.th.removed.Render(fmt.Sprintf("%d removed", m.data.CountByKind(KindRemoved))),
+		segs = append(segs,
+			segment{fmt.Sprintf("%d added", m.data.CountByKind(KindAdded)), m.th.added},
+			segment{fmt.Sprintf("%d modified", m.data.CountByKind(KindModified)), m.th.modified},
+			segment{fmt.Sprintf("%d removed", m.data.CountByKind(KindRemoved)), m.th.removed},
 		)
 	}
-	line2 := strings.Join(counts, m.th.subtle.Render(" · "))
-	return line1 + "\n" + line2 + "\n" + m.th.rule.Render(strings.Repeat("─", w))
+	return segs
 }
 
-func (m Model) tabsView(w int) string {
+func (m Model) headerView(p plan) string {
+	title := m.titleSegments()
+	// The config path is the first thing to go when the line will not fit.
+	if lipgloss.Width(plainJoin(title, sep)) > p.content {
+		title = title[:2]
+	}
+	head := m.renderSegments(title, p.content) + "\n" + m.renderSegments(m.countSegments(), p.content)
+	if !p.rule {
+		return head // a short screen spends its rows on content, not on decoration
+	}
+	return head + "\n" + m.th.rule.Render(strings.Repeat("─", p.content))
+}
+
+func (m Model) tabsView(plan) string {
 	cells := make([]string, 0, len(m.tabs))
 	for i, t := range m.tabs {
 		label := " " + t.title() + " "
@@ -373,85 +470,45 @@ func (m Model) tabsView(w int) string {
 	return strings.Join(cells, m.th.subtle.Render("│"))
 }
 
-func (m Model) columnHeader(w int) string {
-	l := m.layout(w)
-	head := strings.Repeat(" ", l.gutter) + fit("FLAGS", l.flags)
-	if l.flags > 0 {
-		head += " "
+func (m Model) columnHeader(p plan) string {
+	t := p.table
+	head := strings.Repeat(" ", t.gutter)
+	if t.lead > 0 {
+		head += fit("FLAGS", t.lead) + " "
 	}
-	head += fit("SOURCE", l.src) + "   " + fit("DESTINATION", l.dest)
-	if l.counts > 0 {
-		head += " " + fit("CHANGES", l.counts)
+	head += fit(colSource, t.primary) + strings.Repeat(" ", arrowWidth) + fit(colDest, t.second)
+	if t.counts > 0 {
+		head += " " + fit("CHANGES", t.counts)
 	}
 	return m.th.colHeader.Render(head)
 }
 
-// layout is the mappings table's column geometry for a given width.
-type layout struct {
-	gutter int // cursor marker
-	flags  int
-	src    int
-	dest   int
-	counts int
-}
-
-func (m Model) layout(w int) layout {
-	l := layout{gutter: 2}
-	for i, s := range m.slots {
-		if i > 0 {
-			l.flags++
-		}
-		l.flags += s.width
-	}
-	if m.data.ShowChanges {
-		l.counts = 12
-	}
-	rest := w - l.gutter - l.flags - l.counts - 4 // 3 for the arrow, 1 for a gap
-	if l.flags > 0 {
-		rest--
-	}
-	rest = max(rest, 10)
-	l.src = rest / 2
-	l.dest = rest - l.src
-	return l
-}
-
-func (m Model) rowsView(w, h int) string {
+func (m Model) rowsView(p plan) string {
 	idxs := m.visible()
 	if len(idxs) == 0 {
 		return m.th.subtle.Render("  " + m.emptyMessage())
 	}
 	cur := min(m.cursor[m.tab()], len(idxs)-1)
 
-	// When the rows do not fit, the last line becomes a position indicator, so
-	// that scrolling never hides where the cursor is in the list.
-	rowsH, overflow := h, len(idxs) > h
-	if overflow && h > 1 {
-		rowsH = h - 1
+	capacity := p.items()
+	overflow := len(idxs) > capacity
+	if overflow && p.rows > p.rowHeight {
+		capacity = max((p.rows-1)/p.rowHeight, 1) // the last line becomes the indicator
 	}
 	off := 0
-	if cur >= rowsH {
-		off = cur - rowsH + 1
+	if cur >= capacity {
+		off = cur - capacity + 1
 	}
-	end := min(off+rowsH, len(idxs))
+	end := min(off+capacity, len(idxs))
 
-	lines := make([]string, 0, h)
+	lines := make([]string, 0, end-off+1)
 	for i := off; i < end; i++ {
-		lines = append(lines, m.rowView(idxs[i], i == cur, w))
+		lines = append(lines, m.rowView(p, idxs[i], i == cur))
 	}
-	if overflow && h > 1 {
+	if overflow {
 		lines = append(lines, m.th.subtle.Render(fmt.Sprintf("  row %d of %d", cur+1, len(idxs))))
 	}
-	return strings.Join(lines, "\n")
-}
-
-// padLines pads a block out to n lines so the panel and footer stay pinned to
-// the bottom of the screen instead of floating under a short list.
-func padLines(block string, n int) string {
-	if missing := n - lipgloss.Height(block); missing > 0 {
-		return block + strings.Repeat("\n", missing)
-	}
-	return block
+	return clipLines(strings.Join(lines, "\n"), p.rows)
 }
 
 func (m Model) emptyMessage() string {
@@ -468,14 +525,14 @@ func (m Model) emptyMessage() string {
 	}
 }
 
-func (m Model) rowView(idx int, selected bool, w int) string {
+func (m Model) rowView(p plan, idx int, selected bool) string {
 	switch m.tab() {
 	case tabChanges:
-		return m.changeRowView(m.data.Changes[idx], selected, w)
+		return m.changeRowView(p, m.data.Changes[idx], selected)
 	case tabMappings:
-		return m.mappingRowView(m.data.Mappings[idx], selected, w)
+		return m.mappingRowView(p, m.data.Mappings[idx], selected)
 	default:
-		return m.configRowView(m.configLines()[idx], selected, w)
+		return m.configRowView(p, m.configLines()[idx], selected)
 	}
 }
 
@@ -486,34 +543,42 @@ func (m Model) marker(selected bool) string {
 	return "  "
 }
 
-func (m Model) mappingRowView(r MappingRow, selected bool, w int) string {
-	l := m.layout(w)
-	pathStyle := m.th.path
+func (m Model) mappingRowView(p plan, r MappingRow, selected bool) string {
+	t := p.table
+	style := m.th.path
 	if !r.Valid {
-		pathStyle = m.th.invalid
+		style = m.th.invalid
 	}
 	if selected {
-		pathStyle = pathStyle.Bold(true)
+		style = style.Bold(true)
+	}
+	src := m.th.stylePath(truncateMiddle(r.Src, t.primary), style)
+
+	lead := ""
+	if t.lead > 0 {
+		lead = padTo(m.flagsCell(p.slots, r), t.lead) + " "
+	}
+	if t.second == 0 {
+		// Too narrow for a pair: the destination stacks under its source,
+		// indented to the source's column and free to use the rest of the line.
+		indent := t.gutter + lipgloss.Width(lead)
+		dest := m.th.stylePath(truncateMiddle(r.Dest, max(p.width-indent-2, 6)), style)
+		return m.marker(selected) + lead + src + "\n" +
+			strings.Repeat(" ", indent) + m.th.subtle.Render("→ ") + dest
 	}
 
-	var b strings.Builder
-	b.WriteString(m.marker(selected))
-	if l.flags > 0 {
-		b.WriteString(padTo(m.flagsCell(r), l.flags))
-		b.WriteString(" ")
+	row := m.marker(selected) + lead + padTo(src, t.primary) +
+		m.th.subtle.Render(" → ") +
+		padTo(m.th.stylePath(truncateMiddle(r.Dest, t.second), style), t.second)
+	if t.counts > 0 {
+		row += " " + padTo(m.countsCell(r), t.counts)
 	}
-	b.WriteString(padTo(m.th.stylePath(truncateMiddle(r.Src, l.src), pathStyle), l.src))
-	b.WriteString(m.th.subtle.Render(" → "))
-	b.WriteString(padTo(m.th.stylePath(truncateMiddle(r.Dest, l.dest), pathStyle), l.dest))
-	if l.counts > 0 {
-		b.WriteString(" " + padTo(m.countsCell(r), l.counts))
-	}
-	return b.String()
+	return row
 }
 
-func (m Model) flagsCell(r MappingRow) string {
-	cells := make([]string, 0, len(m.slots))
-	for _, s := range m.slots {
+func (m Model) flagsCell(slots []flagSlot, r MappingRow) string {
+	cells := make([]string, 0, len(slots))
+	for _, s := range slots {
 		if s.on(r) {
 			cells = append(cells, s.style.Render(s.glyph))
 		} else {
@@ -540,19 +605,19 @@ func (m Model) countsCell(r MappingRow) string {
 	return strings.Join(parts, " ")
 }
 
-func (m Model) changeRowView(c ChangeRow, selected bool, w int) string {
+func (m Model) changeRowView(p plan, c ChangeRow, selected bool) string {
 	style := m.th.styleForKind(c.Kind)
-	icon := m.changeIcon(c.Kind)
-	tag := ""
-	if c.Orphan {
-		tag = m.th.subtle.Render("  (orphan)")
-	}
-	avail := w - 2 - lipgloss.Width(icon) - lipgloss.Width(tag) - 1
-	path := truncateMiddle(c.Path, max(avail, 10))
 	if selected {
 		style = style.Bold(true)
 	}
-	return m.marker(selected) + style.Render(icon) + m.th.stylePath(path, style) + tag
+	tag := ""
+	width := p.table.primary
+	if c.Orphan {
+		tag = m.th.subtle.Render(orphanTag)
+		width = max(width-lipgloss.Width(orphanTag), minColumn)
+	}
+	path := m.th.stylePath(truncateMiddle(c.Path, width), style)
+	return m.marker(selected) + style.Render(m.changeIcon(c.Kind)) + path + tag
 }
 
 func (m Model) changeIcon(k Kind) string {
@@ -566,39 +631,53 @@ func (m Model) changeIcon(k Kind) string {
 	}
 }
 
-func (m Model) configRowView(l configLine, selected bool, w int) string {
+func (m Model) configRowView(p plan, l configLine, selected bool) string {
 	if l.section {
 		return "  " + m.th.colHeader.Render(strings.ToUpper(l.key))
 	}
-	// 24 columns fit the longest mirror variable name ($XDG_CONFIG_HOME_MIRROR)
-	// without truncation, which is the common case on this tab.
-	key := m.th.detailKey.Render(fit(l.key, 24))
-	value := m.th.stylePath(truncateMiddle(l.value, max(w-28, 10)), m.th.path)
+	key := m.th.detailKey.Render(fit(l.key, p.table.lead))
+	value := m.th.stylePath(truncateMiddle(l.value, p.table.primary), m.th.path)
 	return m.marker(selected) + key + " " + value
 }
 
-// --- panels ----------------------------------------------------------------
+// --- panels -----------------------------------------------------------------
 
-func (m Model) panelView(w int) string {
-	if m.showLegend {
-		return m.th.panel.Width(w - 2).Render(m.legendBody())
-	}
-	if !m.showDetail {
-		return ""
-	}
-	body := m.detailBody(w)
-	if body == "" {
-		return ""
-	}
-	return m.th.panel.Width(w - 2).Render(body)
+// panelLine is one line of the detail or legend panel, kept as label + value so
+// the panel's natural width can be measured before it is styled.
+type panelLine struct {
+	label   string
+	value   string
+	style   lipgloss.Style
+	heading bool
 }
 
-func (m Model) legendBody() string {
-	lines := []string{m.th.colHeader.Render("LEGEND")}
-	for _, s := range m.slots {
-		lines = append(lines, s.style.Render(fit(s.glyph, 3))+m.th.detailKey.Render(fit(s.name, 9))+s.help)
+// panelBody is the panel's content at its natural width. The layout plan
+// measures it; panelView truncates it to the width it was given.
+func (m Model) panelBody() []panelLine {
+	if m.showLegend {
+		return m.legendBody()
 	}
-	kinds := []struct {
+	idxs := m.visible()
+	if !m.showDetail || len(idxs) == 0 {
+		return nil
+	}
+	idx := idxs[min(m.cursor[m.tab()], len(idxs)-1)]
+	switch m.tab() {
+	case tabChanges:
+		return m.changeDetail(m.data.Changes[idx])
+	case tabMappings:
+		return m.mappingDetail(m.data.Mappings[idx])
+	default:
+		return nil
+	}
+}
+
+func (m Model) legendBody() []panelLine {
+	lines := []panelLine{{value: "LEGEND", heading: true}}
+	for _, s := range m.slots {
+		lines = append(lines, panelLine{label: s.glyph, value: fit(s.name, 8) + " " + s.help, style: s.style})
+	}
+	for _, k := range []struct {
 		icon  string
 		style lipgloss.Style
 		text  string
@@ -606,80 +685,134 @@ func (m Model) legendBody() string {
 		{m.data.Icons.DiffCreated, m.th.added, "created in the destination"},
 		{m.data.Icons.DiffUpdated, m.th.modified, "content differs, will be overwritten"},
 		{m.data.Icons.DiffRemoved, m.th.removed, "removed from the destination"},
+	} {
+		lines = append(lines, panelLine{label: strings.TrimSpace(k.icon), value: fit("", 8) + " " + k.text, style: k.style})
 	}
-	for _, k := range kinds {
-		lines = append(lines, k.style.Render(fit(strings.TrimSpace(k.icon), 3))+m.th.detailKey.Render(fit("", 9))+k.text)
-	}
-	return strings.Join(lines, "\n")
+	return lines
 }
 
-// detailBody renders the selected row's detail pane.
-func (m Model) detailBody(w int) string {
-	idxs := m.visible()
-	if len(idxs) == 0 {
-		return ""
-	}
-	idx := idxs[min(m.cursor[m.tab()], len(idxs)-1)]
-	switch m.tab() {
-	case tabChanges:
-		return m.changeDetail(m.data.Changes[idx], w)
-	case tabMappings:
-		return m.mappingDetail(m.data.Mappings[idx], w)
-	default:
-		return ""
-	}
-}
-
-func (m Model) mappingDetail(r MappingRow, w int) string {
-	var kv []KeyValue
-	kv = append(kv, KeyValue{"src", r.RealSrc}, KeyValue{"dest", r.RealDest})
+func (m Model) mappingDetail(r MappingRow) []panelLine {
+	lines := []panelLine{{label: "src", value: r.RealSrc}, {label: "dest", value: r.RealDest}}
 	if !r.Valid {
-		kv = append(kv, KeyValue{"invalid", r.InvalidReason + " · fix: " + r.InvalidFix})
+		lines = append(lines, panelLine{label: "invalid", value: r.InvalidReason + " · fix: " + r.InvalidFix, style: m.th.invalid})
 	}
 	if r.Force {
-		kv = append(kv, KeyValue{"force", "the destination is overwritten from the source"})
+		lines = append(lines, panelLine{label: "force", value: "the destination is overwritten from the source"})
 	}
 	if len(r.OnlyPatterns) > 0 {
-		kv = append(kv, KeyValue{"only", strings.Join(r.OnlyPatterns, ", ")})
+		lines = append(lines, panelLine{label: "only", value: strings.Join(r.OnlyPatterns, ", ")})
 	}
 	if len(r.IgnorePatterns) > 0 {
-		kv = append(kv, KeyValue{"ignore", strings.Join(r.IgnorePatterns, ", ")})
+		lines = append(lines, panelLine{label: "ignore", value: strings.Join(r.IgnorePatterns, ", ")})
 	}
 	for i, h := range r.HookCommands {
-		key := "hooks"
+		label := "hooks"
 		if i > 0 {
-			key = ""
+			label = ""
 		}
-		kv = append(kv, KeyValue{key, h})
+		lines = append(lines, panelLine{label: label, value: h})
 	}
 	if r.Changes() > 0 {
-		kv = append(kv, KeyValue{"changes", fmt.Sprintf("%d added, %d modified, %d removed", r.Added, r.Modified, r.Removed)})
+		lines = append(lines, panelLine{label: "changes", value: fmt.Sprintf("%d added, %d modified, %d removed", r.Added, r.Modified, r.Removed)})
 	}
-	return m.renderKV(kv, w)
+	return lines
 }
 
-func (m Model) changeDetail(c ChangeRow, w int) string {
+func (m Model) changeDetail(c ChangeRow) []panelLine {
 	kind := map[Kind]string{KindAdded: "added", KindModified: "modified", KindRemoved: "removed"}[c.Kind]
 	if c.Orphan {
 		kind += " (orphan: tracked by a previous pull, no longer matched)"
 	}
-	return m.renderKV([]KeyValue{
-		{"path", c.Path},
-		{"change", kind},
-		{"mapping", c.Mapping},
-	}, w)
-}
-
-func (m Model) renderKV(kv []KeyValue, w int) string {
-	lines := make([]string, 0, len(kv))
-	for _, e := range kv {
-		key := m.th.detailKey.Render(fit(e.Key, 8))
-		lines = append(lines, key+" "+m.th.stylePath(truncateMiddle(e.Value, max(w-14, 10)), m.th.path))
+	return []panelLine{
+		{label: "path", value: c.Path},
+		{label: "change", value: kind},
+		{label: "mapping", value: c.Mapping},
 	}
-	return strings.Join(lines, "\n")
 }
 
-func (m Model) footerView(w int) string {
+// natural is the panel line's unwrapped width, used to size the panel.
+func (l panelLine) natural(labelWidth int) int {
+	if l.heading {
+		return lipgloss.Width(l.value)
+	}
+	return labelWidth + 1 + lipgloss.Width(l.value)
+}
+
+func labelWidth(lines []panelLine) int {
+	w := 0
+	for _, l := range lines {
+		if !l.heading {
+			w = max(w, lipgloss.Width(l.label))
+		}
+	}
+	return w
+}
+
+func (m Model) panelView(p plan) string {
+	body := m.panelBody()
+	if len(body) == 0 {
+		return ""
+	}
+	inner := max(p.panelWidth-4, minColumn) // the border and its padding
+	lw := labelWidth(body)
+	rendered := make([]string, 0, len(body))
+	for _, l := range body {
+		if l.heading {
+			rendered = append(rendered, m.th.colHeader.Render(fit(l.value, inner)))
+			continue
+		}
+		style := l.style
+		if style.String() == "" {
+			style = m.th.detailKey
+		}
+		value := m.th.stylePath(truncateMiddle(l.value, max(inner-lw-1, minColumn)), m.th.path)
+		rendered = append(rendered, style.Render(fit(l.label, lw))+" "+value)
+	}
+	panel := m.th.panel.Width(p.panelWidth - 2)
+	if p.panel == panelBeside {
+		panel = panel.MarginLeft(1)
+	}
+	return panel.Render(strings.Join(rendered, "\n"))
+}
+
+// --- footer -----------------------------------------------------------------
+
+// footerLines is the key hints, fitted to the width: the full list when it fits
+// beside the apply hint, a shorter list when it does not, and the hint on its
+// own line when even that is too wide. The hint never drops — it is the answer
+// to "how do I make this happen?".
+func (m Model) footerLines(width int) []string {
+	long := strings.Join([]string{"j/k move", "/ filter", "l legend", "d detail", "tab switch", "q quit"}, sep)
+	short := strings.Join([]string{"j/k", "/ filter", "l legend", "q quit"}, sep)
+
+	hint := ""
+	if m.data.ShowChanges && len(m.data.Changes) > 0 {
+		hint = "preview only: run with --apply to sync"
+	}
+	if hint == "" {
+		for _, keys := range []string{long, short} {
+			if lipgloss.Width(keys) <= width {
+				return []string{keys}
+			}
+		}
+		return []string{fit(short, width)}
+	}
+	for _, keys := range []string{long, short} {
+		if lipgloss.Width(keys)+lipgloss.Width(sep)+lipgloss.Width(hint) <= width {
+			return []string{keys + sep + hint}
+		}
+	}
+	if lipgloss.Width(short) <= width {
+		return []string{short, fit(hint, width)}
+	}
+	return []string{fit(hint, width)}
+}
+
+// footerHeight is how many rows the footer will take, so the layout plan can
+// budget for it before it is rendered.
+func (m Model) footerHeight(width int) int { return len(m.footerLines(width)) }
+
+func (m Model) footerView(p plan) string {
 	if m.filtering {
 		return m.filter.View()
 	}
@@ -688,41 +821,47 @@ func (m Model) footerView(w int) string {
 			m.th.path.Render(q) +
 			m.th.subtle.Render(fmt.Sprintf("  %d/%d  (esc to clear)", len(m.visible()), m.total()))
 	}
-	hint := ""
-	if m.data.ShowChanges && len(m.data.Changes) > 0 {
-		hint = "preview only — run with --apply to sync"
+	lines := m.footerLines(p.content)
+	for i, l := range lines {
+		lines[i] = m.th.footer.Render(l)
 	}
-	return m.helpView(w, hint)
+	return strings.Join(lines, "\n")
 }
 
-// helpView fits the key hints to the terminal: the full list when it fits
-// beside the hint, a shorter one when it does not, and the hint on its own line
-// when even that is too wide. The hint is the one part that never drops — it is
-// the answer to "how do I make this happen?".
-func (m Model) helpView(w int, hint string) string {
-	long := strings.Join([]string{"j/k move", "/ filter", "l legend", "d detail", "tab switch", "q quit"}, " · ")
-	short := strings.Join([]string{"j/k", "/ filter", "l legend", "q quit"}, " · ")
-	styledHint := m.th.subtle.Render(hint)
+// --- block helpers ----------------------------------------------------------
 
-	for _, keys := range []string{long, short} {
-		help := m.th.footer.Render(keys)
-		if hint == "" {
-			if lipgloss.Width(keys) <= w {
-				return help
-			}
-			continue
+// padLines pads a block out to n lines so the chrome below it stays where the
+// layout put it.
+func padLines(block string, n int) string {
+	if missing := n - lipgloss.Height(block); missing > 0 {
+		return block + strings.Repeat("\n", missing)
+	}
+	return block
+}
+
+// clipWidth truncates every line of a block to width columns, counting printable
+// cells rather than bytes so styling survives.
+func clipWidth(block string, width int) string {
+	rows := strings.Split(block, "\n")
+	for i, r := range rows {
+		if lipgloss.Width(r) > width {
+			rows[i] = ansi.Truncate(r, width, "")
 		}
-		if lipgloss.Width(keys)+lipgloss.Width(hint)+2 <= w {
-			return spread(help, styledHint, w)
-		}
 	}
-	if hint == "" {
-		return m.th.footer.Render(fit(short, w))
+	return strings.Join(rows, "\n")
+}
+
+// clipLines truncates a block to n lines, which is how a panel gives up space
+// it was not granted.
+func clipLines(block string, n int) string {
+	if n <= 0 || block == "" {
+		return block
 	}
-	if lipgloss.Width(short) <= w {
-		return m.th.footer.Render(short) + "\n" + m.th.subtle.Render(fit(hint, w))
+	rows := strings.Split(block, "\n")
+	if len(rows) <= n {
+		return block
 	}
-	return m.th.subtle.Render(fit(hint, w))
+	return strings.Join(rows[:n], "\n")
 }
 
 // Compile-time assurance that the cockpit satisfies tea.Model.

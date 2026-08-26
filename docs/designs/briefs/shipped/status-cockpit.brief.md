@@ -33,7 +33,7 @@ This brief covers the interactive replacement: a full-screen Bubble Tea cockpit 
 - **Empty** — a config with no mappings for this direction; a preview with no differences ("Everything is in sync").
 - **Filtering** — `/` opens an input; the table narrows as the query is typed; the count in the header reflects matches; `esc` restores.
 - **Invalid mappings** — rendered in the error color with the reason and the suggested fix in the detail pane, and surfaced in the header count so they cannot scroll away.
-- **Narrow terminal** — paths middle-truncated (`…`) so the tail, which carries the filename, always survives.
+- **Any terminal size** — the frame reflows: see *Responsive layout* below.
 - **Non-interactive** — not a TTY, `--apply`, `--quiet`, `--yes`, `CI`, `TERM=dumb`, or `DOTSYNC_NO_TUI=1`: the classic renderer, unchanged.
 
 ## Mockups
@@ -83,6 +83,48 @@ This brief covers the interactive replacement: a full-screen Bubble Tea cockpit 
 
 **Filter** (`/`) and **legend** (`l`) replace the footer and the detail pane respectively; both are dismissed with `esc`.
 
+## Responsive layout
+
+The frame is resolved on every render from the measured content and the current terminal, not from a fixed grid — the rules and their rationale are [ADR 0004](../../../architecture/decisions/0004-resolve-the-layout-per-frame-from-content-and-viewport.md). Three shapes, and the thresholds are derived rather than chosen:
+
+**Wide — the panel moves beside the list** (spare width >= 44 columns). Columns stay at their content width, so the arrow sits right after the longest source instead of at the middle of the screen:
+
+```
+dotsync status · PUSH · ~/.config/dotsync.toml
+27 mappings · 26 valid · 1 invalid
+──────────────────────────────────────────────────────────────────────────────────────────
+ Mappings │ Config
+  FLAGS     SOURCE                          DESTINATION
+▸ !   x     $XDG_CONFIG_HOME/nvim         → $XDG_CONFIG_HOME_MIRROR/nvim   +-------------+
+      >     $HOME/.ssh                    → $HOME_MIRROR/.ssh              | src  /Users |
+            $HOME/.zshenv                 → $HOME_MIRROR/.zshenv           | dest /Users |
+          ? $XDG_CONFIG_HOME/cabal/config → $XDG_CONFIG_HOME_MIRROR/cabal… | force ...   |
+                                                                          +-------------+
+j/k move · / filter · l legend · d detail · tab switch · q quit
+```
+
+**Comfortable — the panel stacks under the list**, hugging the last row rather than floating at the bottom of a tall screen:
+
+```
+  FLAGS     SOURCE                          DESTINATION
+▸ !   x     $XDG_CONFIG_HOME/nvim         → $XDG_CONFIG_HOME_MIRROR/nvim
+      >     $HOME/.ssh                    → $HOME_MIRROR/.ssh
++----------------------------------------------------------------------+
+| src   /Users/d/.config/nvim                                           |
++----------------------------------------------------------------------+
+```
+
+**Narrow — the row folds** (under 64 columns for the path pair), the way a table becomes cards on a phone:
+
+```
+▸ !   x   $XDG_CONFIG_HOME/nvim
+          → $XDG_CONFIG_HOME_MIRROR/nvim
+      >   $HOME/.ssh
+          → $HOME_MIRROR/.ssh
+```
+
+Under 12 rows the panel goes entirely; under 10, the header rule and column header go with it; the key hints shorten before they wrap. Whatever happens, a last-resort clip keeps the frame inside the terminal.
+
 ## Key bindings
 
 | Key | Action |
@@ -109,7 +151,8 @@ None blocking. Applying from the cockpit (`a` to sync the selection) is delibera
 
 ## As shipped
 
-The implementation follows the brief, with two refinements the real terminal argued for:
+The implementation follows the brief, with the refinements real terminals argued for:
 
-- The panel and key hints are **pinned to the bottom** of the screen rather than floating under a short list.
+- Everything above about **responsive layout** — the first cut divided the viewport proportionally, which was unreadable on a 32" screen.
 - When rows overflow, the last row line becomes a **`row N of M` position indicator**, and on a short terminal the **detail pane yields before the rows do**.
+- The **key hints stay pinned to the bottom edge**; the detail panel does not.

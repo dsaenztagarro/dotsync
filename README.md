@@ -21,7 +21,7 @@ This is the **Go rewrite** of dotsync. The original Ruby gem lives at [`dsaenzta
 - **Config Includes**: Compose configs from a shared base + machine-specific overlays with `include`.
 - **Config Source**: Point local config to your dotfiles repo with `source` — changes are visible immediately without syncing.
 - **Post-Sync Hooks**: Run commands automatically after files change (e.g. codesigning, chmod, service reload).
-- **Interactive Screen**: On a terminal, `status` and the preview commands open a full-screen cockpit — aligned mappings, filtering, per-row detail, and a legend — and fall back to plain line output whenever the output is piped, quiet, or unattended.
+- **Interactive Screen**: On a terminal, `status` and the preview commands open a full-screen cockpit — aligned mappings, filtering, per-row detail, and a legend — that reflows to any window size, and falls back to plain line output whenever the output is piped, quiet, or unattended.
 - **Quiet by Default**: Minimal output by default — legends, mappings tables, and env vars are opt-in via `-v` or `--show-*` flags.
 - **Invalid Paths Surface**: Broken mappings are reported in a dedicated, always-visible section with a clear reason and fix hint.
 - **Auto-Create Destinations**: Missing destination directories can be created with `--create-dest`, or interactively per-mapping during `--apply`.
@@ -250,6 +250,8 @@ dotsync status ~/.config/dotsync.toml                                        PUS
 ╰──────────────────────────────────────────────────────────────────────────────╯
 j/k move · / filter · l legend · d detail · tab switch · q quit
 ```
+
+The frame **reflows to your terminal**: columns are sized to the paths they hold (never to the viewport, so the arrow stays next to its source on a 32" screen), the detail pane moves beside the list when there is room for it and stacks underneath when there is not, and on a narrow terminal each row folds onto two lines rather than truncating both paths to nothing. Short terminals drop decoration before content.
 
 `status` opens on **Mappings** (tabs: Mappings, Config). `diff`, `push`, and `pull` open on **Changes** — every pending addition, modification, and removal, grouped and colored like the classic output, with the owning mapping in the detail pane.
 
