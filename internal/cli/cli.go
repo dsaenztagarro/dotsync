@@ -17,7 +17,7 @@ import (
 )
 
 // version is the binary version, overridable at build time via -ldflags.
-var version = "0.0.0-dev"
+var version = "0.5.0"
 
 type flags struct {
 	config       string
