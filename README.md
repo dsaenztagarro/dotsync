@@ -232,24 +232,27 @@ Nothing is written until you pass `--apply`. When you are ready to switch over, 
 On an interactive terminal, `status`, `diff`, `push`, and `pull` (in preview mode) open a full-screen cockpit instead of printing lines: mappings in aligned columns, one column per flag, counts in the header, and a detail pane for whatever is selected.
 
 ```
-dotsync status ~/.config/dotsync.toml                                        PUSH
+dotsync status · PUSH · ~/.config/dotsync.toml
 27 mappings · 26 valid · 1 invalid
 ────────────────────────────────────────────────────────────────────────────────
  Mappings │ Config
-  FLAGS     SOURCE                             DESTINATION
-▸ !   x     $XDG_CONFIG_HOME/nvim            → $XDG_CONFIG_HOME_MIRROR/nvim
-    >       $HOME/.ssh                       → $HOME_MIRROR/.ssh
-          ? $XDG_CONFIG_HOME/cabal/config    → $XDG_CONFIG_HOME_MIRROR/cabal/…
-            $HOME/.zshenv                    → $HOME_MIRROR/.zshenv
+  FLAGS   SCOPE         PATH                        DESTINATION
+▸ !   x   config        nvim
+    >     home          .ssh
+          config        mysql/my.cnf              → mysql/my@9.5.cnf
+        ? config        cabal/config
+          abs → config  /opt/homebrew/var/pg.conf → postgresql/pg.conf
   row 1 of 27
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ src      /home/you/.config/nvim                                              │
-│ dest     /home/you/dotfiles/xdg_config_home/nvim                             │
-│ force    the destination is overwritten from the source                      │
-│ ignore   lazy-lock.json                                                      │
+│ src    /home/you/.config/nvim                                                │
+│ dest   /home/you/dotfiles/xdg_config_home/nvim                               │
+│ force  the destination is overwritten from the source                        │
+│ ignore lazy-lock.json                                                        │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 j/k move · / filter · l legend · d detail · tab switch · q quit
 ```
+
+Mappings are shown **by scope**: the `$VAR` root both sides live under becomes a column (`config` is `$XDG_CONFIG_HOME` ↔ `$XDG_CONFIG_HOME_MIRROR`), the paths beneath it are what you read, and a destination appears only when it is not the source path again. A row whose two sides live under *different* roots says so (`abs → config`), and a config with no variable roots keeps the full paths. Filtering still matches the full written and resolved paths, so `MIRROR` finds rows that no longer print it.
 
 The frame **reflows to your terminal**: columns are sized to the paths they hold (never to the viewport, so the arrow stays next to its source on a 32" screen), the detail pane moves beside the list when there is room for it and stacks underneath when there is not, and on a narrow terminal each row folds onto two lines rather than truncating both paths to nothing. Short terminals drop decoration before content.
 

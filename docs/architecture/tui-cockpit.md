@@ -47,6 +47,7 @@ The third: **nothing in the view layer knows a width.** Every frame begins by re
 - `model.go` — the Bubble Tea model. `Update` handles `WindowSizeMsg` and keys; while filtering, keys go to the `bubbles/textinput` instead of the navigation switch. `View` composes header, tab bar, optional column header, the row window, an optional panel (detail or legend), and the footer.
 - `theme.go` — the lipgloss styles. Base tones are adaptive (light/dark); the three change colors come from the config's `[colors]` table and the flag glyphs from `[icons]`, so a user's overrides carry over from the classic renderer. `$VAR` segments are styled through lipgloss rather than the raw escapes `paths.ColorizeEnvVars` emits, so widths stay measurable — both share one definition of a variable via `paths.EnvVarSpans`.
 - `layout.go` — the layout engine: the thresholds, `resolve()`, and the column/panel rules above.
+- `scope.go` — the root/scope derivation behind the Mappings tab's `SCOPE` and `PATH` columns.
 - `text.go` — middle-truncation that keeps roughly twice as much of a path's tail as its head (the filename is what the reader scans for), padding, and fitting.
 - `run.go` — the activation predicate and the program runner (`tea.WithAltScreen`).
 
@@ -72,8 +73,8 @@ The third: **nothing in the view layer knows a width.** Every frame begins by re
 
 `resolve` measures three things and applies the rules in [ADR 0004](decisions/0004-resolve-the-layout-per-frame-from-content-and-viewport.md):
 
-1. **`activeSlots()`** — which flag columns any *visible* row actually carries; a config without hooks never pays for a hook column, and a filter narrows the gutter with the rows.
-2. **`columns()`** — the natural width of each column (`contentNeeds()`), then `fitColumns()` to reconcile it with the viewport. Both columns fit: they keep their natural width and the remainder is left at the edge. Only one fits: it keeps its size, the other takes the rest. Neither: they split the difference. Under 64 columns for the pair, the destination stacks onto its own line and `rowHeight` becomes 2.
+1. **`activeSlots()` / `scopedRows()`** — which flag columns any *visible* row actually carries, and whether enough rows are rooted in a variable for the scope column to be worth its width. A config without hooks never pays for a hook column; a config of absolute paths never pays for a scope column.
+2. **`columns()`** — the natural width of each column (`contentNeeds()`, or `scopedNeeds()` when the scope column is in play), then `fitColumns()` to reconcile it with the viewport. Both columns fit: they keep their natural width and the remainder is left at the edge. Only one fits: it keeps its size, the other takes the rest. Neither: they split the difference. Under 64 columns for the pair, the destination stacks onto its own line and `rowHeight` becomes 2.
 3. **`placePanel()` / `splitHeight()`** — the panel goes beside the list when 44+ columns are spare (sized to its own content, capped at 40% of the screen), below it otherwise, and nowhere at all under 12 rows. Vertically the list keeps `minRows`; a legend the user opened is clipped rather than dropped.
 
 | Pressure | What gives |
@@ -83,6 +84,8 @@ The third: **nothing in the view layer knows a width.** Every frame begins by re
 | Short terminal | the header rule and column header go, then the detail pane, then the key hints shorten |
 | More rows than fit | the last list line becomes a `row N of M` indicator |
 | Any arithmetic slip | `clipWidth` / `clipLines` truncate the frame to the terminal rather than wrapping it |
+
+**The scope column** — `scope.go` — is why the table is short. Every mapping's paths are rooted in a variable, and both roots are usually twins (`$XDG_CONFIG_HOME` / `$XDG_CONFIG_HOME_MIRROR`), so `scopeOf()` lifts the root into a `SCOPE` cell and leaves the path beneath it. A destination is drawn only when it is not the source path again; when no row differs, that column disappears. A row whose sides are *not* twins states both (`abs → config`), so the shorter form never implies a symmetry the config does not have. See [ADR 0005](decisions/0005-show-mappings-by-scope-not-by-repeated-root.md). Because most rows have no destination cell, they also stay one line tall in the folded layout — `rowLines()` is what makes the row window height-aware.
 
 **The flag gutter** is why rows line up: each flag owns a fixed column, so a `force` glyph lands in the same place whether or not the row also has `only` or `ignore`. The classic renderer concatenates the glyphs instead, which is what shifted every following character and made the original output unreadable.
 
@@ -100,5 +103,6 @@ The third: **nothing in the view layer knows a width.** Every frame begins by re
 
 - [ADR 0003](decisions/0003-interactive-tui-as-an-additive-tty-only-layer.md) — why the cockpit is additive, TTY-only, and read-only
 - [ADR 0004](decisions/0004-resolve-the-layout-per-frame-from-content-and-viewport.md) — why the layout is resolved per frame
+- [ADR 0005](decisions/0005-show-mappings-by-scope-not-by-repeated-root.md) — why the table shows a scope instead of repeating the root
 - [Design brief](../designs/briefs/shipped/status-cockpit.brief.md) — the surface, its states, and the key bindings
 - [ADR 0002](decisions/0002-rewrite-in-go-as-a-single-binary.md) — the migration and its parity constraint

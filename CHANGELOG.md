@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 Versioning continues the line of the original Ruby gem (now [`dotsync-ruby`](https://github.com/dsaenztagarro/dotsync-ruby), last released at 0.4.6): this binary reads the same configuration and reproduces the same behavior, so it is a continuation of the same tool rather than a new one.
 
+## [0.6.0] - 2026-08-27
+
+### Changed
+
+- **The cockpit's Mappings tab shows a `SCOPE` column** instead of repeating each row's `$VAR` root. On a real config `$XDG_CONFIG_HOME_MIRROR` appeared on 20+ rows and distinguished none of them, and 25 of 28 rows had an identical path on both sides. The root each side lives under becomes a column (`config`, `home`, `data`, `cache`, `bin`, or the variable's own name), the paths beneath it are what you read, and a destination is drawn only when it is not the source path again — when no row differs, that column disappears. A row whose sides live under different roots states both (`abs → config`), so the shorter form never implies a symmetry the config does not have, and a table with no variable roots keeps the full paths. Under the folded (narrow) layout, only rows whose destination differs take a second line. See [ADR 0005](docs/architecture/decisions/0005-show-mappings-by-scope-not-by-repeated-root.md).
+- **The legend explains the scope column**, and the detail pane still carries the resolved absolute paths for both sides. Filtering matches the full written and resolved paths, so a root that is no longer displayed can still be searched for.
+
+### Fixed
+
+- **A side panel could lose its right border**: the frame added a separator column that the panel's own margin had already accounted for, pushing its last column past the screen edge.
+
 ## [0.5.0] - 2026-08-27
 
 The Ruby gem rewritten as a single self-contained Go binary, with an interactive terminal cockpit on top of the ported behavior. Behavioral parity with the Ruby original is verified by a differential harness; non-interactive output is unchanged.
@@ -34,4 +45,5 @@ The Ruby gem rewritten as a single self-contained Go binary, with an interactive
 
 - **Automatic update checks** — the Ruby gem's once-a-day "new version available" notice is not implemented.
 
+[0.6.0]: https://github.com/dsaenztagarro/dotsync/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/dsaenztagarro/dotsync/releases/tag/v0.5.0
