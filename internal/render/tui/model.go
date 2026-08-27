@@ -339,6 +339,26 @@ func (m Model) contentNeeds() (primary, second int) {
 	return primary, second
 }
 
+// scopedNeeds is the natural width of the scoped columns: the scope label, the
+// path beneath the source root, and the destination path for the rows whose
+// destination is not simply the source path again. A zero destination need
+// means no row differs, so that column is not drawn at all.
+func (m Model) scopedNeeds() (scope, src, dest int) {
+	scope, src = lipgloss.Width(colScope), lipgloss.Width(colPath)
+	for _, i := range m.visible() {
+		s := scopeOf(m.data.Mappings[i])
+		scope = max(scope, lipgloss.Width(s.label))
+		src = max(src, lipgloss.Width(s.srcCell()))
+		if s.dest != "" {
+			dest = max(dest, lipgloss.Width(s.dest))
+		}
+	}
+	if dest > 0 {
+		dest = max(dest, lipgloss.Width(colDest))
+	}
+	return scope, src, dest
+}
+
 // headerWidth is the natural width of the two header lines, so the rule under
 // them spans the header even when the table is narrower.
 func (m Model) headerWidth() int {
@@ -353,6 +373,8 @@ const (
 	orphanTag = "  (orphan)"
 	colSource = "SOURCE"
 	colDest   = "DESTINATION"
+	colScope  = "SCOPE"
+	colPath   = "PATH"
 )
 
 // segment is one styled piece of a composed line. Lines are built as segments
@@ -400,9 +422,11 @@ func (m Model) View() string {
 	case panelBeside:
 		// The panel sits next to the selection; the list is padded to the full
 		// row area so the footer stays at the bottom edge.
+		// The panel carries its own left margin, so joining adds no separator
+		// of its own — a second one would push its right border off the screen.
 		left := lipgloss.NewStyle().Width(p.table.total()).Render(padLines(list, p.rows))
 		panel := clipLines(m.panelView(p), p.rows)
-		out = append(out, lipgloss.JoinHorizontal(lipgloss.Top, left, " ", panel))
+		out = append(out, lipgloss.JoinHorizontal(lipgloss.Top, left, panel))
 	case panelBelow:
 		// The panel hugs the last row rather than floating at the bottom of a
 		// tall screen; the padding goes underneath it.
@@ -476,7 +500,15 @@ func (m Model) columnHeader(p plan) string {
 	if t.lead > 0 {
 		head += fit("FLAGS", t.lead) + " "
 	}
-	head += fit(colSource, t.primary) + strings.Repeat(" ", arrowWidth) + fit(colDest, t.second)
+	source := colSource
+	if t.scope > 0 {
+		head += fit(colScope, t.scope) + "  "
+		source = colPath
+	}
+	head += fit(source, t.primary)
+	if t.second > 0 {
+		head += strings.Repeat(" ", arrowWidth) + fit(colDest, t.second)
+	}
 	if t.counts > 0 {
 		head += " " + fit("CHANGES", t.counts)
 	}
@@ -489,17 +521,30 @@ func (m Model) rowsView(p plan) string {
 		return m.th.subtle.Render("  " + m.emptyMessage())
 	}
 	cur := min(m.cursor[m.tab()], len(idxs)-1)
+	height := func(i int) int { return m.rowLines(p, idxs[i]) }
 
-	capacity := p.items()
-	overflow := len(idxs) > capacity
-	if overflow && p.rows > p.rowHeight {
-		capacity = max((p.rows-1)/p.rowHeight, 1) // the last line becomes the indicator
+	total := 0
+	for i := range idxs {
+		total += height(i)
 	}
-	off := 0
-	if cur >= capacity {
-		off = cur - capacity + 1
+	budget := p.rows
+	overflow := total > budget
+	if overflow && budget > 1 {
+		budget-- // the last line becomes the position indicator
 	}
-	end := min(off+capacity, len(idxs))
+
+	// Rows are not all one line tall, so the window is grown by height: back
+	// from the cursor as far as the budget allows, then forward into what is
+	// left. The cursor is on screen by construction.
+	off, end, used := cur, cur+1, height(cur)
+	for off > 0 && used+height(off-1) <= budget {
+		off--
+		used += height(off)
+	}
+	for end < len(idxs) && used+height(end) <= budget {
+		used += height(end)
+		end++
+	}
 
 	lines := make([]string, 0, end-off+1)
 	for i := off; i < end; i++ {
@@ -509,6 +554,19 @@ func (m Model) rowsView(p plan) string {
 		lines = append(lines, m.th.subtle.Render(fmt.Sprintf("  row %d of %d", cur+1, len(idxs))))
 	}
 	return clipLines(strings.Join(lines, "\n"), p.rows)
+}
+
+// rowLines is how many screen lines a row occupies: two only when the layout
+// folded AND the row has a destination to fold onto the second line. Under the
+// scoped layout most rows have none, so a narrow terminal still shows them all.
+func (m Model) rowLines(p plan, idx int) int {
+	if p.rowHeight == 1 || m.tab() != tabMappings {
+		return 1
+	}
+	if p.scoped && scopeOf(m.data.Mappings[idx]).dest == "" {
+		return 1
+	}
+	return 2
 }
 
 func (m Model) emptyMessage() string {
@@ -544,6 +602,9 @@ func (m Model) marker(selected bool) string {
 }
 
 func (m Model) mappingRowView(p plan, r MappingRow, selected bool) string {
+	if p.scoped {
+		return m.scopedRowView(p, r, selected)
+	}
 	t := p.table
 	style := m.th.path
 	if !r.Valid {
@@ -558,7 +619,7 @@ func (m Model) mappingRowView(p plan, r MappingRow, selected bool) string {
 	if t.lead > 0 {
 		lead = padTo(m.flagsCell(p.slots, r), t.lead) + " "
 	}
-	if t.second == 0 {
+	if t.folded {
 		// Too narrow for a pair: the destination stacks under its source,
 		// indented to the source's column and free to use the rest of the line.
 		indent := t.gutter + lipgloss.Width(lead)
@@ -571,6 +632,51 @@ func (m Model) mappingRowView(p plan, r MappingRow, selected bool) string {
 		m.th.subtle.Render(" → ") +
 		padTo(m.th.stylePath(truncateMiddle(r.Dest, t.second), style), t.second)
 	if t.counts > 0 {
+		row += " " + padTo(m.countsCell(r), t.counts)
+	}
+	return row
+}
+
+// scopedRowView draws a row as "which root, which path beneath it", with a
+// destination only when it is not the source path again. A row whose
+// destination repeats its source therefore stays one line even in the folded
+// layout, which is most of them.
+func (m Model) scopedRowView(p plan, r MappingRow, selected bool) string {
+	t := p.table
+	sc := scopeOf(r)
+	style := m.th.path
+	if !r.Valid {
+		style = m.th.invalid
+	}
+	if selected {
+		style = style.Bold(true)
+	}
+
+	lead := ""
+	if t.lead > 0 {
+		lead = padTo(m.flagsCell(p.slots, r), t.lead) + " "
+	}
+	scopeStyle := m.th.accent
+	if strings.Contains(sc.label, "→") {
+		scopeStyle = m.th.subtle // a row that crosses scopes states both, quietly
+	}
+	head := m.marker(selected) + lead + padTo(scopeStyle.Render(fit(sc.label, t.scope)), t.scope) + "  "
+	row := head + padTo(m.th.stylePath(truncateMiddle(sc.srcCell(), t.primary), style), t.primary)
+
+	switch {
+	case sc.dest == "":
+		// Nothing to add: the destination is the source path under its own root.
+	case t.folded:
+		indent := strings.Repeat(" ", lipgloss.Width(head))
+		dest := m.th.stylePath(truncateMiddle(sc.dest, max(p.width-lipgloss.Width(head)-2, 6)), style)
+		row += "\n" + indent + m.th.subtle.Render("→ ") + dest
+	default:
+		row += m.th.subtle.Render(" → ") + padTo(m.th.stylePath(truncateMiddle(sc.dest, t.second), style), t.second)
+	}
+	if t.counts > 0 && !t.folded {
+		if sc.dest == "" && t.second > 0 {
+			row += strings.Repeat(" ", arrowWidth+t.second)
+		}
 		row += " " + padTo(m.countsCell(r), t.counts)
 	}
 	return row
@@ -649,6 +755,7 @@ type panelLine struct {
 	value   string
 	style   lipgloss.Style
 	heading bool
+	dim     bool // a continuation line, quieter than the value above it
 }
 
 // panelBody is the panel's content at its natural width. The layout plan
@@ -687,6 +794,13 @@ func (m Model) legendBody() []panelLine {
 		{m.data.Icons.DiffRemoved, m.th.removed, "removed from the destination"},
 	} {
 		lines = append(lines, panelLine{label: strings.TrimSpace(k.icon), value: fit("", 8) + " " + k.text, style: k.style})
+	}
+	if m.tab() == tabMappings && m.scopedRows() >= 2 {
+		lines = append(lines,
+			panelLine{value: fit("scope", 8) + " the root both paths live under, e.g. config = $XDG_CONFIG_HOME ↔ $XDG_CONFIG_HOME_MIRROR"},
+			panelLine{value: fit("a → b", 8) + " the two sides live under different roots", dim: true},
+			panelLine{value: fit("(blank)", 8) + " the destination is the same path under its own root", dim: true},
+		)
 	}
 	return lines
 }
@@ -765,7 +879,11 @@ func (m Model) panelView(p plan) string {
 		if style.String() == "" {
 			style = m.th.detailKey
 		}
-		value := m.th.stylePath(truncateMiddle(l.value, max(inner-lw-1, minColumn)), m.th.path)
+		valueStyle := m.th.path
+		if l.dim {
+			valueStyle = m.th.subtle
+		}
+		value := m.th.stylePath(truncateMiddle(l.value, max(inner-lw-1, minColumn)), valueStyle)
 		rendered = append(rendered, style.Render(fit(l.label, lw))+" "+value)
 	}
 	panel := m.th.panel.Width(p.panelWidth - 2)

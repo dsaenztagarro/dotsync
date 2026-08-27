@@ -21,6 +21,20 @@ func plain(s string) string { return ansiPattern.ReplaceAllString(s, "") }
 
 func lines(s string) []string { return strings.Split(plain(s), "\n") }
 
+// listLines returns the list side of each rendered line, cutting a side-by-side
+// panel off, so assertions about rows are not satisfied by text that happens to
+// appear in the detail pane.
+func listLines(view string) []string {
+	var out []string
+	for _, l := range lines(view) {
+		if i := strings.IndexAny(l, "│╭╰"); i >= 0 {
+			l = l[:i]
+		}
+		out = append(out, strings.TrimRight(l, " "))
+	}
+	return out
+}
+
 // lineWith returns the first rendered line containing want.
 func lineWith(t *testing.T, view, want string) string {
 	t.Helper()
@@ -30,6 +44,18 @@ func lineWith(t *testing.T, view, want string) string {
 		}
 	}
 	t.Fatalf("no line containing %q in view:\n%s", want, plain(view))
+	return ""
+}
+
+// rowWith returns the first list row containing want, ignoring the panel.
+func rowWith(t *testing.T, view, want string) string {
+	t.Helper()
+	for _, l := range listLines(view) {
+		if strings.Contains(l, want) {
+			return l
+		}
+	}
+	t.Fatalf("no row containing %q in view:\n%s", want, plain(view))
 	return ""
 }
 
@@ -92,6 +118,11 @@ func statusData() Data {
 				HookCommands: []string{"chmod 600 {files}"},
 			},
 			{
+				Src: "$XDG_CONFIG_HOME/mysql/my.cnf", Dest: "$XDG_CONFIG_HOME_MIRROR/mysql/my@9.5.cnf",
+				RealSrc: "/home/d/.config/mysql/my.cnf", RealDest: "/home/d/mirror/mysql/my@9.5.cnf",
+				Valid: true,
+			},
+			{
 				Src: "$XDG_CONFIG_HOME/cabal/config", Dest: "$XDG_CONFIG_HOME_MIRROR/cabal/config",
 				RealSrc: "/home/d/.config/cabal/config", RealDest: "/home/d/mirror/cabal/config",
 				Valid: false, InvalidReason: "destination directory does not exist", InvalidFix: "--create-dest",
@@ -129,41 +160,41 @@ func TestHeaderCarriesCommandConfigAndCounts(t *testing.T) {
 		}
 	}
 	counts := lines(view)[1]
-	for _, want := range []string{"3 mappings", "2 valid", "1 invalid"} {
+	for _, want := range []string{"4 mappings", "3 valid", "1 invalid"} {
 		if !strings.Contains(counts, want) {
 			t.Errorf("counts line %q missing %q", counts, want)
 		}
 	}
 }
 
-// The unaligned classic output is what this screen replaces: every arrow has to
-// land in the same column no matter which flags a row carries.
-func TestMappingArrowsShareOneColumn(t *testing.T) {
-	view := sized(New(statusData()), 100, 30).View()
-	var columns []int
-	for _, l := range lines(view) {
-		if i := strings.Index(l, " → "); i >= 0 && strings.Contains(l, "$") {
-			columns = append(columns, utf8.RuneCountInString(l[:i])) // columns, not bytes
+// The unaligned classic output is what this screen replaces: every path has to
+// start in the same column no matter which flags or scope its row carries.
+func TestMappingPathsShareOneColumn(t *testing.T) {
+	m := sized(New(statusData()), 100, 30)
+	p := m.resolve()
+	want := p.table.gutter + p.table.lead + 1 + p.table.scope + 2
+
+	var found int
+	for _, l := range listLines(m.View()) {
+		for _, path := range []string{"nvim", ".ssh", "mysql/my.cnf", "cabal/config"} {
+			if i := strings.Index(l, path); i >= 0 {
+				if col := utf8.RuneCountInString(l[:i]); col != want {
+					t.Errorf("%q starts at column %d, want %d in %q", path, col, want, l)
+				}
+				found++
+				break
+			}
 		}
 	}
-	if len(columns) != 3 {
-		t.Fatalf("expected 3 mapping rows, found %d in:\n%s", len(columns), plain(view))
-	}
-	for _, c := range columns[1:] {
-		if c != columns[0] {
-			t.Errorf("arrow columns not aligned: %v", columns)
-		}
+	if found != 4 {
+		t.Errorf("found %d path cells, want 4", found)
 	}
 }
 
-// Every flag owns a column, so the gutter reads vertically: a `force` glyph
-// lands in the same place whether or not the row also has `only` or `ignore`.
-// The classic renderer concatenates them instead, which is what shifts the rest
-// of the line.
 func TestFlagGutterKeepsOneColumnPerFlag(t *testing.T) {
 	view := sized(New(statusData()), 100, 30).View()
-	forceRow := []rune(lineWith(t, view, "$XDG_CONFIG_HOME/nvim")) // force + ignore
-	onlyRow := []rune(lineWith(t, view, "$HOME/.ssh"))             // only + hooks
+	forceRow := []rune(rowWith(t, view, "nvim")) // force + ignore
+	onlyRow := []rune(rowWith(t, view, ".ssh"))  // only + hooks
 
 	const marker = 2 // the two-cell cursor gutter
 	slots := []struct {
@@ -203,8 +234,8 @@ func TestSelectedMappingDetailShowsResolvedPathsAndFilters(t *testing.T) {
 }
 
 func TestInvalidMappingExplainsItselfInTheDetailPane(t *testing.T) {
-	m := sized(New(statusData()), 100, 30)
-	view := press(t, m, "G").View() // last row is the invalid one
+	m := sized(New(statusData()), 160, 30) // wide enough for the panel to spell it out
+	view := press(t, m, "G").View()        // last row is the invalid one
 	if !strings.Contains(plain(view), "destination directory does not exist") {
 		t.Errorf("expected the invalidity reason in:\n%s", plain(view))
 	}
@@ -216,16 +247,16 @@ func TestInvalidMappingExplainsItselfInTheDetailPane(t *testing.T) {
 func TestFilterNarrowsRowsAndEscapeRestoresThem(t *testing.T) {
 	m := sized(New(statusData()), 100, 30)
 	m = press(t, m, "/", "ssh")
-	view := plain(m.View())
-	if !strings.Contains(view, "$HOME/.ssh") {
+	view := strings.Join(listLines(m.View()), "\n")
+	if !strings.Contains(view, ".ssh") {
 		t.Errorf("filtered view lost the match:\n%s", view)
 	}
-	if strings.Contains(view, "$XDG_CONFIG_HOME/nvim") {
+	if strings.Contains(view, "nvim") {
 		t.Errorf("filtered view kept a non-match:\n%s", view)
 	}
 
 	m = press(t, m, "esc")
-	if got := plain(m.View()); !strings.Contains(got, "$XDG_CONFIG_HOME/nvim") {
+	if got := strings.Join(listLines(m.View()), "\n"); !strings.Contains(got, "nvim") {
 		t.Errorf("esc did not restore the rows:\n%s", got)
 	}
 }
@@ -240,7 +271,7 @@ func TestFilterWithNoMatchesExplainsItself(t *testing.T) {
 
 func TestCursorStaysInsideTheFilteredRowSet(t *testing.T) {
 	m := sized(New(statusData()), 100, 30)
-	m = press(t, m, "G")        // cursor on row 3
+	m = press(t, m, "G")        // cursor on the last row
 	m = press(t, m, "/", "ssh") // one row left
 	if got := m.cursor[m.tab()]; got != 0 {
 		t.Errorf("cursor = %d, want it clamped to 0", got)
@@ -279,8 +310,8 @@ func TestChangesTabListsAdditionsModificationsRemovals(t *testing.T) {
 
 func TestPerMappingChangeCountsAppearOnTheMappingsTab(t *testing.T) {
 	m := sized(New(diffData()), 100, 30)
-	view := plain(press(t, m, "tab").View()) // Changes -> Mappings
-	row := lineWith(t, view, "$XDG_CONFIG_HOME/nvim")
+	view := press(t, m, "tab").View() // Changes -> Mappings
+	row := rowWith(t, view, "nvim")
 	if !strings.Contains(row, "+2") || !strings.Contains(row, "~1") {
 		t.Errorf("mapping row missing its change counts: %q", row)
 	}
@@ -351,10 +382,10 @@ func TestOverflowingListKeepsThePositionIndicator(t *testing.T) {
 		d.Mappings = append(d.Mappings, MappingRow{Src: "$HOME/f", Dest: "$HOME_MIRROR/f", Valid: true})
 	}
 	m := sized(New(d), 100, 24)
-	if got := plain(m.View()); !strings.Contains(got, "row 1 of 33") {
+	if got := plain(m.View()); !strings.Contains(got, "row 1 of 34") {
 		t.Errorf("expected a position indicator when rows overflow:\n%s", got)
 	}
-	if got := plain(press(t, m, "G").View()); !strings.Contains(got, "row 33 of 33") {
+	if got := plain(press(t, m, "G").View()); !strings.Contains(got, "row 34 of 34") {
 		t.Errorf("indicator did not follow the cursor:\n%s", got)
 	}
 }
@@ -363,7 +394,7 @@ func TestOverflowingListKeepsThePositionIndicator(t *testing.T) {
 // on screen.
 func TestShortTerminalDropsTheDetailPaneBeforeTheRows(t *testing.T) {
 	view := plain(sized(New(statusData()), 100, 10).View())
-	if !strings.Contains(view, "$HOME/.ssh") {
+	if !strings.Contains(view, ".ssh") {
 		t.Errorf("rows squeezed off a short screen:\n%s", view)
 	}
 	if strings.Contains(view, "the destination is overwritten") {

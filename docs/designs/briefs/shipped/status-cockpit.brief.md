@@ -87,19 +87,19 @@ This brief covers the interactive replacement: a full-screen Bubble Tea cockpit 
 
 The frame is resolved on every render from the measured content and the current terminal, not from a fixed grid — the rules and their rationale are [ADR 0004](../../../architecture/decisions/0004-resolve-the-layout-per-frame-from-content-and-viewport.md). Three shapes, and the thresholds are derived rather than chosen:
 
-**Wide — the panel moves beside the list** (spare width >= 44 columns). Columns stay at their content width, so the arrow sits right after the longest source instead of at the middle of the screen:
+**Wide — the panel moves beside the list** (spare width >= 44 columns). Columns stay at their content width, and the root each path lives under is lifted into a `SCOPE` column, so a destination only appears when it is not the source path again:
 
 ```
 dotsync status · PUSH · ~/.config/dotsync.toml
 27 mappings · 26 valid · 1 invalid
 ──────────────────────────────────────────────────────────────────────────────────────────
  Mappings │ Config
-  FLAGS     SOURCE                          DESTINATION
-▸ !   x     $XDG_CONFIG_HOME/nvim         → $XDG_CONFIG_HOME_MIRROR/nvim   +-------------+
-      >     $HOME/.ssh                    → $HOME_MIRROR/.ssh              | src  /Users |
-            $HOME/.zshenv                 → $HOME_MIRROR/.zshenv           | dest /Users |
-          ? $XDG_CONFIG_HOME/cabal/config → $XDG_CONFIG_HOME_MIRROR/cabal… | force ...   |
-                                                                          +-------------+
+  FLAGS   SCOPE         PATH                DESTINATION
+▸ !   x   config        nvim                                     +-----------------------+
+      >   home          .ssh                                     | src  /Users/d/.config |
+          config        mysql/my.cnf      → mysql/my@9.5.cnf      | dest /Users/d/mirror  |
+        ? config        cabal/config                              | force ...             |
+          abs → config  /opt/homebrew/…   → postgresql/pg.conf    +-----------------------+
 j/k move · / filter · l legend · d detail · tab switch · q quit
 ```
 
@@ -114,13 +114,13 @@ j/k move · / filter · l legend · d detail · tab switch · q quit
 +----------------------------------------------------------------------+
 ```
 
-**Narrow — the row folds** (under 64 columns for the path pair), the way a table becomes cards on a phone:
+**Narrow — the row folds** (under 64 columns for the path pair), the way a table becomes cards on a phone. Only a row whose destination actually differs takes the second line:
 
 ```
-▸ !   x   $XDG_CONFIG_HOME/nvim
-          → $XDG_CONFIG_HOME_MIRROR/nvim
-      >   $HOME/.ssh
-          → $HOME_MIRROR/.ssh
+▸ !   x   config  nvim
+      >   home    .ssh
+          config  mysql/my.cnf
+                  → mysql/my@9.5.cnf
 ```
 
 Under 12 rows the panel goes entirely; under 10, the header rule and column header go with it; the key hints shorten before they wrap. Whatever happens, a last-resort clip keeps the frame inside the terminal.
@@ -156,3 +156,4 @@ The implementation follows the brief, with the refinements real terminals argued
 - Everything above about **responsive layout** — the first cut divided the viewport proportionally, which was unreadable on a 32" screen.
 - When rows overflow, the last row line becomes a **`row N of M` position indicator**, and on a short terminal the **detail pane yields before the rows do**.
 - The **key hints stay pinned to the bottom edge**; the detail panel does not.
+- The Mappings tab shows a **`SCOPE` column** instead of repeating each row's `$VAR` root, and a destination only when it differs ([ADR 0005](../../../architecture/decisions/0005-show-mappings-by-scope-not-by-repeated-root.md)).

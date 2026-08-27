@@ -24,7 +24,6 @@ const (
 	minPairWidth  = 64  // src and dest stop sharing a line below this
 	minPanelWidth = 44  // a panel narrower than this is not worth drawing
 	maxPanelWidth = 100 // past this a panel is a wall of text, not a detail view
-	panelShare    = 40  // percent of the viewport a side panel may claim
 	minContent    = 40  // the header rule never shrinks past this
 )
 
@@ -53,9 +52,11 @@ const (
 type tableWidths struct {
 	gutter  int
 	lead    int
+	scope   int // the root each side lives under, on Mappings when it is lifted out
 	primary int
-	second  int
+	second  int // 0 when there is no destination column to draw
 	counts  int
+	folded  bool // the destination moved onto its own line
 }
 
 // total is the width one row occupies, gaps included.
@@ -63,6 +64,9 @@ func (t tableWidths) total() int {
 	w := t.gutter + t.primary
 	if t.lead > 0 {
 		w += t.lead + 1
+	}
+	if t.scope > 0 {
+		w += t.scope + 2
 	}
 	if t.second > 0 {
 		w += arrowWidth + t.second
@@ -81,6 +85,7 @@ type plan struct {
 
 	slots     []flagSlot // the flag columns this frame reserves
 	table     tableWidths
+	scoped    bool // rows show a scope and the path beneath it, not two full paths
 	rowHeight int  // 1, or 2 when a row's paths stack
 	colHeader bool // the FLAGS/SOURCE/DESTINATION row
 	rule      bool // the line under the header
@@ -101,12 +106,13 @@ func (m Model) resolve() plan {
 	p := plan{width: w, height: max(m.height, 4)}
 
 	p.slots = m.activeSlots()
-	p.table = m.columns(w, p.slots)
+	p.scoped = m.tab() == tabMappings && m.scopedRows() >= 2
+	p.table = m.columns(w, p.slots, p.scoped)
 	p.rowHeight = 1
-	if m.tab() == tabMappings && p.table.second == 0 {
-		p.rowHeight = 2 // the destination moved to its own line
+	if p.table.folded {
+		p.rowHeight = 2
 	}
-	p.colHeader = m.tab() == tabMappings && p.rowHeight == 1 && p.height >= minRuleHeight
+	p.colHeader = m.tab() == tabMappings && !p.table.folded && p.height >= minRuleHeight
 	p.rule = p.height >= minRuleHeight
 
 	p.content = min(w, max(p.table.total(), m.headerWidth(), minContent))
@@ -118,7 +124,7 @@ func (m Model) resolve() plan {
 // columns sizes the active tab's columns to the content they hold. Columns that
 // fit keep their natural width; only when the row cannot fit is width taken
 // away, and then from the column that is over its share.
-func (m Model) columns(w int, slots []flagSlot) tableWidths {
+func (m Model) columns(w int, slots []flagSlot, scoped bool) tableWidths {
 	t := tableWidths{gutter: gutterWidth}
 	primaryNeed, secondNeed := m.contentNeeds()
 
@@ -131,15 +137,27 @@ func (m Model) columns(w int, slots []flagSlot) tableWidths {
 		if m.data.ShowChanges && w >= minPairWidth {
 			t.counts = countsWidth
 		}
+		if scoped {
+			t.scope, primaryNeed, secondNeed = m.scopedNeeds()
+			if t.scope+2 > w/3 {
+				t.scope = max(w/3-2, 0) // the scope is a label, never the row
+			}
+		}
 		avail := m.available(t, w)
+		if scoped && secondNeed == 0 {
+			// No row's destination differs from its source: there is nothing
+			// for a destination column to say.
+			t.primary = min(primaryNeed, avail)
+			return t
+		}
 		if avail-arrowWidth >= minPairWidth {
 			t.primary, t.second = fitColumns(avail-arrowWidth, primaryNeed, secondNeed)
 			return t
 		}
 		// Too narrow to keep a pair on one line: the destination stacks under
 		// the source, so each column may use the full row.
+		t.folded = true
 		t.primary = min(primaryNeed, avail)
-		t.second = 0
 		return t
 	case tabChanges:
 		t.lead = lipgloss.Width(m.changeIcon(KindAdded))
@@ -157,6 +175,9 @@ func (m Model) available(t tableWidths, w int) int {
 	fixed := t.gutter
 	if t.lead > 0 {
 		fixed += t.lead + 1
+	}
+	if t.scope > 0 {
+		fixed += t.scope + 2
 	}
 	if t.counts > 0 {
 		fixed += 1 + t.counts
@@ -192,16 +213,28 @@ func (m Model) placePanel(p *plan) {
 		return
 	}
 	if spare := p.width - p.table.total() - 1; spare >= minPanelWidth {
-		// The panel grows to fit its own content, but never past a share of the
-		// screen — the list stays the subject, the panel stays the aside.
-		limit := clamp(minPanelWidth, p.width*panelShare/100, maxPanelWidth)
+		// The panel grows to fit its own content and stops there: the list is
+		// already sized to its own, so the two never compete for the same cell.
 		p.panel = panelBeside
-		p.panelWidth = min(spare, clamp(minPanelWidth, m.panelContentWidth()+4, limit))
+		p.panelWidth = min(spare, clamp(minPanelWidth, m.panelContentWidth()+4, maxPanelWidth))
 		p.content = min(p.width, p.table.total()+1+p.panelWidth)
 		return
 	}
 	p.panel = panelBelow
 	p.panelWidth = min(p.width, max(p.table.total(), minPanelWidth))
+}
+
+// scopedRows counts the mappings whose paths are rooted in a variable. The
+// scope column is only worth its width when it factors out more than one row;
+// a config of absolute paths keeps the full-path rendering.
+func (m Model) scopedRows() int {
+	n := 0
+	for _, i := range m.visible() {
+		if scopeOf(m.data.Mappings[i]).ok {
+			n++
+		}
+	}
+	return n
 }
 
 // activeSlots is the flag gutter this frame pays for: only the flags at least

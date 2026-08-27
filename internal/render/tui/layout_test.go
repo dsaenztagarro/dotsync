@@ -20,10 +20,10 @@ func TestLayoutReflowsToTheViewport(t *testing.T) {
 	}{
 		{"32-inch screen: the panel moves beside the list", 236, 58, panelBeside, 1, true},
 		{"wide window: still beside", 160, 40, panelBeside, 1, true},
-		{"laptop: the panel stacks below", 120, 30, panelBelow, 1, true},
+		{"laptop: the panel stacks below", 120, 30, panelBeside, 1, true},
 		{"half a laptop screen: columns share the width", 90, 24, panelBelow, 1, true},
-		{"narrow: source and destination stack per row", 70, 20, panelBelow, 2, false},
-		{"very narrow: still two lines, still usable", 46, 16, panelBelow, 2, false},
+		{"narrow: the differing destination stacks per row", 60, 20, panelBelow, 2, false},
+		{"very narrow: still usable", 46, 16, panelBelow, 2, false},
 		{"short: the panel yields the screen to the list", 110, 11, panelHidden, 1, true},
 	}
 	for _, c := range cases {
@@ -46,33 +46,39 @@ func TestLayoutReflowsToTheViewport(t *testing.T) {
 }
 
 // The complaint that started this: on a wide screen the proportional split put
-// the arrow a hundred columns from the source it belonged to.
+// the arrow a hundred columns from the source it belonged to. Columns now take
+// their width from the paths they hold, at any viewport size.
 func TestColumnsAreSizedToContentNotToTheViewport(t *testing.T) {
 	d := statusData()
-	longestSrc, longestDest := 0, 0
+	longestPath, longestDest := 0, 0
 	for _, r := range d.Mappings {
-		longestSrc = max(longestSrc, len(r.Src))
-		longestDest = max(longestDest, len(r.Dest))
+		s := scopeOf(r)
+		longestPath = max(longestPath, len(s.srcCell()))
+		longestDest = max(longestDest, len(s.dest))
 	}
 
 	for _, w := range []int{120, 160, 236, 400} {
 		p := sized(New(d), w, 40).resolve()
-		if p.table.primary != longestSrc {
-			t.Errorf("at %d columns: source column = %d, want the longest source (%d)", w, p.table.primary, longestSrc)
+		if !p.scoped {
+			t.Fatalf("at %d columns: expected the scoped layout", w)
+		}
+		if p.table.primary != longestPath {
+			t.Errorf("at %d columns: path column = %d, want the longest path (%d)", w, p.table.primary, longestPath)
 		}
 		if p.table.second != longestDest {
-			t.Errorf("at %d columns: destination column = %d, want the longest destination (%d)", w, p.table.second, longestDest)
+			t.Errorf("at %d columns: destination column = %d, want the longest differing destination (%d)", w, p.table.second, longestDest)
 		}
 	}
 
-	// And the rendered arrows land immediately after that column, not at the
+	// And the rendered arrow lands immediately after that column, not at the
 	// middle of the screen.
-	view := sized(New(d), 236, 40).View()
-	for _, l := range lines(view) {
-		if i := strings.Index(l, " → "); i >= 0 && strings.Contains(l, "$") {
-			col := utf8.RuneCountInString(l[:i])
-			if want := 2 + flagsWidth(sized(New(d), 236, 40).resolve().slots) + 1 + longestSrc; col != want {
-				t.Errorf("arrow at column %d, want %d (right after the longest source)", col, want)
+	m := sized(New(d), 236, 40)
+	p := m.resolve()
+	want := p.table.gutter + p.table.lead + 1 + p.table.scope + 2 + p.table.primary
+	for _, l := range lines(m.View()) {
+		if i := strings.Index(l, " → "); i >= 0 {
+			if col := utf8.RuneCountInString(l[:i]); col != want {
+				t.Errorf("arrow at column %d, want %d (right after the path column)", col, want)
 			}
 		}
 	}
@@ -110,21 +116,40 @@ func TestFlagGutterOnlyPaysForFlagsInUse(t *testing.T) {
 	}
 }
 
-// On a wide screen the panel is an aside, not a second list: it grows to its
-// content but never past its share of the screen.
-func TestSidePanelGrowsToItsContentWithinItsShare(t *testing.T) {
-	p := sized(New(statusData()), 236, 40).resolve()
+// On a wide screen the panel grows to fit its own content and stops there: the
+// list is sized to its content too, so neither starves the other.
+func TestSidePanelGrowsToItsContentAndStops(t *testing.T) {
+	m := sized(New(statusData()), 236, 40)
+	p := m.resolve()
 	if p.panel != panelBeside {
 		t.Fatalf("panel placement = %v, want beside", p.panel)
 	}
 	if p.panelWidth < minPanelWidth {
 		t.Errorf("panel width %d is below the legibility floor %d", p.panelWidth, minPanelWidth)
 	}
-	if share := 236 * panelShare / 100; p.panelWidth > share {
-		t.Errorf("panel width %d exceeds its %d%% share (%d)", p.panelWidth, panelShare, share)
-	}
 	if p.panelWidth > maxPanelWidth {
 		t.Errorf("panel width %d exceeds the cap %d", p.panelWidth, maxPanelWidth)
+	}
+	if want := clamp(minPanelWidth, m.panelContentWidth()+4, maxPanelWidth); p.panelWidth != want {
+		t.Errorf("panel width = %d, want its content width %d", p.panelWidth, want)
+	}
+	if p.table.total()+1+p.panelWidth > 236 {
+		t.Errorf("list and panel together (%d) overflow the viewport", p.table.total()+1+p.panelWidth)
+	}
+}
+
+// A side panel must fit whole: the plan reserves its width, so the frame has to
+// render its right border rather than clipping it at the screen edge.
+func TestSidePanelKeepsItsBorderOnScreen(t *testing.T) {
+	for _, w := range []int{130, 150, 180, 236} {
+		m := sized(New(statusData()), w, 30)
+		if m.resolve().panel != panelBeside {
+			continue
+		}
+		view := plain(m.View())
+		if !strings.Contains(view, "╮") || !strings.Contains(view, "╯") {
+			t.Errorf("at %d columns the panel border is clipped:\n%s", w, view)
+		}
 	}
 }
 
@@ -133,7 +158,7 @@ func TestSidePanelGrowsToItsContentWithinItsShare(t *testing.T) {
 func TestSidePanelIsTopAlignedWithTheList(t *testing.T) {
 	view := plain(sized(New(statusData()), 236, 40).View())
 	for _, l := range lines(view) {
-		if strings.Contains(l, "$XDG_CONFIG_HOME/nvim") {
+		if strings.Contains(l, "nvim") && !strings.Contains(l, "src") {
 			if !strings.Contains(l, "╭") {
 				t.Errorf("first row does not share its line with the panel top:\n%q", l)
 			}
@@ -147,11 +172,11 @@ func TestSidePanelIsTopAlignedWithTheList(t *testing.T) {
 // screen; only the key hints stay pinned there.
 func TestStackedPanelHugsTheList(t *testing.T) {
 	d := statusData()
-	rendered := lines(sized(New(d), 120, 40).View())
+	rendered := lines(sized(New(d), 90, 40).View()) // narrow enough that the panel stacks
 
 	lastRow, panelTop, footer := -1, -1, -1
 	for i, l := range rendered {
-		if strings.Contains(l, "$XDG_CONFIG_HOME/cabal/config") && !strings.Contains(l, "invalid") {
+		if strings.Contains(l, "cabal/config") && !strings.Contains(l, "invalid") && !strings.Contains(l, "dest") {
 			lastRow = i
 		}
 		if strings.HasPrefix(strings.TrimSpace(l), "╭") && panelTop < 0 {
