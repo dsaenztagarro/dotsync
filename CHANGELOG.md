@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 Versioning continues the line of the original Ruby gem (now [`dotsync-ruby`](https://github.com/dsaenztagarro/dotsync-ruby), last released at 0.4.6): this binary reads the same configuration and reproduces the same behavior, so it is a continuation of the same tool rather than a new one.
 
+## [0.6.1] - 2026-08-27
+
+### Fixed
+
+- **The built binary reported `0.0.0-dev` whatever version it was built from.** `cmd/dotsync` passed its own placeholder into `cli.SetVersion` unconditionally, and only an empty string was ignored, so the placeholder always won over the compiled-in version. An un-injected build now reports the release it was built from; `-ldflags "-X main.version=…"` still overrides it.
+
 ## [0.6.0] - 2026-08-27
 
 ### Changed
@@ -45,5 +51,6 @@ The Ruby gem rewritten as a single self-contained Go binary, with an interactive
 
 - **Automatic update checks** — the Ruby gem's once-a-day "new version available" notice is not implemented.
 
+[0.6.1]: https://github.com/dsaenztagarro/dotsync/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/dsaenztagarro/dotsync/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/dsaenztagarro/dotsync/releases/tag/v0.5.0

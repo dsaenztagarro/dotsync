@@ -7,8 +7,10 @@ import (
 	"github.com/dsaenztagarro/dotsync/internal/cli"
 )
 
-// version is set at build time via -ldflags "-X main.version=<v>".
-var version = "0.0.0-dev"
+// version is set at build time via -ldflags "-X main.version=<v>". Empty means
+// nothing was injected, in which case the version compiled into internal/cli
+// stands — a plain `go build` of a release tag then reports that release.
+var version = ""
 
 func main() {
 	cli.SetVersion(version)
