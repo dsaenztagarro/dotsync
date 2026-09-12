@@ -21,15 +21,7 @@ jobs:
         with:
           go-version: "1.25"
           check-latest: true
-      - name: gofmt (must be clean)
-        run: |
-          unformatted="$(gofmt -l .)"
-          if [ -n "$unformatted" ]; then
-            echo "These files are not gofmt-clean:"; echo "$unformatted"; exit 1
-          fi
-      - name: go vet
-        run: go vet ./...
-      - name: go test
-        run: go test ./...
-      - name: go build
-        run: go build ./cmd/dotsync
+      # One step on purpose: `make gate` is the same gofmt/vet/test/build
+      # sequence a contributor runs locally, so CI cannot drift from it.
+      - name: make gate
+        run: make gate

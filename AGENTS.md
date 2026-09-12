@@ -32,11 +32,15 @@ This is the **Go rewrite** of the original Ruby gem (now at [`dsaenztagarro/dots
 ## Common Commands
 
 ```bash
-# build:   go build ./cmd/dotsync
-# test:    go test ./...
-# lint:    go vet ./... && gofmt -l .    # gofmt -l must print nothing
+# gate:    make gate                     # gofmt + vet + test + build, what CI runs
+# build:   make build                    # ./dotsync, with the release version stamped in
+# install: make install                  # into $XDG_BIN_HOME (or ~/.local/bin)
+# parity:  make parity                   # differential harness vs the Ruby oracle
+# test:    go test ./...                 # a single check by hand; no make alias for it
 # run:     go run ./cmd/dotsync <command> [flags]
 ```
+
+Use `make build`/`make install` rather than a bare `go build`: only the Makefile passes the `-ldflags` that stamp the release into the binary, so a hand-rolled build reports the version compiled into `internal/cli` — the *previous* release on every commit after a tag.
 
 ## Architecture
 
@@ -122,12 +126,16 @@ When a change has a runtime surface, **drive it and observe the behavior** befor
 
 ## CI / gate
 
-Before a change ships, the following must be green (also what the `/epic` skill defers to):
+Before a change ships, `make gate` must be green (also what the `/epic` skill defers to).
+It is the single definition of the gate — CI runs the same target — and it covers:
 
-- `gofmt -l .` prints nothing (all files formatted).
+- `gofmt -l .` prints nothing (all files formatted). Note that `gofmt -l` exits `0` even when it names files, which is why the check belongs in the target and not in a typed command.
 - `go vet ./...` passes.
 - `go test ./...` passes.
-- For parity-affecting changes: the golden/differential harness passes against the Ruby oracle.
+- `go build ./cmd/dotsync` compiles.
+
+For parity-affecting changes, additionally: `make parity` passes against the Ruby oracle.
+It is not part of `make gate` because it needs the Ruby gem on `PATH`, which CI does not have.
 
 ## Development Workflow
 

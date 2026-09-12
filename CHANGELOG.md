@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 Versioning continues the line of the original Ruby gem (now [`dotsync-ruby`](https://github.com/dsaenztagarro/dotsync-ruby), last released at 0.4.6): this binary reads the same configuration and reproduces the same behavior, so it is a continuation of the same tool rather than a new one.
 
+## [Unreleased]
+
+### Added
+
+- **A `Makefile` with the handful of invocations that are easy to get wrong.** `make build` and `make install` pass the `-ldflags` that stamp the release into the binary, so a build no longer reports the version compiled into `internal/cli` — the previous release on every commit after a tag. `make gate` is the full ship gate (gofmt, vet, test, build) and is now what CI runs, so the gate has one definition instead of two that can drift; it also fixes the check that `gofmt -l` names unformatted files while exiting `0`. `make parity` wraps the differential harness and documents its `DOTSYNC_RUBY` override. Deliberately thin: `go test ./...` and `go vet ./...` keep no aliases.
+
 ## [0.6.1] - 2026-08-27
 
 ### Fixed

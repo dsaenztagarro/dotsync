@@ -97,9 +97,11 @@ go install github.com/dsaenztagarro/dotsync/cmd/dotsync@latest
 ```sh
 git clone https://github.com/dsaenztagarro/dotsync.git
 cd dotsync
-go build -o dotsync ./cmd/dotsync
+make build            # ./dotsync, with the release version stamped in
 ./dotsync --version
 ```
+
+`make install` builds the same binary straight into `$XDG_BIN_HOME` (or `~/.local/bin` if that is unset); override the destination with `make install PREFIX=/usr/local/bin`.
 
 ### Trying it alongside the Ruby version
 
@@ -875,13 +877,18 @@ dotsync -c ~/my-config.toml push
 ## Development
 
 ```sh
-go build ./cmd/dotsync      # build the binary
-go test ./...               # run the test suite
-go vet ./...                # static checks
-gofmt -l .                  # must print nothing (all files formatted)
+make gate        # the full ship gate: gofmt, vet, test, build
+make build       # build ./dotsync with the release version stamped in
+make install     # build and install into $XDG_BIN_HOME (or ~/.local/bin)
+make parity      # differential harness vs the Ruby oracle (needs the gem on PATH)
+make help        # list the targets
 ```
 
-CI (GitHub Actions) runs `gofmt`, `go vet`, `go test`, and `go build` on Linux and macOS. Parity-affecting changes are additionally checked by a differential harness that runs the Ruby oracle and the Go binary against a shared fixture corpus and diffs filesystem state, exit codes, and output.
+The targets are deliberately thin: `go test ./...` and `go vet ./...` are still the right way to run a single check by hand, and there are no aliases for them here.
+What `make` adds is the two things that are quietly easy to get wrong — the `-ldflags` that stamp the release into the binary (a bare `go build` reports the version compiled into `internal/cli`, which is the *previous* release on every commit after a tag), and the fact that `gofmt -l` names unformatted files while still exiting `0`, so a check that looks green can be red.
+
+CI (GitHub Actions) runs `make gate` on Linux and macOS — the same target you run locally, so the gate has one definition and cannot drift.
+Parity-affecting changes are additionally checked by a differential harness that runs the Ruby oracle and the Go binary against a shared fixture corpus and diffs filesystem state, exit codes, and output.
 
 Contributor guidance lives in [`AGENTS.md`](AGENTS.md); architecture decisions and how-it-works explainers live under [`docs/architecture/`](docs/architecture).
 
