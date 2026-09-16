@@ -105,6 +105,9 @@ func (a *Action) Execute() error {
 	if sec.invalidPaths {
 		a.showInvalidPaths()
 	}
+	if sec.selfRefConfig {
+		a.showSelfReferentialConfig()
+	}
 	if err := a.computeDiffs(); err != nil {
 		return err
 	}
@@ -276,6 +279,37 @@ func (a *Action) showInvalidPaths() {
 		if msg, ok := invalidityMessages[m.InvalidityReason()]; ok {
 			a.log.Gray("    " + msg[0] + " · fix: " + msg[1])
 		}
+	}
+	a.log.Plain("")
+}
+
+// showSelfReferentialConfig warns when this run would rewrite one of the files
+// that produced its own configuration. That is legal and supported, but it has
+// a consequence a preview cannot show: the incoming rules were not the rules
+// this run was planned with, so they govern nothing until the next run.
+func (a *Action) showSelfReferentialConfig() {
+	refs := config.SelfReferences(a.mappings, a.cfg.Provenance())
+	if len(refs) == 0 {
+		return
+	}
+	a.log.Error(fmt.Sprintf("Config synced by this run (%d):", len(refs)))
+	for _, r := range refs {
+		a.log.Plain("  " + r.ConfigFile)
+		a.log.Gray("    via " + r.Mapping.DecoratedSrc() + " → " + r.Mapping.DecoratedDest())
+		if r.Role == config.Overwritten {
+			a.log.Gray("    overwritten by this run, which was planned from it — an incoming rule")
+			a.log.Gray("    change takes effect on the next run and cannot appear in this preview")
+		} else {
+			a.log.Gray("    copied out by this run, replacing the copy at the far end — an edit")
+			a.log.Gray("    made there is reverted without appearing as a difference")
+		}
+	}
+	// Only suggest `source` to someone who is not already using it; when the
+	// sourced file is itself in the payload, the fix is the mapping, not source.
+	if a.cfg.Provenance().SourcePath == "" {
+		a.log.Gray("    · fix: point " + a.cfg.Path() + " at the repo copy with `source`")
+	} else {
+		a.log.Gray("    · fix: exclude it from the mapping, or keep it outside the synced tree")
 	}
 	a.log.Plain("")
 }
@@ -712,6 +746,7 @@ type sections struct {
 	differences       bool
 	diffContent       bool
 	invalidPaths      bool
+	selfRefConfig     bool
 }
 
 func computeSections(o Options) sections {
@@ -725,5 +760,8 @@ func computeSections(o Options) sections {
 		differences:       !(o.Quiet || o.OnlyMappings || o.OnlyConfig),
 		diffContent:       o.DiffContent,
 		invalidPaths:      true,
+		// Always on, like invalidPaths: a run that rewrites its own governing
+		// config is worth saying out loud even when every other section is off.
+		selfRefConfig: true,
 	}
 }

@@ -31,13 +31,21 @@ func (a *Action) tuiData() (tui.Data, error) {
 	d := tui.Data{
 		Command:    a.opts.Command,
 		Direction:  a.dir.String(),
-		ConfigPath: a.cfg.Path(),
+		ConfigPath: a.cfg.EffectivePath(),
 		Colors:     a.colors,
 		Icons:      a.icons,
 		EnvVars:    a.envVarRows(),
 	}
 	for _, m := range a.ensureDestinations() {
 		d.Notices = append(d.Notices, "created destination "+m.OriginalDest())
+	}
+	// Same warning the classic renderer prints, so the two cannot disagree.
+	for _, r := range config.SelfReferences(a.mappings, a.cfg.Provenance()) {
+		fate := "overwritten by this run — an incoming rule change takes effect on the next run"
+		if r.Role == config.Propagated {
+			fate = "copied out by this run — an edit at the far end is reverted"
+		}
+		d.Notices = append(d.Notices, "config "+r.ConfigFile+" is "+fate)
 	}
 	if sec.differences {
 		if err := a.computeDiffs(); err != nil {
@@ -135,10 +143,16 @@ func (a *Action) optionRows() []tui.KeyValue {
 	rows := []tui.KeyValue{
 		{Key: "command", Value: a.opts.Command},
 		{Key: "direction", Value: a.dir.String()},
-		{Key: "config", Value: a.cfg.Path()},
+		{Key: "config", Value: a.cfg.EffectivePath()},
 		{Key: "apply", Value: boolWord(a.opts.Apply)},
 		{Key: "force hooks", Value: boolWord(a.opts.ForceHooks)},
 		{Key: "create dest", Value: boolWord(a.opts.CreateDest)},
+	}
+	if p := a.cfg.Provenance(); p.SourcePath != "" {
+		rows = append(rows, tui.KeyValue{Key: "pointer", Value: p.HostPath})
+	}
+	if p := a.cfg.Provenance(); p.IncludePath != "" {
+		rows = append(rows, tui.KeyValue{Key: "includes", Value: p.IncludePath})
 	}
 	if a.dir == config.Pull {
 		rows = append(rows, tui.KeyValue{Key: "backups", Value: a.cfg.BackupsRoot()})

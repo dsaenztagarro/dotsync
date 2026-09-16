@@ -19,7 +19,7 @@ This is the **Go rewrite** of dotsync. The original Ruby gem lives at [`dsaenzta
 - **Automatic Backups**: Pull operations create timestamped backups for easy recovery.
 - **Live Watching**: Continuously monitor and sync changes in real time with the `watch` command.
 - **Config Includes**: Compose configs from a shared base + machine-specific overlays with `include`.
-- **Config Source**: Point local config to your dotfiles repo with `source` — changes are visible immediately without syncing.
+- **Config Source**: Point local config to your dotfiles repo with `source` — changes are visible immediately without syncing, and dotsync warns when a mapping would sync the configuration instead.
 - **Post-Sync Hooks**: Run commands automatically after files change (e.g. codesigning, chmod, service reload).
 - **Interactive Screen**: On a terminal, `status` and the preview commands open a full-screen cockpit — aligned mappings, filtering, per-row detail, and a legend — that reflows to any window size, and falls back to plain line output whenever the output is piped, quiet, or unattended.
 - **Quiet by Default**: Minimal output by default — legends, mappings tables, and env vars are opt-in via `-v` or `--show-*` flags.
@@ -289,6 +289,7 @@ Your `[icons]` and `[colors]` overrides apply to this screen too — see [Custom
 ```sh
 # Setup and inspection
 dotsync setup                      # Create the initial config file
+dotsync setup --source <path>      # Point at a config that lives in your dotfiles repo
 dotsync init                       # Same as setup (alias)
 dotsync status                     # View the resolved configuration
 
@@ -391,11 +392,19 @@ ignore = ["lazy-lock.json"]
 local  = "$HOME/.zshenv"
 remote = "$HOME_MIRROR/.zshenv"
 
-# Sync the config file itself to a different name in the repo
+# Sync the config file itself to a different name in the repo.
+# Prefer the Config Source section below — see the note after this block.
 [[sync.mappings]]
 local  = "$XDG_CONFIG_HOME/dotsync.toml"
 remote = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.macbook.toml"
 ```
+
+> **A configuration that syncs itself is both an input to a run and a payload of it.**
+> A rule committed to the repo is only *delivered* by a pull that ran under the previous rules, so it governs nothing until the run after that — and the preview cannot show what the incoming rules will do, because the plan was computed from the outgoing ones.
+> In the other direction a push copies the live config out over the repo copy, reverting an edit made there without listing it as a difference.
+>
+> dotsync reports this as a **"Config synced by this run"** warning rather than refusing it, since a directory mapping can legitimately cover a tree that happens to contain the config.
+> [Config Source](#config-source) avoids the situation entirely and is the recommended arrangement; use the mapping above only when you cannot point at a repo-resident config.
 
 **How it works:**
 
@@ -586,8 +595,11 @@ Use `source` to point your local config at the authoritative copy in your dotfil
 
 ```toml
 # ~/.config/dotsync.toml (a thin pointer that never changes)
-source = "$XDG_CONFIG_HOME_MIRROR/dotsync/dotsync.mbp_personal.toml"
+source = "/Users/you/Code/dotfiles/xdg_config_home/dotsync/dotsync.mbp_personal.toml"
 ```
+
+Write it with `dotsync setup --source <path>`, which expands the path and records it absolute.
+An absolute path matters for unattended runs: a LaunchAgent, cron job or systemd unit inherits no shell profile, so the mirror variables a login shell exports are not set and a `$VAR`-relative pointer resolves somewhere else.
 
 ```toml
 # The real config in the repo (may itself use `include`)
@@ -604,7 +616,8 @@ ignore = ["lazy-lock.json"]
 - `source` must be the **only** key in the pointer file.
 - The source file may use `include` to compose with a base (resolved relative to the source file).
 - Chained sources (a source file pointing at another source) are not supported.
-- Environment variables are expanded in the `source` path.
+- Environment variables are expanded in the `source` path — but see the note above on writing it absolute.
+- Because the configuration is never copied, none of it appears in a sync, and an edit governs the very next run.
 
 This makes per-machine setup a one-liner: each machine's `~/.config/dotsync.toml` points at its own overlay in the repo.
 
@@ -827,6 +840,16 @@ dotsync -c ~/.config/dotsync/dotsync.macbook.toml push --apply
 
 The default icons are ASCII, so this is unusual — but if you have overridden them with Nerd Font glyphs, install a [Nerd Font](https://www.nerdfonts.com/) and configure your terminal to use it, or set plain-ASCII/emoji values in the `[icons]` table (see [Customizing Icons](#customizing-icons)).
 
+### "Config synced by this run"
+
+One of your mappings copies a file that dotsync read its own configuration from.
+That is allowed, but it means a rule reaches the machine one run later than you expect, and the preview for the run that delivers it was computed from the *outgoing* rules, so it cannot show what the incoming ones will do.
+In the push direction it means the live config overwrites the repo copy, quietly reverting an edit made there.
+
+The warning names the file, the mapping that moves it, and which of the two is happening.
+The fix is [Config Source](#config-source): point `~/.config/dotsync.toml` at the repo copy so the configuration is read in place and never travels.
+If you are already using `source` and the sourced file is itself inside a mapping, exclude it with `ignore` or keep it outside the synced tree.
+
 ### Changes are not being applied
 
 `push`/`pull` run in preview mode by default. Add `--apply`:
@@ -873,6 +896,14 @@ Create one with `dotsync setup` (writes `~/.config/dotsync.toml`), or point at a
 dotsync setup
 dotsync -c ~/my-config.toml push
 ```
+
+If the configuration already lives in your dotfiles repository, write a pointer at it instead of a second copy — see [Config Source](#config-source):
+
+```sh
+dotsync setup --source ~/Code/dotfiles/xdg_config_home/dotsync/dotsync.mbp_personal.toml
+```
+
+`setup` never replaces an existing config; remove it first, or pass `-c` to write elsewhere.
 
 ## Development
 

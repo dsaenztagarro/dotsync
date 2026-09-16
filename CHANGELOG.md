@@ -10,7 +10,14 @@ Versioning continues the line of the original Ruby gem (now [`dotsync-ruby`](htt
 
 ### Added
 
+- **dotsync warns when a mapping would sync the configuration it just read.** A config that ships itself is both an input to a run and a payload of it: a rule committed to the repo is only delivered by a run governed by the previous rules, so it governs nothing until the run after that — and the preview for the delivering run was computed from the outgoing rules, so it cannot show what the incoming ones will do. The push direction has the mirror-image problem: the live config overwrites the repo copy, reverting an edit made there without listing it as a difference. The new *Config synced by this run* block names the file, the mapping that moves it, and which of the two is happening, in the classic renderer and the cockpit alike. It reports rather than refuses — a directory mapping can legitimately cover a tree that contains the config, and changing which files get written would diverge from the Ruby oracle. Filesystem outcomes are unchanged. See [the explainer](docs/architecture/config-resolution.md).
+- **`dotsync setup --source <path>`** writes a pointer config at a configuration that already lives in your dotfiles repository, so the repo copy is read in place and an edit governs the very next run. The path is recorded absolute: a run started by a LaunchAgent, cron job or systemd unit inherits no shell profile, so the mirror variables a login shell exports are unset there and a `$VAR`-relative pointer would resolve elsewhere — which is why the README example no longer uses one.
 - **A `Makefile` with the handful of invocations that are easy to get wrong.** `make build` and `make install` pass the `-ldflags` that stamp the release into the binary, so a build no longer reports the version compiled into `internal/cli` — the previous release on every commit after a tag. `make gate` is the full ship gate (gofmt, vet, test, build) and is now what CI runs, so the gate has one definition instead of two that can drift; it also fixes the check that `gofmt -l` names unformatted files while exiting `0`. `make parity` wraps the differential harness and documents its `DOTSYNC_RUBY` override. Deliberately thin: `go test ./...` and `go vet ./...` keep no aliases.
+
+### Changed
+
+- **`dotsync setup` refuses to replace an existing config** instead of silently overwriting it. A bootstrap command that destroys a working configuration is the one thing it must not do; remove the file first, or pass `-c` to write elsewhere.
+- **The cockpit header and the resolved-options view name the config you actually edit.** Under `source` both showed the pointer — the one file nobody edits. They now show the sourced file, with the pointer and any included base kept as their own rows.
 
 ## [0.6.1] - 2026-08-27
 
