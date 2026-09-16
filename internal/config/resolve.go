@@ -18,18 +18,53 @@ import (
 	"github.com/dsaenztagarro/dotsync/internal/paths"
 )
 
+// Provenance records which files on disk produced a resolved tree. SourcePath
+// and IncludePath are empty when the config uses no `source` / `include`.
+//
+// It exists because resolution is lossy: `source` is replaced by the tree it
+// points at and `include` is consumed by the merge, so without this the only
+// file the program can still name is the one it was pointed at — which, under
+// `source`, is the one file nobody edits.
+type Provenance struct {
+	HostPath    string // the file dotsync was pointed at
+	SourcePath  string // the file `source` pointed to, if any
+	IncludePath string // the file `include` merged in, if any
+}
+
+// EffectivePath is the file a user edits to change this configuration: the
+// sourced file when there is one, otherwise the host file.
+func (p Provenance) EffectivePath() string {
+	if p.SourcePath != "" {
+		return p.SourcePath
+	}
+	return p.HostPath
+}
+
+// Files returns the config files that produced the tree, in resolution order,
+// skipping the ones this configuration does not use.
+func (p Provenance) Files() []string {
+	out := make([]string, 0, 3)
+	for _, f := range []string{p.HostPath, p.SourcePath, p.IncludePath} {
+		if f != "" {
+			out = append(out, f)
+		}
+	}
+	return out
+}
+
 // Resolve loads the config at path and fully resolves it into a dynamic tree,
 // applying `source` indirection and `include` deep-merge. Mirrors
 // ConfigCache#resolve_config.
-func Resolve(path string) (map[string]any, error) {
+func Resolve(path string) (map[string]any, Provenance, error) {
+	prov := Provenance{HostPath: path}
 	raw, err := parseTOMLFile(path)
 	if err != nil {
-		return nil, err
+		return nil, prov, err
 	}
 	if _, ok := raw["source"]; ok {
-		return resolveSource(raw, path)
+		return resolveSource(raw, prov)
 	}
-	return resolveInclude(raw, path)
+	return resolveInclude(raw, prov, path)
 }
 
 func parseTOMLFile(path string) (map[string]any, error) {
@@ -45,49 +80,54 @@ func parseTOMLFile(path string) (map[string]any, error) {
 
 // resolveSource handles a `source = "..."` pointer config, which must contain
 // only that key and points at the real config file (which may itself `include`).
-func resolveSource(raw map[string]any, configPath string) (map[string]any, error) {
+func resolveSource(raw map[string]any, prov Provenance) (map[string]any, Provenance, error) {
 	sv, ok := raw["source"].(string)
 	if !ok {
-		return nil, &derr.ConfigError{Msg: "Config Error: 'source' must be a string path"}
+		return nil, prov, &derr.ConfigError{Msg: "Config Error: 'source' must be a string path"}
 	}
 	if len(raw) > 1 {
-		return nil, &derr.ConfigError{Msg: "Config Error: 'source' cannot be combined with other keys. The source file should contain the full configuration."}
+		return nil, prov, &derr.ConfigError{Msg: "Config Error: 'source' cannot be combined with other keys. The source file should contain the full configuration."}
 	}
 	sourcePath := paths.ExpandPath(paths.ExpandEnvVars(sv))
 	if !fileExists(sourcePath) {
-		return nil, &derr.ConfigError{Msg: "Config Error: Source file not found: " + sourcePath}
+		return nil, prov, &derr.ConfigError{Msg: "Config Error: Source file not found: " + sourcePath}
 	}
+	prov.SourcePath = sourcePath
 	sourceRaw, err := parseTOMLFile(sourcePath)
 	if err != nil {
-		return nil, err
+		return nil, prov, err
 	}
 	if _, ok := sourceRaw["source"]; ok {
-		return nil, &derr.ConfigError{Msg: "Config Error: Chained sources are not supported (found 'source' in " + sourcePath + ")"}
+		return nil, prov, &derr.ConfigError{Msg: "Config Error: Chained sources are not supported (found 'source' in " + sourcePath + ")"}
 	}
-	return resolveInclude(sourceRaw, sourcePath)
+	// The include resolves relative to the source file's own directory, not the
+	// pointer's, which is what lets a repo-resident config include a sibling base.
+	return resolveInclude(sourceRaw, prov, sourcePath)
 }
 
 // resolveInclude applies an `include = "..."` deep-merge, mirroring
-// ConfigMerger#resolve.
-func resolveInclude(config map[string]any, configPath string) (map[string]any, error) {
+// ConfigMerger#resolve. baseDirOf is the file the include is relative to: the
+// sourced file when there is one, otherwise the host config.
+func resolveInclude(config map[string]any, prov Provenance, baseDirOf string) (map[string]any, Provenance, error) {
 	incVal, ok := config["include"]
 	if !ok {
-		return config, nil
+		return config, prov, nil
 	}
 	incStr, ok := incVal.(string)
 	if !ok {
-		return nil, &derr.ConfigError{Msg: "Config Error: 'include' must be a string path"}
+		return nil, prov, &derr.ConfigError{Msg: "Config Error: 'include' must be a string path"}
 	}
-	includePath := expandPathRel(incStr, filepath.Dir(configPath))
+	includePath := expandPathRel(incStr, filepath.Dir(baseDirOf))
 	if !fileExists(includePath) {
-		return nil, &derr.ConfigError{Msg: "Config Error: Included file not found: " + includePath}
+		return nil, prov, &derr.ConfigError{Msg: "Config Error: Included file not found: " + includePath}
 	}
+	prov.IncludePath = includePath
 	base, err := parseTOMLFile(includePath)
 	if err != nil {
-		return nil, err
+		return nil, prov, err
 	}
 	if _, ok := base["include"]; ok {
-		return nil, &derr.ConfigError{Msg: "Config Error: Chained includes are not supported (found 'include' in " + includePath + ")"}
+		return nil, prov, &derr.ConfigError{Msg: "Config Error: Chained includes are not supported (found 'include' in " + includePath + ")"}
 	}
 	overlay := make(map[string]any, len(config))
 	for k, v := range config {
@@ -95,7 +135,7 @@ func resolveInclude(config map[string]any, configPath string) (map[string]any, e
 			overlay[k] = v
 		}
 	}
-	return deepMerge(base, overlay), nil
+	return deepMerge(base, overlay), prov, nil
 }
 
 // deepMerge merges overlay onto base: hashes merge recursively, arrays

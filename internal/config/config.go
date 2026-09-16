@@ -58,7 +58,7 @@ type Config struct {
 	raw         map[string]any
 	dir         Direction
 	sectionName string // the [<section>.mappings] table to read (push/pull/watch)
-	path        string // the resolved, absolute config file path
+	prov        Provenance
 }
 
 // DefaultConfigPath mirrors ENV["DOTSYNC_CONFIG"] || "~/.config/dotsync.toml".
@@ -87,11 +87,11 @@ func load(path string, dir Direction, sectionName string) (*Config, error) {
 		return nil, &derr.ConfigError{Msg: fmt.Sprintf(
 			"Config file not found: %s\n\nTo create a default configuration file, run:\n  dotsync setup", abs)}
 	}
-	raw, err := Resolve(abs)
+	raw, prov, err := Resolve(abs)
 	if err != nil {
 		return nil, err
 	}
-	c := &Config{raw: raw, dir: dir, sectionName: sectionName, path: abs}
+	c := &Config{raw: raw, dir: dir, sectionName: sectionName, prov: prov}
 	if err := c.validate(); err != nil {
 		return nil, err
 	}
@@ -101,8 +101,15 @@ func load(path string, dir Direction, sectionName string) (*Config, error) {
 // Raw exposes the resolved tree (for [icons]/[colors] overrides).
 func (c *Config) Raw() map[string]any { return c.raw }
 
-// Path is the resolved config file this configuration was read from.
-func (c *Config) Path() string { return c.path }
+// Path is the file dotsync was pointed at. Under `source` this is the pointer,
+// not the configuration anyone edits — use EffectivePath for that.
+func (c *Config) Path() string { return c.prov.HostPath }
+
+// Provenance names every file on disk that produced this configuration.
+func (c *Config) Provenance() Provenance { return c.prov }
+
+// EffectivePath is the file a user edits to change this configuration.
+func (c *Config) EffectivePath() string { return c.prov.EffectivePath() }
 
 // Mappings returns the direction's mappings: the [[push|pull.mappings]] section
 // mappings first, then the [sync] mappings (explicit, then shorthands in order).

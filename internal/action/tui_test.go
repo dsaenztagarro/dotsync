@@ -3,6 +3,7 @@ package action
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/dsaenztagarro/dotsync/internal/config"
@@ -244,5 +245,74 @@ dest = "`+root+`/dest/app"
 	}
 	if !d.Mappings[0].Valid {
 		t.Error("the mapping should be valid once its destination exists")
+	}
+}
+
+// The cockpit and the classic renderer must agree about a config that ships
+// itself: the same condition, surfaced in both, is the whole point of building
+// the detection in the config layer rather than in one renderer.
+func TestCockpitNoticesAConfigTheRunWouldOverwrite(t *testing.T) {
+	root := t.TempDir()
+	write(t, filepath.Join(root, "repo/note.md"), "from the repo\n")
+	write(t, filepath.Join(root, "local/note.md"), "local\n")
+
+	// A pull whose destination directory holds the config that planned it.
+	cfgPath := filepath.Join(root, "local", "dotsync.toml")
+	write(t, cfgPath, `
+[[sync.mappings]]
+local  = "`+root+`/local"
+remote = "`+root+`/repo"
+`)
+	a := newAction(t, cfgPath, config.Pull, Options{Command: "pull"})
+	d := dataOrFail(t, a)
+
+	var found string
+	for _, n := range d.Notices {
+		if strings.Contains(n, cfgPath) {
+			found = n
+		}
+	}
+	if found == "" {
+		t.Fatalf("expected a notice naming %q, got %v", cfgPath, d.Notices)
+	}
+	if !strings.Contains(found, "overwritten") {
+		t.Errorf("a config on the destination side is overwritten; notice said %q", found)
+	}
+}
+
+func TestCockpitHeaderNamesTheSourcedConfigNotThePointer(t *testing.T) {
+	root := t.TempDir()
+	write(t, filepath.Join(root, "repo/note.md"), "from the repo\n")
+	write(t, filepath.Join(root, "local/note.md"), "local\n")
+
+	real := filepath.Join(root, "repo", "dotsync.machine.toml")
+	write(t, real, `
+[[sync.mappings]]
+local  = "`+root+`/local"
+remote = "`+root+`/repo"
+ignore = ["dotsync.machine.toml"]
+`)
+	pointer := filepath.Join(root, "home", "dotsync.toml")
+	write(t, pointer, "source = \""+real+"\"\n")
+
+	a := newAction(t, pointer, config.Pull, Options{Command: "pull"})
+	d := dataOrFail(t, a)
+	if d.ConfigPath != real {
+		t.Errorf("header shows %q; the pointer is not the file anyone edits, want %q", d.ConfigPath, real)
+	}
+	for _, n := range d.Notices {
+		if strings.Contains(n, "dotsync") && strings.Contains(n, "overwritten") {
+			t.Errorf("a sourced config outside the payload needs no warning, got %q", n)
+		}
+	}
+	rows := a.optionRows()
+	var sawPointer bool
+	for _, r := range rows {
+		if r.Key == "pointer" && r.Value == pointer {
+			sawPointer = true
+		}
+	}
+	if !sawPointer {
+		t.Errorf("the pointer stays visible as its own row, got %+v", rows)
 	}
 }

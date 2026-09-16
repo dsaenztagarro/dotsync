@@ -189,16 +189,28 @@ func watchCommand() *cobra.Command {
 }
 
 func setupCommand() *cobra.Command {
-	var configPath string
+	var configPath, sourcePath string
 	cmd := &cobra.Command{
 		Use:     "setup",
 		Aliases: []string{"init"},
 		Short:   "Write a starter configuration file",
-		Args:    cobra.NoArgs,
+		Long: "Write a starter configuration file.\n\n" +
+			"With --source, write a pointer at a configuration that already lives in\n" +
+			"your dotfiles repository instead. dotsync then reads the repo copy directly,\n" +
+			"so an edit governs the very next run and the config never has to sync itself.",
+		Args: cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			path := configPath
 			if path == "" {
 				path = config.DefaultConfigPath()
+			}
+			if sourcePath != "" {
+				written, err := config.WriteSourcePointer(path, sourcePath)
+				if err != nil {
+					return err
+				}
+				fmt.Println("Wrote dotsync config pointer to " + written)
+				return nil
 			}
 			written, err := config.WriteDefault(path)
 			if err != nil {
@@ -209,6 +221,7 @@ func setupCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVarP(&configPath, "config", "c", "", "path to the config file")
+	cmd.Flags().StringVar(&sourcePath, "source", "", "write a pointer at this configuration in your dotfiles repo")
 	return cmd
 }
 
