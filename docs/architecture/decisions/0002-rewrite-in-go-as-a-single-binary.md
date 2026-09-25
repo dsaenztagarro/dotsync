@@ -54,6 +54,6 @@ Behavioral parity with the Ruby original is the governing constraint during the 
 ## References
 
 - [`0001-record-decisions-as-adrs.md`](0001-record-decisions-as-adrs.md) — the ADR practice this follows.
-- [ai-engineering-template](https://github.com/dsaenztagarro/ai-engineering-template) — the workflow scaffold this project adopts.
+- [agentic-engineering-template](https://github.com/dsaenztagarro/agentic-engineering-template) — the workflow scaffold this project adopts.
 - `dsaenztagarro/dotsync-ruby` — the original Ruby implementation (the parity oracle).
 - Explainer: [`docs/architecture/config-resolution.md`](../config-resolution.md) — how `source`, `include` and the deep-merge work today.
