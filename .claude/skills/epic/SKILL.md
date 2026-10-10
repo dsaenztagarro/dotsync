@@ -1,7 +1,7 @@
 ---
 name: epic
-description: Turn a design doc into a GitHub epic — decompose the design into self-contained sub-issues with a phased plan, then implement them one ticket at a time (branch → tests → PR → squash-merge), carrying every pragmatic decision forward on the epic issue so later tickets inherit the context. The design doc is a UI design (a Claude Design canvas under `docs/designs/*.html`) or a backend/architecture design authored as markdown (`docs/architecture/*.md` or `docs/features/*.md`). User-invoked only; the user reviews the work at the very end. Run `/epic <design-path>` to start, or `/epic resume #<epic>` to continue.
-argument-hint: "<docs/designs/*.html | docs/architecture/*.md | docs/features/*.md> | resume #<epic>"
+description: Turn a design doc into a GitHub epic — decompose the design into self-contained sub-issues with a phased plan, then implement them one ticket at a time (branch → tests → PR → squash-merge), carrying every pragmatic decision forward on the epic issue so later tickets inherit the context. The design doc is a UI design (a page Claude Design returned, in the `dotsync-ds` design repository) or a backend/architecture design authored as markdown (`docs/architecture/*.md` or `docs/features/*.md`). User-invoked only; the user reviews the work at the very end. Run `/epic <design-path>` to start, or `/epic resume #<epic>` to continue.
+argument-hint: "<dotsync-ds design page | docs/architecture/*.md | docs/features/*.md> | resume #<epic>"
 ---
 
 # Run an epic from a design doc
@@ -23,7 +23,7 @@ decomposes:
 
 | Kind | Lives in | Authored by | Decomposes by |
 |------|----------|-------------|---------------|
-| **UI / visual** | `docs/designs/*.html` | **Claude Design** (from a design brief) | the doc's sections/anchors; each interactive workflow becomes a spec'd ticket |
+| **UI / visual** | a page in `dotsync-ds` (see the `design-handoff` skill) | **Claude Design** (from a design brief) | the page's sections; each interactive workflow becomes a spec'd ticket |
 | **Backend / architecture** | `docs/architecture/*.md` (a cross-cutting contract) or `docs/features/*.md` (a feature's design) | authored directly as markdown from an approved plan/ADR | its own section headings and phase ordering; each layer that can merge green becomes a ticket |
 
 For a backend design there are no visual workflows — "design fidelity" means the contracts the
