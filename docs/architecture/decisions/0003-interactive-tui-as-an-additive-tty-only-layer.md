@@ -56,6 +56,6 @@ The cockpit is **additive**. Two gates decide which renderer runs, and both must
 ## References
 
 - Issue [#1](https://github.com/dsaenztagarro/dotsync/issues/1) — the tracking issue for the cockpit
-- Design brief: [`docs/designs/briefs/shipped/status-cockpit.brief.md`](../../designs/briefs/shipped/status-cockpit.brief.md)
+- Design brief: [status cockpit (deleted when it shipped)](https://github.com/dsaenztagarro/dotsync/blob/f8624cf/docs/designs/briefs/shipped/status-cockpit.brief.md)
 - Explainer: [`docs/architecture/tui-cockpit.md`](../tui-cockpit.md) — how the cockpit works today
 - [ADR 0002](0002-rewrite-in-go-as-a-single-binary.md) — the migration whose parity constraint this decision protects

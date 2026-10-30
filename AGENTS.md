@@ -97,15 +97,16 @@ Good (ASCII):
 +--------+     +--------+
 ```
 
-## Design workflow (the TUI cockpit)
+## Design workflow (Claude Design)
 
-dotsync's UI is a **terminal TUI** (the full-screen review-and-apply cockpit), not a web surface — so the HTML **Claude Design** canvas flow and a design-system binding do **not** apply here (`docs/designs/DESIGN-SYSTEM.md` is marked N/A). The lightweight part of the workflow still does:
+**Do not hand-build UI without a design.** Design content — briefs, the pages Claude Design returns, the export mirror — lives in the **[`dotsync-ds`](https://github.com/dsaenztagarro/dotsync-ds)** design repository, which extends the shared terminal system `cli-ds`, and exactly one generated artefact crosses into this one: `dist/tokens.toml`. The procedure, and the three routes into the Claude Design project, are the [`design-handoff`](.claude/skills/design-handoff/SKILL.md) skill.
 
-1. **Brief.** A new or reworked TUI screen starts as a short **design brief** in `docs/designs/briefs/proposed/<name>.brief.md` (see [`docs/designs/README.md`](docs/designs/README.md)) — the surface, its states, key bindings, and intent, with an **ASCII mockup** standing in for the HTML canvas.
-2. **Build to it.** Implement the screen against the brief; the TUI must degrade to the classic renderer on non-TTY / `--yes` / `--quiet` / piped / CI.
-3. **Verify & promote.** Every interactive workflow the brief specifies gets a test; driving the runtime surface (an actual TTY session) is how fidelity is confirmed. When shipped, move the brief `proposed/ → shipped/`; a design decision worth keeping becomes an ADR.
-
-If dotsync ever grows a genuine web surface, restore the full Claude Design flow from the template.
+- **A design page shows the surface, never the application's rules.** Interaction is drawn; validations, sync rules and the data model are not. The test for a sentence on a page: could someone open the running application and find it false? The design project's own `readme.md` carries the rule.
+- **Build to the page, with the vendored artefact only.** No colour or glyph outside the token set, the user's `[colors]` and `[icons]` overrides, and the classic renderer's ASCII defaults.
+- **The TUI degrades to the classic renderer** on a non-TTY, under `--yes`, `--quiet`, `--apply`, `--no-tui`, `CI`, `DOTSYNC_NO_TUI` or `TERM=dumb`; a design never removes that path.
+- **Code never cites a design page or a brief**, in any form — a path, a section label, or the same thing in words. A page regenerates and a brief is deleted; cite the decision record for *why* and the test for *what*.
+- **Validate the design against the codebase before building — raise the hand if it's wrong.** If it brings consistency, build it faithfully. If it does **not**, neither implement it silently nor diverge from it silently: a **comment** on the ticket for something localised, a **brief** in `dotsync-ds` for something structural.
+- **A behaviour a page draws that nothing here has settled is an open question**, answered by a test and, where it is a real fork, an ADR — then sent back through a brief.
 
 ## Testing Guidelines
 

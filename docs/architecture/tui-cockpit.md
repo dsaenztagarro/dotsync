@@ -104,5 +104,5 @@ The third: **nothing in the view layer knows a width.** Every frame begins by re
 - [ADR 0003](decisions/0003-interactive-tui-as-an-additive-tty-only-layer.md) — why the cockpit is additive, TTY-only, and read-only
 - [ADR 0004](decisions/0004-resolve-the-layout-per-frame-from-content-and-viewport.md) — why the layout is resolved per frame
 - [ADR 0005](decisions/0005-show-mappings-by-scope-not-by-repeated-root.md) — why the table shows a scope instead of repeating the root
-- [Design brief](../designs/briefs/shipped/status-cockpit.brief.md) — the surface, its states, and the key bindings
+- [Design brief](https://github.com/dsaenztagarro/dotsync/blob/f8624cf/docs/designs/briefs/shipped/status-cockpit.brief.md) — the surface, its states, and the key bindings
 - [ADR 0002](decisions/0002-rewrite-in-go-as-a-single-binary.md) — the migration and its parity constraint

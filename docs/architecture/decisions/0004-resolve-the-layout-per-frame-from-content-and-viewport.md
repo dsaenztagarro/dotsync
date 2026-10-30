@@ -62,4 +62,4 @@ Two last-resort guards close the loop: every line is truncated to the viewport w
 - Issue [#1](https://github.com/dsaenztagarro/dotsync/issues/1) · PR [#2](https://github.com/dsaenztagarro/dotsync/pull/2)
 - [ADR 0003](0003-interactive-tui-as-an-additive-tty-only-layer.md) — the cockpit this layout belongs to
 - Explainer: [`docs/architecture/tui-cockpit.md`](../tui-cockpit.md) — the mechanism as it works today
-- Design brief: [`docs/designs/briefs/shipped/status-cockpit.brief.md`](../../designs/briefs/shipped/status-cockpit.brief.md)
+- Design brief: [status cockpit (deleted when it shipped)](https://github.com/dsaenztagarro/dotsync/blob/f8624cf/docs/designs/briefs/shipped/status-cockpit.brief.md)
