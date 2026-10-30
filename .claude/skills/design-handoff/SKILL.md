@@ -31,7 +31,7 @@ Design content lives outside this repository because it grows without bound, and
 ## 2. What crosses, and by which route
 
 **Exactly one generated artefact reaches this application**, and it is data — a token set, or a stylesheet bundle.
-For dotsync it is `dotsync-ds/dist/tokens.toml`, mirrored to `design/tokens.toml` here. The cockpit does not read it yet: its colours are hand-written, and the per-user `[colors]` and `[icons]` overrides in a dotsync config win over any token.
+For dotsync it is `dotsync-ds/dist/tokens.toml`. It is not vendored here yet, because the cockpit does not read it: its colours are hand-written, and the per-user `[colors]` and `[icons]` overrides in a dotsync config win over any token. The step that copies it in, pinned to a `dotsync-ds` revision, arrives with the first code that reads it.
 A page is read by a person designing or building a surface; it is never a build input, and code never cites one.
 
 The design project holds its own files and nothing else — it cannot open either repository. Everything it knows arrives by one of three routes, each started by a person:
