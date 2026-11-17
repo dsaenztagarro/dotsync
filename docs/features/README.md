@@ -2,7 +2,7 @@
 
 End-to-end documentation of a shipped feature: what it does, the user flow, its configuration, and how the pieces connect. Where an [explainer](../architecture/) describes one *mechanism*, a feature doc describes one *capability* as the user experiences it — often spanning several mechanisms.
 
-A feature doc doubles as a **backend design doc** for the `/epic` workflow: authored up front from an approved plan, it decomposes into implementation tickets; kept current after shipping, it explains the feature to the next maintainer.
+A feature doc doubles as a **backend design doc** for `/sdlc:plan`: authored up front from an approved plan, it decomposes into implementation tickets; kept current after shipping, it explains the feature to the next maintainer.
 
 ## Suggested shape
 
